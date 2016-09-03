@@ -1,0 +1,25 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion "24.0.2"
+
+    defaultConfig {
+        applicationId "care.dovetail.blinker"
+        minSdkVersion 21
+        targetSdkVersion 22
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:24.2.0'
+    compile files('libs/JTransforms-3.0.jar')
+    compile files('libs/dsp-collection.jar')
+}
