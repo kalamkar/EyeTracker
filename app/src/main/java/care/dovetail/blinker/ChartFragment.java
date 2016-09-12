@@ -38,7 +38,7 @@ public class ChartFragment extends Fragment {
 		blinks =	ecgView.makePointsChart(
 				getResources().getColor(android.R.color.holo_orange_dark), 5);
 		blinks.setXRange(0, Config.GRAPH_LENGTH);
-		blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+//		blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
 		median = ecgView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
 		median.setXRange(0, Config.GRAPH_LENGTH);
@@ -61,13 +61,15 @@ public class ChartFragment extends Fragment {
 		medianPoints.add(Pair.create(Config.GRAPH_LENGTH - 1, medianAmplitude));
 		median.setData(medianPoints);
 
-		List<Pair<Integer, Integer>> blinkPoints = new ArrayList<Pair<Integer, Integer>>();
-		for (int i = 0; i < blinks.size(); i++) {
-			Feature blink = blinks.get(i);
-			blinkPoints.add(Pair.create(blink.index, blink.min + blink.min == 0 ? 5 : 0));
-			blinkPoints.add(Pair.create(blink.index, blink.max - blink.max == 0 ? 5 : 0));
+		if (blinks != null) {
+			List<Pair<Integer, Integer>> blinkPoints = new ArrayList<Pair<Integer, Integer>>();
+			for(int i = 0; i < blinks.size(); i++) {
+				Feature blink = blinks.get(i);
+				blinkPoints.add(Pair.create(blink.index, blink.min + blink.min == 0 ? 5 : 0));
+				blinkPoints.add(Pair.create(blink.index, blink.max - blink.max == 0 ? 5 : 0));
+			}
+			this.blinks.setData(blinkPoints);
 		}
-		this.blinks.setData(blinkPoints);
 
 		getView().findViewById(R.id.eog).invalidate();
 	}

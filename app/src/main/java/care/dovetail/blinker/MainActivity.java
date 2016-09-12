@@ -127,7 +127,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 			ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
 			chart.clear();
 			chart.update(filter ? signals.getFilteredValues() : signals.getValues(),
-					signals.getFeatures(Feature.Type.SLOPE), signals.medianAmplitude);
+					/* signals.getFeatures(Feature.Type.SLOPE) */ null, signals.medianAmplitude);
 		}
 	};
 

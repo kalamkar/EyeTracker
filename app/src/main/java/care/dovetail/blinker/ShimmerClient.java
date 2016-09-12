@@ -24,12 +24,26 @@ public class ShimmerClient {
 	private ShimmerConnection connection;
 
     public interface BluetoothDeviceListener {
-    	public void onScanStart();
-    	public void onScanResult(String deviceAddress);
-    	public void onScanEnd();
-    	public void onConnect(String address);
-    	public void onDisconnect(String address);
-    	public void onNewValues(int values[]);
+    	void onScanStart();
+    	void onScanResult(String deviceAddress);
+    	void onScanEnd();
+    	void onConnect(String address);
+    	void onDisconnect(String address);
+    	void onNewValues(int values[]);
+    }
+
+    private static class DataPacket {
+        private final long timestamp;
+        private final byte status;
+        private final long ch1;
+        private final long ch2;
+
+        DataPacket(long timestamp, byte status, long ch1, long ch2) {
+            this.timestamp = timestamp;
+            this.status = status;
+            this.ch1 = ch1;
+            this.ch2 = ch2;
+        }
     }
 
 	public ShimmerClient(Context context, BluetoothDeviceListener listener) {
@@ -96,7 +110,9 @@ public class ShimmerClient {
 				}
 
 				listener.onConnect(device.getAddress());
-				connection.startStreaming();
+				if (connection.sendInquiry()) {
+                    connection.start();
+                }
 			}
 		}.execute();
 	}
@@ -151,12 +167,36 @@ public class ShimmerClient {
 	        do {
 	            try {
 	                numBytes = inStream.read(buffer);
-	                Log.v(TAG, String.format("Num bytes %d, first %d", numBytes, buffer[0]));
-	                int values[] = new int[numBytes];
-	                for (int i = 0; i < numBytes / 2 ; i += 2) {
-	                	values[i] = buffer[i + 1] << 8 & buffer[i];
-	                }
-	                // listener.onNewValues(values);
+                    switch(buffer[0] & 0xFF) {
+                        case 0x00:
+                            // Data packet
+                            DataPacket data = parseDataPacket(buffer);
+                            if (data != null) {
+                                Log.v(TAG, String.format("Timestamp %d, Status 0x%02x, ch1 %d, ch2 %d",
+                                        data.timestamp, data.status, data.ch1, data.ch2));
+	                            listener.onNewValues(new int[] {(int) data.ch1});
+                            } else {
+                                Log.w(TAG, String.format("Unknown data %s",
+                                        bytesToString(buffer, numBytes)));
+                            }
+                            break;
+                        case 0xFF:
+                            // command ack
+                            Log.v(TAG, String.format("Ack %s", bytesToString(buffer, numBytes)));
+                            if ((buffer[1] & 0xFF) == 0x02) {
+                                // Inquiry Ack and response
+                                // 0xff 0x02
+                                // Sampling rate, accel range, config setup byte0, num chans, buffer size
+                                // 0x80 0x02 0x50 0x9b 0x39 0x08 0x03 0x01
+                                // 0x1d 0x1e 0x1f   Channel IDs
+                                startStreaming();
+                            }
+                            break;
+                        default:
+                            Log.v(TAG, String.format("Num bytes %d, Packet %s",
+                                    numBytes, bytesToString(buffer, numBytes)));
+                            break;
+                    }
 	            } catch (IOException e) {
 	            	Log.e(TAG, "Exception while reading BT Socket.", e);
 	            	break;
@@ -165,11 +205,13 @@ public class ShimmerClient {
 	        onDisconnect(socket.getRemoteDevice());
 	    }
 
-	    public void startStreaming() {
-	    	if (write(new byte[] {(byte) 0x07})) {
-	    		this.start();
-	    	}
+	    public boolean startStreaming() {
+	    	return write(new byte[] {(byte) 0x07});
 	    }
+
+        public boolean sendInquiry() {
+            return write(new byte[] {(byte) 0x01});
+        }
 
 	    private boolean write(byte[] bytes) {
 	        try {
@@ -189,4 +231,47 @@ public class ShimmerClient {
 	        }
 	    }
 	}
+
+    private static DataPacket parseDataPacket(byte packet[]) {
+        if (packet != null && packet.length >= 11) {
+            return new DataPacket(parseU24(packet[1], packet[2], packet[3]), packet[4],
+                    parseI24R(packet[5], packet[6], packet[7]),
+                    parseI24R(packet[8], packet[9], packet[10]));
+        }
+        return null;
+    }
+
+    private static long parseU24(byte byte1, byte byte2, byte byte3) {
+        long xmsb =((long)(byte3 & 0xFF) << 16);
+        long msb =((long)(byte2 & 0xFF) << 8);
+        long lsb =((long)(byte1 & 0xFF));
+        return xmsb + msb + lsb;
+    }
+
+    private static long parseU16(byte byte1, byte byte2) {
+        return (byte1 & 0xFF) + ((byte2 & 0xFF) << 8);
+    }
+
+    private static long parseI24R(byte byte1, byte byte2, byte byte3) {
+        long xmsb = ((long)(byte1 & 0xFF) << 16);
+        long msb = ((long)(byte2 & 0xFF) << 8);
+        long lsb = ((long)(byte3 & 0xFF));
+        return getTwosComplement((int)(xmsb + msb + lsb), 24);
+    }
+
+	private static long getTwosComplement(int signedData, int bitLength) {
+		int newData=signedData;
+		if (signedData >= (1 << (bitLength-1))) {
+			newData = -((signedData ^ (int)(Math.pow(2, bitLength) - 1)) + 1);
+		}
+		return newData;
+	}
+
+    private static String bytesToString(byte buffer[], int numBytes) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < numBytes; i++) {
+            builder.append(String.format("0x%02x ", buffer[i]));
+        }
+        return builder.toString();
+    }
 }
