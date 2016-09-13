@@ -1,8 +1,5 @@
 package care.dovetail.blinker;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Fragment;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -10,13 +7,18 @@ import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import care.dovetail.blinker.ChartView.Chart;
 import care.dovetail.blinker.SignalProcessor.Feature;
 
 public class ChartFragment extends Fragment {
 	private static final String TAG = "ChartFragment";
 
-	private Chart eog;
+	private Chart channel1;
+    private Chart channel2;
 	private Chart blinks;
 	private Chart median;
 
@@ -30,17 +32,21 @@ public class ChartFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		ChartView ecgView = ((ChartView) getView().findViewById(R.id.eog));
-		eog = ecgView.makeLineChart(Color.BLUE, 2);
-		eog.setXRange(0, Config.GRAPH_LENGTH);
-		eog.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+		ChartView chartView = ((ChartView) getView().findViewById(R.id.eog));
+		channel1 = chartView.makeLineChart(Color.BLUE, 2);
+		channel1.setXRange(0, Config.GRAPH_LENGTH);
+		channel1.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
-		blinks =	ecgView.makePointsChart(
+        channel2 = chartView.makeLineChart(Color.GREEN, 2);
+        channel2.setXRange(0, Config.GRAPH_LENGTH);
+        channel2.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+
+		blinks =	chartView.makePointsChart(
 				getResources().getColor(android.R.color.holo_orange_dark), 5);
 		blinks.setXRange(0, Config.GRAPH_LENGTH);
 		blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
-		median = ecgView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
+		median = chartView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
 		median.setXRange(0, Config.GRAPH_LENGTH);
 		median.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 	}
@@ -49,14 +55,20 @@ public class ChartFragment extends Fragment {
 		((ChartView) getView().findViewById(R.id.eog)).clear();
 	}
 
-	public void update(int data[], List<Feature> blinks, int medianAmplitude) {
-		List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data.length);
-		for (int i = 0; i < data.length; i++) {
-			points.add(Pair.create(i, data[i]));
+	public void update(int data1[], int data2[], List<Feature> blinks, int medianAmplitude) {
+		List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data1.length);
+		for (int i = 0; i < data1.length; i++) {
+			points.add(Pair.create(i, data1[i]));
 		}
-		eog.setData(points);
+		channel1.setData(points);
 
-		List<Pair<Integer, Integer>> medianPoints = new ArrayList<Pair<Integer, Integer>>(2);
+        points = new ArrayList<Pair<Integer, Integer>>(data2.length);
+        for (int i = 0; i < data2.length; i++) {
+            points.add(Pair.create(i, data2[i]));
+        }
+        channel2.setData(points);
+
+        List<Pair<Integer, Integer>> medianPoints = new ArrayList<Pair<Integer, Integer>>(2);
 		medianPoints.add(Pair.create(0, medianAmplitude));
 		medianPoints.add(Pair.create(Config.GRAPH_LENGTH - 1, medianAmplitude));
 		median.setData(medianPoints);

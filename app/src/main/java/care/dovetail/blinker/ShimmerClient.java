@@ -1,10 +1,5 @@
 package care.dovetail.blinker;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -14,6 +9,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Set;
 
 public class ShimmerClient {
 	private static final String TAG = "ShimmerClient";
@@ -31,7 +31,7 @@ public class ShimmerClient {
     	void onScanEnd();
     	void onConnect(String address);
     	void onDisconnect(String address);
-    	void onNewValues(int values[]);
+    	void onNewValues(int values1[], int values2[]);
     }
 
     private static class DataPacket {
@@ -176,7 +176,8 @@ public class ShimmerClient {
                             if (data != null) {
 //                                Log.v(TAG, String.format("Timestamp %d, Status 0x%02x, ch1 %d, ch2 %d",
 //                                        data.timestamp, data.status, data.ch1, data.ch2));
-	                            listener.onNewValues(new int[] {(int) data.ch1});
+	                            listener.onNewValues(
+                                        new int[] {(int) data.ch1}, new int[] {(int) data.ch2});
                             } else {
                                 Log.w(TAG, String.format("Unknown data %s",
                                         bytesToString(buffer, numBytes)));

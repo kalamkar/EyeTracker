@@ -1,22 +1,23 @@
 package care.dovetail.blinker;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
 import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.blinker.SignalProcessor.Feature;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener {
 	private static final String TAG = "MainActivity";
 
 	private ShimmerClient patchClient;
-	private final SignalProcessor signals = new SignalProcessor();
+	private final SignalProcessor signals1 = new SignalProcessor();
+	private final SignalProcessor signals2 = new SignalProcessor();
 
 	private Timer chartUpdateTimer = null;
 
@@ -126,13 +127,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 			boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
 			ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
 			chart.clear();
-			chart.update(filter ? signals.getFilteredValues() : signals.getValues(),
-					/* signals.getFeatures(Feature.Type.SLOPE) */ null, signals.medianAmplitude);
+			chart.update(signals1.getValues(), signals2.getValues(), null,
+                    signals1.medianAmplitude);
 		}
 	};
 
 	@Override
-	public void onNewValues(int[] chunk) {
-		signals.update(chunk);
+	public void onNewValues(int[] chunk1, int[] chunk2) {
+		signals1.update(chunk1);
+        signals2.update(chunk2);
 	}
 }
