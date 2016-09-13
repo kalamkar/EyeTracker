@@ -15,8 +15,8 @@ public class Config {
 
 	public static final int GRAPH_LENGTH = 1000;			// 5 seconds at 200Hz
 
-	public static final int SHORT_GRAPH_MIN = 100; 	//   0 for V3,  64 for V2,  64 for V1
-	public static final int SHORT_GRAPH_MAX = 160; 	// 255 for V3, 192 for V2, 255 for V1
+	public static final int SHORT_GRAPH_MIN = 0; 	//   0 for V3
+	public static final int SHORT_GRAPH_MAX = 255; 	// 255 for V3
 
 	public static final int GRAPH_UPDATE_MILLIS = 500;
 

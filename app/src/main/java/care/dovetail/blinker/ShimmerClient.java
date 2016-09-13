@@ -18,6 +18,8 @@ import android.util.Log;
 public class ShimmerClient {
 	private static final String TAG = "ShimmerClient";
 
+    private static final int MAX_24BIT_SIGNED = 8388608;
+
 	private final BluetoothDeviceListener listener;
 
 	private final BluetoothAdapter adapter;
@@ -41,8 +43,8 @@ public class ShimmerClient {
         DataPacket(long timestamp, byte status, long ch1, long ch2) {
             this.timestamp = timestamp;
             this.status = status;
-            this.ch1 = ch1;
-            this.ch2 = ch2;
+            this.ch1 = (ch1 + MAX_24BIT_SIGNED) * 256 / (2 * MAX_24BIT_SIGNED);
+            this.ch2 = (ch2 + MAX_24BIT_SIGNED) * 256 / (2 * MAX_24BIT_SIGNED);
         }
     }
 
@@ -172,8 +174,8 @@ public class ShimmerClient {
                             // Data packet
                             DataPacket data = parseDataPacket(buffer);
                             if (data != null) {
-                                Log.v(TAG, String.format("Timestamp %d, Status 0x%02x, ch1 %d, ch2 %d",
-                                        data.timestamp, data.status, data.ch1, data.ch2));
+//                                Log.v(TAG, String.format("Timestamp %d, Status 0x%02x, ch1 %d, ch2 %d",
+//                                        data.timestamp, data.status, data.ch1, data.ch2));
 	                            listener.onNewValues(new int[] {(int) data.ch1});
                             } else {
                                 Log.w(TAG, String.format("Unknown data %s",

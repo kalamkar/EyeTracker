@@ -38,7 +38,7 @@ public class ChartFragment extends Fragment {
 		blinks =	ecgView.makePointsChart(
 				getResources().getColor(android.R.color.holo_orange_dark), 5);
 		blinks.setXRange(0, Config.GRAPH_LENGTH);
-//		blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+		blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
 		median = ecgView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
 		median.setXRange(0, Config.GRAPH_LENGTH);
