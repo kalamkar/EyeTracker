@@ -19,7 +19,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:24.2.0'
+    compile 'com.android.support:support-v4:24.2.1'
     compile files('libs/JTransforms-3.0.jar')
     compile files('libs/dsp-collection.jar')
 }

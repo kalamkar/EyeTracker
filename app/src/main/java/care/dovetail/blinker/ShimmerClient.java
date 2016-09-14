@@ -16,259 +16,280 @@ import java.io.OutputStream;
 import java.util.Set;
 
 public class ShimmerClient {
-	private static final String TAG = "ShimmerClient";
+    private static final String TAG = "ShimmerClient";
 
-    private static final int MAX_24BIT_SIGNED = 8388608;
+    private final BluetoothDeviceListener listener;
 
-	private final BluetoothDeviceListener listener;
-
-	private final BluetoothAdapter adapter;
-	private ShimmerConnection connection;
+    private final BluetoothAdapter adapter;
+    private ShimmerConnection connection;
 
     public interface BluetoothDeviceListener {
-    	void onScanStart();
-    	void onScanResult(String deviceAddress);
-    	void onScanEnd();
-    	void onConnect(String address);
-    	void onDisconnect(String address);
-    	void onNewValues(int values1[], int values2[]);
+        void onScanStart();
+
+        void onScanResult(String deviceAddress);
+
+        void onScanEnd();
+
+        void onConnect(String address);
+
+        void onDisconnect(String address);
+
+        void onNewValues(int values1[], int values2[]);
     }
 
     private static class DataPacket {
-        private final long timestamp;
+        private final int timestamp;
         private final byte status;
-        private final long ch1;
-        private final long ch2;
+        private final int channel1;
+        private final int channel2;
 
-        DataPacket(long timestamp, byte status, long ch1, long ch2) {
+        DataPacket(int timestamp, byte status, int ch1, int ch2) {
             this.timestamp = timestamp;
             this.status = status;
-            this.ch1 = (ch1 + MAX_24BIT_SIGNED) * 256 / (2 * MAX_24BIT_SIGNED);
-            this.ch2 = (ch2 + MAX_24BIT_SIGNED) * 256 / (2 * MAX_24BIT_SIGNED);
+            long temp1 = (ch1 + Config.MAX_24BIT_SIGNED) * 256 / (2 * Config.MAX_24BIT_SIGNED);
+            long temp2 = (ch2 + Config.MAX_24BIT_SIGNED) * 256 / (2 * Config.MAX_24BIT_SIGNED);
+            this.channel1 = (int) temp1;
+            this.channel2 = (int) temp2;
+//            this.channel1 = channel1 + Config.MAX_24BIT_SIGNED;
+//            this.channel2 = channel2 + Config.MAX_24BIT_SIGNED;
         }
     }
 
-	public ShimmerClient(Context context, BluetoothDeviceListener listener) {
-		this.listener = listener;
+    public ShimmerClient(Context context, BluetoothDeviceListener listener) {
+        this.listener = listener;
 
-		BluetoothManager bluetoothManager =
-				(BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-		adapter = bluetoothManager.getAdapter();
-	}
+        BluetoothManager bluetoothManager =
+                (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        adapter = bluetoothManager.getAdapter();
+    }
 
-	public void startScan() {
-		Log.i(TAG, "Starting scan for Shimmer device.");
-		listener.onScanStart();
-		Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
-		for (BluetoothDevice device : pairedDevices) {
-			String name = device.getName();
-			if (name != null && name.startsWith(Config.BT_DEVICE_NAME_PREFIX)) {
-	            Log.i(TAG, String.format("Found device %s", name));
-				listener.onScanResult(device.getAddress());
-			}
-		}
+    public void startScan() {
+        Log.i(TAG, "Starting scan for Shimmer device.");
+        listener.onScanStart();
+        Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
+        for (BluetoothDevice device : pairedDevices) {
+            String name = device.getName();
+            if (name != null && name.startsWith(Config.BT_DEVICE_NAME_PREFIX)) {
+                Log.i(TAG, String.format("Found device %s", name));
+                listener.onScanResult(device.getAddress());
+            }
+        }
+    }
 
-	}
+    public void stopScan() {
+        Log.i(TAG, "Stopping scan for Shimmer device.");
+        listener.onScanEnd();
+    }
 
-	public void stopScan() {
-		Log.i(TAG, "Stopping scan for Shimmer device.");
-		listener.onScanEnd();
-	}
+    public void connect(String address) {
+        if (address == null || address.isEmpty()) {
+            Log.e(TAG, "No Shimmer device given to connect.");
+            return;
+        }
+        if (adapter == null || !adapter.isEnabled()) {
+            Log.e(TAG, "Bluetooth adapter is null or disabled.");
+            return;
+        }
+        final BluetoothDevice device = adapter.getRemoteDevice(address);
 
-	public void connect(String address) {
-		if (address == null || address.isEmpty()) {
-			Log.e(TAG, "No Shimmer device given to connect.");
-			return;
-		}
-		if (adapter == null || !adapter.isEnabled()) {
-			Log.e(TAG, "Bluetooth adapter is null or disabled.");
-			return;
-		}
-		final BluetoothDevice device = adapter.getRemoteDevice(address);
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    BluetoothSocket socket =
+                            device.createInsecureRfcommSocketToServiceRecord(Config.SHIMMER_UUID);
+                    if (socket == null) {
+                        Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
+                        return null;
+                    }
+                    socket.connect();
+                    connection = new ShimmerConnection(socket);
+                } catch (IOException e) {
+                    Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
+                }
+                return null;
+            }
 
-		new AsyncTask<Void, Void, Void>() {
-			@Override
-			protected Void doInBackground(Void... params) {
-				try {
-		            BluetoothSocket socket =
-		            		device.createInsecureRfcommSocketToServiceRecord(Config.SHIMMER_UUID);
-		            if (socket == null) {
-						Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
-						return null;
-					}
-		            socket.connect();
-		            connection = new ShimmerConnection(socket);
-		        } catch (IOException e) {
-		        	Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
-		        }
-				return null;
-			}
+            @Override
+            protected void onPostExecute(Void result) {
+                if (connection == null) {
+                    Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
+                    return;
+                }
 
-			@Override
-			protected void onPostExecute(Void result) {
-				if (connection == null) {
-					Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
-					return;
-				}
-
-				listener.onConnect(device.getAddress());
-				if (connection.sendInquiry()) {
+                listener.onConnect(device.getAddress());
+                if (connection.sendInquiry()) {
                     connection.start();
                 }
-			}
-		}.execute();
-	}
-
-	public boolean isConnected() {
-		return connection != null;
-	}
-
-	public void close() {
-		if (connection != null) {
-			Log.i(TAG, "Closing connection to Shimmer device.");
-			connection.close();
-			connection = null;
-		}
-	}
-
-	private void onDisconnect(BluetoothDevice device) {
-		listener.onDisconnect(device.getAddress());
-	}
-
-	public static void maybeEnableBluetooth(Activity activity) {
-		BluetoothManager bluetoothManager =
-				(BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-		BluetoothAdapter bluetooth = bluetoothManager.getAdapter();
-
-		if (bluetooth == null || !bluetooth.isEnabled()) {
-			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
-		}
-	}
-
-	private class ShimmerConnection extends Thread {
-	    private final BluetoothSocket socket;
-	    private InputStream inStream;
-	    private OutputStream outStream;
-
-	    public ShimmerConnection(BluetoothSocket socket) {
-	        this.socket = socket;
-	        try {
-	            inStream = socket.getInputStream();
-	            outStream = socket.getOutputStream();
-	        } catch (IOException e) {
-	        	Log.e(TAG, "Could not get I/O streams.", e);
-	        }
-	    }
-
-	    @Override
-		public void run() {
-	        byte[] buffer = new byte[1024];  // buffer store for the stream
-	        int numBytes = -1;
-
-	        do {
-	            try {
-	                numBytes = inStream.read(buffer);
-                    switch(buffer[0] & 0xFF) {
-                        case 0x00:
-                            // Data packet
-                            DataPacket data = parseDataPacket(buffer);
-                            if (data != null) {
-//                                Log.v(TAG, String.format("Timestamp %d, Status 0x%02x, ch1 %d, ch2 %d",
-//                                        data.timestamp, data.status, data.ch1, data.ch2));
-	                            listener.onNewValues(
-                                        new int[] {(int) data.ch1}, new int[] {(int) data.ch2});
-                            } else {
-                                Log.w(TAG, String.format("Unknown data %s",
-                                        bytesToString(buffer, numBytes)));
-                            }
-                            break;
-                        case 0xFF:
-                            // command ack
-                            Log.v(TAG, String.format("Ack %s", bytesToString(buffer, numBytes)));
-                            if ((buffer[1] & 0xFF) == 0x02) {
-                                // Inquiry Ack and response
-                                // 0xff 0x02
-                                // Sampling rate, accel range, config setup byte0, num chans, buffer size
-                                // 0x80 0x02 0x50 0x9b 0x39 0x08 0x03 0x01
-                                // 0x1d 0x1e 0x1f   Channel IDs
-                                startStreaming();
-                            }
-                            break;
-                        default:
-                            Log.v(TAG, String.format("Num bytes %d, Packet %s",
-                                    numBytes, bytesToString(buffer, numBytes)));
-                            break;
-                    }
-	            } catch (IOException e) {
-	            	Log.e(TAG, "Exception while reading BT Socket.", e);
-	            	break;
-	            }
-	        } while (numBytes >= 0);
-	        onDisconnect(socket.getRemoteDevice());
-	    }
-
-	    public boolean startStreaming() {
-	    	return write(new byte[] {(byte) 0x07});
-	    }
-
-        public boolean sendInquiry() {
-            return write(new byte[] {(byte) 0x01});
-        }
-
-	    private boolean write(byte[] bytes) {
-	        try {
-	            outStream.write(bytes);
-	        } catch (IOException e) {
-	        	Log.e(TAG, "Could not write to output stream.", e);
-	        	return false;
-	        }
-	        return true;
-	    }
-
-	    public void close() {
-	        try {
-	            socket.close();
-	        } catch (IOException e) {
-	        	Log.e(TAG, "Could not close socket.", e);
-	        }
-	    }
-	}
-
-    private static DataPacket parseDataPacket(byte packet[]) {
-        if (packet != null && packet.length >= 11) {
-            return new DataPacket(parseU24(packet[1], packet[2], packet[3]), packet[4],
-                    parseI24R(packet[5], packet[6], packet[7]),
-                    parseI24R(packet[8], packet[9], packet[10]));
-        }
-        return null;
+            }
+        }.execute();
     }
 
-    private static long parseU24(byte byte1, byte byte2, byte byte3) {
-        long xmsb =((long)(byte3 & 0xFF) << 16);
-        long msb =((long)(byte2 & 0xFF) << 8);
-        long lsb =((long)(byte1 & 0xFF));
+    public boolean isConnected() {
+        return connection != null;
+    }
+
+    public void close() {
+        if (connection != null) {
+            Log.i(TAG, "Closing connection to Shimmer device.");
+            connection.close();
+            connection = null;
+        }
+    }
+
+    private void onDisconnect(BluetoothDevice device) {
+        listener.onDisconnect(device.getAddress());
+    }
+
+    public static void maybeEnableBluetooth(Activity activity) {
+        BluetoothManager bluetoothManager =
+                (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter bluetooth = bluetoothManager.getAdapter();
+
+        if (bluetooth == null || !bluetooth.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
+        }
+    }
+
+    private class ShimmerConnection extends Thread {
+        private final BluetoothSocket socket;
+        private InputStream inStream;
+        private OutputStream outStream;
+
+        public ShimmerConnection(BluetoothSocket socket) {
+            this.socket = socket;
+            try {
+                inStream = socket.getInputStream();
+                outStream = socket.getOutputStream();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not get I/O streams.", e);
+            }
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                int response;
+                try {
+                    response = inStream.read();
+                } catch (IOException e) {
+                    Log.e(TAG, "Exception while reading BT Socket.", e);
+                    break;
+                }
+                if (response == 0x00) {     // Data packet
+                    byte[] buffer = new byte[10];    // u16, u8, 124r, i24r
+                    try {
+                        for (int i = 0; i < buffer.length; i++) {
+                            buffer[i] = (byte) inStream.read();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Exception while reading Data Packet.", e);
+                        break;
+                    }
+                    processData(buffer);
+                } else if (response == 0x02) {  // Inquiry response
+                    byte[] buffer = new byte[128];
+                    int numBytes;
+                    try {
+                        numBytes = inStream.read(buffer, 0, buffer.length);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Exception while reading inquiry response.", e);
+                        break;
+                    }
+                    // Sampling rate, accel range, config setup byte0, num channels, buffer size
+                    // 0x80 0x02, 0x50 0x9b 0x39 0x08, 0x03, 0x01
+                    // 0x1d 0x1e 0x1f   Channel IDs
+                    Log.i(TAG, String.format("Num bytes %d, Packet %s",
+                            numBytes, bytesToString(buffer, numBytes)));
+                    if (numBytes >= 11 && buffer[6] == 3 && buffer[7] == 1 &&
+                            buffer[8] == 0x1D && buffer[9] == 0x1E && buffer[10] == 0x1F) {
+                        startStreaming();
+                    } else {
+                        Log.w(TAG, String.format("Unknown config %s",
+                                bytesToString(buffer, numBytes)));
+                    }
+                } else if (response == 0xFF) {
+                    Log.i(TAG, "Got Ack");
+                } else {
+                    Log.w(TAG, String.format("Unknown response 0x%02x", response));
+                }
+            }
+            onDisconnect(socket.getRemoteDevice());
+        }
+
+        public boolean startStreaming() {
+            Log.i(TAG, "Sending Start Stream command");
+            return write(new byte[]{(byte) 0x07});
+        }
+
+        public boolean sendInquiry() {
+            Log.i(TAG, "Sending Inquiry command");
+            return write(new byte[]{(byte) 0x01});
+        }
+
+        private boolean write(byte[] bytes) {
+            try {
+                outStream.write(bytes);
+            } catch (IOException e) {
+                Log.e(TAG, "Could not write to output stream.", e);
+                return false;
+            }
+            return true;
+        }
+
+        public void close() {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not close socket.", e);
+            }
+        }
+    }
+
+    private void processData(byte buffer[]) {
+        if (buffer == null || buffer.length != 10) {
+            Log.w(TAG, String.format("Invalid buffer for data packet."));
+            return;
+        }
+        DataPacket packet = new DataPacket(
+                parseU24(buffer[0], buffer[1], buffer[2]),      // Timestamp 3 bytes        u24
+                buffer[3],                                      // ExG_ADS1292R_1_STATUS    u8
+                parseI24R(buffer[4], buffer[5], buffer[6]),     // ExG_ADS1292R_1_CH1_24BIT i24r
+                parseI24R(buffer[7], buffer[8], buffer[9]));    // ExG_ADS1292R_1_CH2_24BIT i24r
+
+//        Log.v(TAG, String.format(
+//                "Timestamp %d, Status 0x%02x, channel1 %d, channel2 %d",
+//                packet.timestamp, packet.status, packet.channel1, packet.channel2));
+        listener.onNewValues(
+                new int[]{packet.channel1}, new int[]{packet.channel2});
+    }
+
+    private static int parseU24(byte byte1, byte byte2, byte byte3) {
+        int xmsb = (byte3 & 0xFF) << 16;
+        int msb = (byte2 & 0xFF) << 8;
+        int lsb = (byte1 & 0xFF);
         return xmsb + msb + lsb;
     }
 
-    private static long parseU16(byte byte1, byte byte2) {
+    private static int parseU16(byte byte1, byte byte2) {
         return (byte1 & 0xFF) + ((byte2 & 0xFF) << 8);
     }
 
-    private static long parseI24R(byte byte1, byte byte2, byte byte3) {
-        long xmsb = ((long)(byte1 & 0xFF) << 16);
-        long msb = ((long)(byte2 & 0xFF) << 8);
-        long lsb = ((long)(byte3 & 0xFF));
-        return getTwosComplement((int)(xmsb + msb + lsb), 24);
+    private static int parseI24R(byte byte1, byte byte2, byte byte3) {
+        int xmsb = (byte1 & 0xFF) << 16;
+        int msb = (byte2 & 0xFF) << 8;
+        int lsb = (byte3 & 0xFF);
+        return getTwosComplement(xmsb + msb + lsb, 24);
     }
 
-	private static long getTwosComplement(int signedData, int bitLength) {
-		int newData=signedData;
-		if (signedData >= (1 << (bitLength-1))) {
-			newData = -((signedData ^ (int)(Math.pow(2, bitLength) - 1)) + 1);
-		}
-		return newData;
-	}
+    private static int getTwosComplement(int signedData, int bitLength) {
+        int newData = signedData;
+        if (signedData >= (1 << (bitLength - 1))) {
+            newData = -((signedData ^ (int) (Math.pow(2, bitLength) - 1)) + 1);
+        }
+        return newData;
+    }
 
     private static String bytesToString(byte buffer[], int numBytes) {
         StringBuilder builder = new StringBuilder();

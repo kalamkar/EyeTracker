@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import android.util.Log;
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -201,7 +200,6 @@ public class SignalProcessor {
 				return i;
 			}
 		} while (i < filtered.length - 1 && i > 0);
-		Log.w(TAG, String.format("No %s found from %d to %d", feature, index, i));
 		return -1;
 	}
 

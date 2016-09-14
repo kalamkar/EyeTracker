@@ -61,8 +61,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 
 	@Override
 	public void onScanResult(String deviceAddress) {
-		patchClient.stopScan();
-		patchClient.connect(deviceAddress);
+		if (patchClient != null) {
+			patchClient.stopScan();
+			patchClient.connect(deviceAddress);
+		}
 	}
 
 	@Override

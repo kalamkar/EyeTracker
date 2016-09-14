@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public class Config {
 
+	public static final int MAX_24BIT_SIGNED = 8388608;
+
 	public static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 	public static final long DATA_UUID = 0x404846A1;
@@ -13,12 +15,12 @@ public class Config {
 	public static final int SAMPLE_INTERVAL_MS = 5;
 	public static final int SAMPLES_PER_BROADCAST = 20; // Hardcoded in FW
 
-	public static final int GRAPH_LENGTH = 1000;			// 5 seconds at 200Hz
+	public static final int GRAPH_LENGTH = 500;			// 5 seconds at 200Hz
 
 	public static final int SHORT_GRAPH_MIN = 0; 	//   0 for V3
 	public static final int SHORT_GRAPH_MAX = 255; 	// 255 for V3
 
-	public static final int GRAPH_UPDATE_MILLIS = 500;
+	public static final int GRAPH_UPDATE_MILLIS = 100;
 
 	public static final int FEATURE_DETECT_SAMPLES = 5 * SAMPLES_PER_BROADCAST;
 
