@@ -50,8 +50,8 @@ public class ShimmerClient {
             long temp2 = (ch2 + Config.MAX_24BIT_SIGNED) * 256 / (2 * Config.MAX_24BIT_SIGNED);
             this.channel1 = (int) temp1;
             this.channel2 = (int) temp2;
-//            this.channel1 = channel1 + Config.MAX_24BIT_SIGNED;
-//            this.channel2 = channel2 + Config.MAX_24BIT_SIGNED;
+//            this.channel1 = ch1 + Config.MAX_24BIT_SIGNED;
+//            this.channel2 = ch2 + Config.MAX_24BIT_SIGNED;
         }
     }
 
