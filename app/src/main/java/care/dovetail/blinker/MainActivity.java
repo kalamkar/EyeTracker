@@ -122,7 +122,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             }
 
             boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
-            ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
+            final ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
             chart.clear();
             chart.updateData(filter ? signals1.getFilteredValues() : signals1.getValues(),
                     filter ? signals2.getFilteredValues() : signals2.getValues(), null,
@@ -130,7 +130,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ((ChartFragment) getFragmentManager().findFragmentById(R.id.chart)).updateUI();
+                    if (chart != null) {
+                        chart.updateUI();
+                    }
                 }
             });
         }
