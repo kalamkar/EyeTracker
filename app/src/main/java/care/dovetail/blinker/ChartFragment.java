@@ -17,6 +17,8 @@ import care.dovetail.blinker.SignalProcessor.Feature;
 public class ChartFragment extends Fragment {
     private static final String TAG = "ChartFragment";
 
+    private ChartView chartView;
+
     private Chart channel1;
     private Chart channel2;
     private Chart blinks;
@@ -32,30 +34,30 @@ public class ChartFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ChartView chartView = ((ChartView) getView().findViewById(R.id.eog));
+        chartView = ((ChartView) getView().findViewById(R.id.eog));
         channel1 = chartView.makeLineChart(Color.BLUE, 2);
         channel1.setXRange(0, Config.GRAPH_LENGTH);
-        channel1.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+//        channel1.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
         channel2 = chartView.makeLineChart(Color.GREEN, 2);
         channel2.setXRange(0, Config.GRAPH_LENGTH);
-        channel2.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+//        channel2.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
         blinks = chartView.makePointsChart(
                 getResources().getColor(android.R.color.holo_orange_dark), 5);
         blinks.setXRange(0, Config.GRAPH_LENGTH);
-        blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+//        blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
         median = chartView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
         median.setXRange(0, Config.GRAPH_LENGTH);
-        median.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+//        median.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
     }
 
     public void clear() {
-        ((ChartView) getView().findViewById(R.id.eog)).clear();
+        chartView.clear();
     }
 
-    public void update(int data1[], int data2[], List<Feature> blinks, int medianAmplitude) {
+    public void updateData(int data1[], int data2[], List<Feature> blinks, int medianAmplitude) {
         List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data1.length);
         for (int i = 0; i < data1.length; i++) {
             points.add(Pair.create(i, data1[i]));
@@ -82,7 +84,9 @@ public class ChartFragment extends Fragment {
             }
             this.blinks.setData(blinkPoints);
         }
+    }
 
-        getView().findViewById(R.id.eog).invalidate();
+    public void updateUI() {
+        chartView.invalidate();
     }
 }

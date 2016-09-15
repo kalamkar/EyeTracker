@@ -91,12 +91,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
         });
 
         chartUpdateTimer = new Timer();
-        chartUpdateTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(chartUpdater);
-            }
-        }, 0, Config.GRAPH_UPDATE_MILLIS);
+        chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
     }
 
     @Override
@@ -118,7 +113,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
         }
     }
 
-    private final Runnable chartUpdater = new Runnable() {
+    private final TimerTask chartUpdater = new TimerTask() {
         @Override
         public void run() {
             if (MainActivity.this.isDestroyed()
@@ -129,8 +124,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
             ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
             chart.clear();
-            chart.update(signals1.getValues(), signals2.getValues(), null,
-                    signals1.medianAmplitude);
+            chart.updateData(signals1.getValues(), signals2.getValues(), null,
+                    (signals1.medianAmplitude + signals2.medianAmplitude) / 2);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ((ChartFragment) getFragmentManager().findFragmentById(R.id.chart)).updateUI();
+                }
+            });
         }
     };
 

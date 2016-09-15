@@ -37,24 +37,6 @@ public class ShimmerClient {
         void onNewValues(int values1[], int values2[]);
     }
 
-    private static class DataPacket {
-        private final int timestamp;
-        private final byte status;
-        private final int channel1;
-        private final int channel2;
-
-        DataPacket(int timestamp, byte status, int ch1, int ch2) {
-            this.timestamp = timestamp;
-            this.status = status;
-            long temp1 = (ch1 + Config.MAX_24BIT_SIGNED) * 256 / (2 * Config.MAX_24BIT_SIGNED);
-            long temp2 = (ch2 + Config.MAX_24BIT_SIGNED) * 256 / (2 * Config.MAX_24BIT_SIGNED);
-            this.channel1 = (int) temp1;
-            this.channel2 = (int) temp2;
-//            this.channel1 = ch1 + Config.MAX_24BIT_SIGNED;
-//            this.channel2 = ch2 + Config.MAX_24BIT_SIGNED;
-        }
-    }
-
     public ShimmerClient(Context context, BluetoothDeviceListener listener) {
         this.listener = listener;
 
@@ -252,17 +234,20 @@ public class ShimmerClient {
             Log.w(TAG, String.format("Invalid buffer for data packet."));
             return;
         }
-        DataPacket packet = new DataPacket(
-                parseU24(buffer[0], buffer[1], buffer[2]),      // Timestamp 3 bytes        u24
-                buffer[3],                                      // ExG_ADS1292R_1_STATUS    u8
-                parseI24R(buffer[4], buffer[5], buffer[6]),     // ExG_ADS1292R_1_CH1_24BIT i24r
-                parseI24R(buffer[7], buffer[8], buffer[9]));    // ExG_ADS1292R_1_CH2_24BIT i24r
+
+        int timestamp = parseU24(buffer[0], buffer[1], buffer[2]);  // Timestamp 3 bytes        u24
+        int status = buffer[3];                                     // ExG_ADS1292R_1_STATUS    u8
+        int channel1 = parseI24R(buffer[4], buffer[5], buffer[6]);  // ExG_ADS1292R_1_CH1_24BIT i24r
+        int channel2 = parseI24R(buffer[7], buffer[8], buffer[9]);  // ExG_ADS1292R_1_CH2_24BIT i24r
+
+        channel1 += Config.MAX_24BIT_SIGNED;
+        channel2 += Config.MAX_24BIT_SIGNED;
 
 //        Log.v(TAG, String.format(
-//                "Timestamp %d, Status 0x%02x, channel1 %d, channel2 %d",
-//                packet.timestamp, packet.status, packet.channel1, packet.channel2));
-        listener.onNewValues(
-                new int[]{packet.channel1}, new int[]{packet.channel2});
+//                "Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",
+//                timestamp, status, channel1, channel2));
+
+        listener.onNewValues(new int[]{channel1}, new int[]{channel2});
     }
 
     private static int parseU24(byte byte1, byte byte2, byte byte3) {

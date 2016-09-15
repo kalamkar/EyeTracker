@@ -15,10 +15,10 @@ public class Config {
 	public static final int SAMPLE_INTERVAL_MS = 5;
 	public static final int SAMPLES_PER_BROADCAST = 20; // Hardcoded in FW
 
-	public static final int GRAPH_LENGTH = 500;			// 5 seconds at 200Hz
+	public static final int GRAPH_LENGTH = 500;
 
 	public static final int SHORT_GRAPH_MIN = 0; 	//   0 for V3
-	public static final int SHORT_GRAPH_MAX = 255; 	// 255 for V3
+	public static final int SHORT_GRAPH_MAX = MAX_24BIT_SIGNED * 2; 	// 255 for V3
 
 	public static final int GRAPH_UPDATE_MILLIS = 100;
 
