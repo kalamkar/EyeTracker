@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 
@@ -66,6 +67,7 @@ public class ChartView extends View {
             }
             if (dynamicYRange) {
                 minMaxY = getMinMax(data, false);
+                Log.v(TAG, String.format("minMaxY %d %d", minMaxY.first, minMaxY.second));
             }
 
             if (data == null || data.size() == 0) {
@@ -157,6 +159,8 @@ public class ChartView extends View {
             max = Math.max(max, x ? point.first : point.second);
         }
 
+        min = Math.max(min - (max - min) / 2, 0);
+        max = Math.min(max + (max - min) / 2, Config.MAX_24BIT);
         return Pair.create(min, max);
     }
 

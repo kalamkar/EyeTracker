@@ -240,8 +240,8 @@ public class ShimmerClient {
         int channel1 = parseI24R(buffer[4], buffer[5], buffer[6]);  // ExG_ADS1292R_1_CH1_24BIT i24r
         int channel2 = parseI24R(buffer[7], buffer[8], buffer[9]);  // ExG_ADS1292R_1_CH2_24BIT i24r
 
-        channel1 += Config.MAX_24BIT_SIGNED;
-        channel2 += Config.MAX_24BIT_SIGNED;
+        channel1 += Config.MAX_24BIT / 2;
+        channel2 += Config.MAX_24BIT / 2;
 
 //        Log.v(TAG, String.format(
 //                "Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",

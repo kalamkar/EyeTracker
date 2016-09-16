@@ -1,7 +1,6 @@
 package care.dovetail.blinker;
 
 import android.app.Fragment;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import care.dovetail.blinker.ChartView.Chart;
-import care.dovetail.blinker.SignalProcessor.Feature;
 
 public class ChartFragment extends Fragment {
     private static final String TAG = "ChartFragment";
@@ -21,8 +19,8 @@ public class ChartFragment extends Fragment {
 
     private Chart channel1;
     private Chart channel2;
-    private Chart blinks;
-    private Chart median;
+    private Chart median1;
+    private Chart median2;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,55 +33,51 @@ public class ChartFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         chartView = ((ChartView) getView().findViewById(R.id.eog));
-        channel1 = chartView.makeLineChart(Color.BLUE, 2);
+        channel1 = chartView.makeLineChart(getResources().getColor(android.R.color.holo_blue_dark), 2);
         channel1.setXRange(0, Config.GRAPH_LENGTH);
-//        channel1.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
-        channel2 = chartView.makeLineChart(Color.GREEN, 2);
+        channel2 = chartView.makeLineChart(getResources().getColor(android.R.color.holo_green_dark), 2);
         channel2.setXRange(0, Config.GRAPH_LENGTH);
-//        channel2.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
 
-        blinks = chartView.makePointsChart(
-                getResources().getColor(android.R.color.holo_orange_dark), 5);
-        blinks.setXRange(0, Config.GRAPH_LENGTH);
-//        blinks.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+        median1 = chartView.makeLineChart(getResources().getColor(android.R.color.holo_blue_light), 2);
+        median1.setXRange(0, Config.GRAPH_LENGTH);
 
-        median = chartView.makeLineChart(getResources().getColor(android.R.color.darker_gray), 2);
-        median.setXRange(0, Config.GRAPH_LENGTH);
-//        median.setYRange(Config.SHORT_GRAPH_MIN, Config.SHORT_GRAPH_MAX);
+        median2 = chartView.makeLineChart(getResources().getColor(android.R.color.holo_green_light), 2);
+        median2.setXRange(0, Config.GRAPH_LENGTH);
     }
 
     public void clear() {
         chartView.clear();
     }
 
-    public void updateData(int data1[], int data2[], List<Feature> blinks, int medianAmplitude) {
+    public void updateData(int data1[], int data2[]) {
         List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data1.length);
         for (int i = 0; i < data1.length; i++) {
             points.add(Pair.create(i, data1[i]));
         }
+        int median1 = Utils.getMedian(data1);
+        channel1.setYRange(median1 - Config.GRAPH_HEIGHT, median1 + Config.GRAPH_HEIGHT);
         channel1.setData(points);
 
         points = new ArrayList<Pair<Integer, Integer>>(data2.length);
         for (int i = 0; i < data2.length; i++) {
             points.add(Pair.create(i, data2[i]));
         }
+        int median2 = Utils.getMedian(data2);
+        channel2.setYRange(median2 - Config.GRAPH_HEIGHT, median2 + Config.GRAPH_HEIGHT);
         channel2.setData(points);
 
-        List<Pair<Integer, Integer>> medianPoints = new ArrayList<Pair<Integer, Integer>>(2);
-        medianPoints.add(Pair.create(0, medianAmplitude));
-        medianPoints.add(Pair.create(Config.GRAPH_LENGTH - 1, medianAmplitude));
-        median.setData(medianPoints);
+        List<Pair<Integer, Integer>> median1Points = new ArrayList<Pair<Integer, Integer>>(2);
+        median1Points.add(Pair.create(0, median1));
+        median1Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median1));
+        this.median1.setYRange(median1 - Config.GRAPH_HEIGHT, median1 + Config.GRAPH_HEIGHT);
+        this.median1.setData(median1Points);
 
-        if (blinks != null) {
-            List<Pair<Integer, Integer>> blinkPoints = new ArrayList<Pair<Integer, Integer>>();
-            for (int i = 0; i < blinks.size(); i++) {
-                Feature blink = blinks.get(i);
-                blinkPoints.add(Pair.create(blink.index, blink.min + blink.min == 0 ? 5 : 0));
-                blinkPoints.add(Pair.create(blink.index, blink.max - blink.max == 0 ? 5 : 0));
-            }
-            this.blinks.setData(blinkPoints);
-        }
+        List<Pair<Integer, Integer>> median2Points = new ArrayList<Pair<Integer, Integer>>(2);
+        median2Points.add(Pair.create(0, median2));
+        median2Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median2));
+        this.median2.setYRange(median2 - Config.GRAPH_HEIGHT, median2 + Config.GRAPH_HEIGHT);
+        this.median2.setData(median2Points);
     }
 
     public void updateUI() {
