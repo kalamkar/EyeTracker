@@ -21,7 +21,6 @@ public class SignalProcessor {
 
     private int updateCount = 0;
     private final int values[] = new int[Config.GRAPH_LENGTH];
-    private final int displayValues[] = new int[Config.GRAPH_LENGTH];
     private final int filtered[] = new int[Config.GRAPH_LENGTH];
 
     public int medianAmplitude;
@@ -80,7 +79,7 @@ public class SignalProcessor {
 
         // highpass filter
         eogFilter = new IirFilter(IirFilterDesignFisher.design(
-                FilterPassType.bandpass, FilterCharacteristicsType.bessel, 4, 0, 0.005, 0.015));
+                FilterPassType.highpass, FilterCharacteristicsType.butterworth, 1, 0, 0.0025, 0.07));
     }
 
     public synchronized void update(int[] chunk) {
@@ -88,13 +87,7 @@ public class SignalProcessor {
 
         System.arraycopy(values, chunk.length, values, 0, values.length - chunk.length);
         System.arraycopy(chunk, 0, values, values.length - chunk.length, chunk.length);
-
         System.arraycopy(filtered, chunk.length, filtered, 0, filtered.length - chunk.length);
-        int start = filtered.length - chunk.length;
-        for (int i = 0; i < chunk.length; i++) {
-            filtered[start + i] = (int) eogFilter.step(chunk[i])
-                    + (chunk[i] != 0 ? Config.FILTER_AMPLITUDE_ADJUST : 0);
-        }
 
         if (updateCount >= Config.FEATURE_DETECT_SAMPLES) {
             updateCount = 0;
@@ -113,7 +106,7 @@ public class SignalProcessor {
     }
 
     public synchronized int[] getValues() {
-        return displayValues;
+        return values;
     }
 
     public synchronized int[] getFilteredValues() {
@@ -133,7 +126,6 @@ public class SignalProcessor {
         features.clear();
         findFeatures();
         updateStats();
-        System.arraycopy(values, 0, displayValues, 0, displayValues.length);
     }
 
     private void findFeatures() {
