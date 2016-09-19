@@ -16,7 +16,7 @@ public class Config {
     public static final int SAMPLES_PER_BROADCAST = 20; // Hardcoded in FW
 
     public static final int GRAPH_HEIGHT = (int) (MAX_24BIT * 0.001);
-    public static final int GRAPH_LENGTH = 500;
+    public static final int GRAPH_LENGTH = 1000;
 
     public static final int GRAPH_UPDATE_MILLIS = 100;
 
