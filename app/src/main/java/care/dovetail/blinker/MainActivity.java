@@ -16,8 +16,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
-    private final SignalProcessor signals1 = new SignalProcessor();
-    private final SignalProcessor signals2 = new SignalProcessor();
+    private final SignalProcessor signals = new SignalProcessor();
 
     private Timer chartUpdateTimer = null;
 
@@ -124,13 +123,16 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 //            boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
             final ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
             chart.clear();
-            chart.updateData(signals1.getValues(), signals2.getValues());
+            chart.updateChannel1(signals.channel1(), signals.median1());
+            chart.updateChannel2(signals.channel2(), signals.median2());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (chart != null) {
                         chart.updateUI();
                     }
+                    ((TextView) findViewById(R.id.position)).setText(
+                            String.format("%d, %d", signals.position1(), signals.position2()));
                 }
             });
         }
@@ -138,7 +140,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 
     @Override
     public void onNewValues(int[] chunk1, int[] chunk2) {
-        signals1.update(chunk1);
-        signals2.update(chunk2);
+        signals.update(chunk1, chunk2);
     }
 }

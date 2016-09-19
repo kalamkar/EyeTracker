@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="care.dovetail.monitor.MainActivity" >
+    tools:context="care.dovetail.blinker.MainActivity" >
 
     <care.dovetail.blinker.ChartView
         android:id="@+id/eog"
