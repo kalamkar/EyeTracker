@@ -2,12 +2,16 @@ package care.dovetail.blinker;
 
 import android.util.Pair;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
     private static final int LENGTH_FOR_MEDIAN = Config.GRAPH_LENGTH;
+
+    private static final int BLINK_WINDOW = 20;
 
     private int halfGraphHeight = (int) (Math.pow(2, 24) * 0.001);
     private int stepHeight = (int) (halfGraphHeight * 0.4) / 3;
@@ -64,6 +68,14 @@ public class SignalProcessor {
         return median2;
     }
 
+    public synchronized List<Pair<Integer, Integer>> blinks1() {
+        return findBlinks(values1, median1);
+    }
+
+    public int getSector() {
+        return (int) (Math.random() * 10);
+    }
+
     public Pair<Integer, Integer> range1() {
         return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
     }
@@ -78,6 +90,40 @@ public class SignalProcessor {
 
     public int[] positions2() {
         return positions2;
+    }
+
+    private static List<Pair<Integer, Integer>> findBlinks(int values[], int median) {
+        List<Pair<Integer, Integer>> blinks = new ArrayList<Pair<Integer, Integer>>();
+        Pair<Integer, Integer> minMax = calculateMinMax(values);
+        // Spike height should be within 85% of max (and median difference)
+        int minSpikeHeight = (int) (Math.abs(minMax.second - median) * 0.85);
+        for (int i = 0; i < values.length - BLINK_WINDOW; i++) {
+            int middle = i + (BLINK_WINDOW / 2);
+            int last =  i + BLINK_WINDOW - 1;
+            // If middle is peak AND middle height from left base or right base is more than
+            // min spike height AND difference between left and right base is within tolerance
+            boolean isPeak = (values[middle - 1] < values[middle])
+                    && (values[middle] > values[middle + 1]);
+            int leftHeight = Math.abs(values[middle] - values[i]);
+            int rightHeight = Math.abs(values[middle] - values[last]);
+            boolean isBigEnough = (leftHeight > minSpikeHeight) || (rightHeight > minSpikeHeight);
+            int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * 0.20);
+            boolean isFlat = Math.abs(values[last] - values[i]) < minBaseDifference;
+            if (isPeak && isBigEnough && isFlat) {
+                blinks.add(Pair.create(middle, values[middle]));
+            }
+        }
+        return blinks;
+    }
+
+    private static Pair<Integer, Integer> calculateMinMax(int values[]) {
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        for (int value : values) {
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+        }
+        return Pair.create(min, max);
     }
 
     private static int calculateMedian(int values[]) {

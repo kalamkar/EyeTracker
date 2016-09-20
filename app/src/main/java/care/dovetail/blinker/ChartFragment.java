@@ -19,6 +19,7 @@ public class ChartFragment extends Fragment {
     private int darkBlue;
     private int lightGreen;
     private int darkGreen;
+    private int orange;
 
     private ChartView chartView;
 
@@ -26,6 +27,7 @@ public class ChartFragment extends Fragment {
     private Chart channel2;
     private Chart median1;
     private Chart median2;
+    private Chart features;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -34,6 +36,7 @@ public class ChartFragment extends Fragment {
         lightBlue = getResources().getColor(android.R.color.holo_blue_light);
         darkGreen = getResources().getColor(android.R.color.holo_green_dark);
         lightGreen = getResources().getColor(android.R.color.holo_green_light);
+        orange = getResources().getColor(android.R.color.holo_orange_dark);
         return inflater.inflate(R.layout.fragment_chart, container, false);
     }
 
@@ -53,6 +56,9 @@ public class ChartFragment extends Fragment {
 
         median2 = chartView.makeLineChart(lightGreen, 2);
         median2.setXRange(0, Config.GRAPH_LENGTH);
+
+        features = chartView.makePointsChart(orange, 5);
+        features.setXRange(0, Config.GRAPH_LENGTH);
     }
 
     public void clear() {
@@ -89,6 +95,11 @@ public class ChartFragment extends Fragment {
         median2Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median));
         this.median2.setYRange(range.first, range.second);
         this.median2.setData(median2Points);
+    }
+
+    public void updateFeatures(List<Pair<Integer, Integer>> points, Pair<Integer,Integer> range) {
+        features.setYRange(range.first, range.second);
+        features.setData(points);
     }
 
     public void updateUI() {

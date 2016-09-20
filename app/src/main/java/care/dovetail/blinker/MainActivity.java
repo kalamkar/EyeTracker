@@ -16,6 +16,9 @@ import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
 public class MainActivity extends Activity implements BluetoothDeviceListener {
     private static final String TAG = "MainActivity";
 
+    private static final int SECTOR_IDS[] = new int[] {R.id.num1, R.id.num2, R.id.num3, R.id.num4,
+            R.id.num5, R.id.num6, R.id.num7, R.id.num8, R.id.num9};
+
     private ShimmerClient patchClient;
     private final SignalProcessor signals = new SignalProcessor();
 
@@ -99,22 +102,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
         chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
 
 //        sectorUpdateTimer = new Timer();
-//        sectorUpdateTimer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        TextView position = ((TextView) findViewById(R.id.position));
-//                        if (position == null) {
-//                            return;
-//                        }
-//                        position.setText(
-//                                String.format("%d, %d", signals.position1(), signals.position2()));
-//                    }
-//                });
-//            }
-//        }, 0, 1000);
+//        sectorUpdateTimer.schedule(sectorUpdater, 0, 100);
     }
 
     @Override
@@ -149,16 +137,36 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             chart.clear();
             if (filter) {
                 chart.updateChannel1(signals.positions1(), signals.range1());
-                chart.updateChannel2(signals.positions2(), signals.range2());
+                // chart.updateChannel2(signals.positions2(), signals.range2());
             } else {
                 chart.updateChannel1(signals.channel1(), signals.range1());
-                chart.updateChannel2(signals.channel2(), signals.range2());
+                // chart.updateChannel2(signals.channel2(), signals.range2());
             }
+            chart.updateFeatures(signals.blinks1(), signals.range1());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (chart != null) {
                         chart.updateUI();
+                    }
+                }
+            });
+        }
+    };
+
+    private final TimerTask sectorUpdater = new TimerTask() {
+        @Override
+        public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int highlightSector = signals.getSector();
+                    for (int i = 0; i < SECTOR_IDS.length; i++) {
+                        if (i == highlightSector) {
+                            findViewById(SECTOR_IDS[i]).setVisibility(View.VISIBLE);
+                        } else {
+                            findViewById(SECTOR_IDS[i]).setVisibility(View.INVISIBLE);
+                        }
                     }
                 }
             });
