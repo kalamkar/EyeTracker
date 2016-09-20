@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -19,11 +20,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
     private final SignalProcessor signals = new SignalProcessor();
 
     private Timer chartUpdateTimer = null;
+    private Timer sectorUpdateTimer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
@@ -43,6 +46,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
         }
         if (chartUpdateTimer != null) {
             chartUpdateTimer.cancel();
+        }
+        if (sectorUpdateTimer != null) {
+            sectorUpdateTimer.cancel();
         }
         super.onStop();
     }
@@ -91,6 +97,24 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
 
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
+
+//        sectorUpdateTimer = new Timer();
+//        sectorUpdateTimer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        TextView position = ((TextView) findViewById(R.id.position));
+//                        if (position == null) {
+//                            return;
+//                        }
+//                        position.setText(
+//                                String.format("%d, %d", signals.position1(), signals.position2()));
+//                    }
+//                });
+//            }
+//        }, 0, 1000);
     }
 
     @Override
@@ -120,19 +144,22 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
                 return;
             }
 
-//            boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
+            boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
             final ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
             chart.clear();
-            chart.updateChannel1(signals.channel1(), signals.median1());
-            chart.updateChannel2(signals.channel2(), signals.median2());
+            if (filter) {
+                chart.updateChannel1(signals.positions1(), signals.range1());
+                chart.updateChannel2(signals.positions2(), signals.range2());
+            } else {
+                chart.updateChannel1(signals.channel1(), signals.range1());
+                chart.updateChannel2(signals.channel2(), signals.range2());
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (chart != null) {
                         chart.updateUI();
                     }
-                    ((TextView) findViewById(R.id.position)).setText(
-                            String.format("%d, %d", signals.position1(), signals.position2()));
                 }
             });
         }

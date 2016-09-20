@@ -160,7 +160,7 @@ public class ChartView extends View {
         }
 
         min = Math.max(min - (max - min) / 2, 0);
-        max = Math.min(max + (max - min) / 2, Config.MAX_24BIT);
+        max = Math.min(max + (max - min) / 2, (int) Math.pow(2, 24));
         return Pair.create(min, max);
     }
 

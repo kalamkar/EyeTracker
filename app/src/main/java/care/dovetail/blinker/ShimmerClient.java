@@ -14,10 +14,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+import java.util.UUID;
 
 public class ShimmerClient {
     private static final String TAG = "ShimmerClient";
 
+    public static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    public static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
+
+    private int connectionAttemptts = 3;
     private final BluetoothDeviceListener listener;
 
     private final BluetoothAdapter adapter;
@@ -51,7 +56,7 @@ public class ShimmerClient {
         Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
         for (BluetoothDevice device : pairedDevices) {
             String name = device.getName();
-            if (name != null && name.startsWith(Config.BT_DEVICE_NAME_PREFIX)) {
+            if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
                 Log.i(TAG, String.format("Found device %s", name));
                 listener.onScanResult(device.getAddress());
             }
@@ -79,7 +84,7 @@ public class ShimmerClient {
             protected Void doInBackground(Void... params) {
                 try {
                     BluetoothSocket socket =
-                            device.createInsecureRfcommSocketToServiceRecord(Config.SHIMMER_UUID);
+                            device.createInsecureRfcommSocketToServiceRecord(SHIMMER_UUID);
                     if (socket == null) {
                         Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
                         return null;
@@ -96,6 +101,10 @@ public class ShimmerClient {
             protected void onPostExecute(Void result) {
                 if (connection == null) {
                     Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
+                    connectionAttemptts--;
+                    if (connectionAttemptts > 0) {
+                        connect(device.getAddress());
+                    }
                     return;
                 }
 
@@ -240,8 +249,8 @@ public class ShimmerClient {
         int channel1 = parseI24R(buffer[4], buffer[5], buffer[6]);  // ExG_ADS1292R_1_CH1_24BIT i24r
         int channel2 = parseI24R(buffer[7], buffer[8], buffer[9]);  // ExG_ADS1292R_1_CH2_24BIT i24r
 
-        channel1 += Config.MAX_24BIT / 2;
-        channel2 += Config.MAX_24BIT / 2;
+        channel1 += Math.pow(2, 24) / 2;
+        channel2 += Math.pow(2, 24) / 2;
 
 //        Log.v(TAG, String.format(
 //                "Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",

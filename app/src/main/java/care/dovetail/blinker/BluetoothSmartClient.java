@@ -21,6 +21,9 @@ import android.widget.Toast;
 public class BluetoothSmartClient extends BluetoothGattCallback {
 	private static final String TAG = "BluetoothSmartClient";
 
+    public static final String BT_DEVICE_NAME_PREFIX = "DovetailV3";
+	public static final long DATA_UUID = 0x404846A1;
+
 	private final BluetoothDeviceListener listener;
 	private final Context context;
 
@@ -33,12 +36,12 @@ public class BluetoothSmartClient extends BluetoothGattCallback {
 	private int state = BluetoothProfile.STATE_DISCONNECTED;
 
     public interface BluetoothDeviceListener {
-    	public void onScanStart();
-    	public void onScanResult(String deviceAddress);
-    	public void onScanEnd();
-    	public void onConnect(String address);
-    	public void onDisconnect(String address);
-    	public void onNewValues(int values[]);
+    	void onScanStart();
+    	void onScanResult(String deviceAddress);
+    	void onScanEnd();
+    	void onConnect(String address);
+    	void onDisconnect(String address);
+    	void onNewValues(int values[]);
     }
 
 	public BluetoothSmartClient(Context context, BluetoothDeviceListener listener) {
@@ -64,7 +67,7 @@ public class BluetoothSmartClient extends BluetoothGattCallback {
 		public void onScanResult(int callbackType, ScanResult result) {
 			String name = result.getDevice().getName();
 			name = name == null ? result.getScanRecord().getDeviceName() : name;
-			if (name != null && name.startsWith(Config.BT_DEVICE_NAME_PREFIX)) {
+			if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
 				Log.i(TAG, String.format("Found device %s", name));
 				listener.onScanResult(result.getDevice().getAddress());
 			}
@@ -123,7 +126,7 @@ public class BluetoothSmartClient extends BluetoothGattCallback {
     	for (BluetoothGattService service : gatt.getServices()) {
     		for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
     			long uuid = characteristic.getUuid().getMostSignificantBits() >> 32;
-    			if (uuid == Config.DATA_UUID) {
+    			if (uuid == DATA_UUID) {
     				sensorData = characteristic;
     			}
     		}

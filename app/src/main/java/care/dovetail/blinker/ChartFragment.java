@@ -59,33 +59,35 @@ public class ChartFragment extends Fragment {
         chartView.clear();
     }
 
-    public void updateChannel1(int data1[], int median1) {
+    public void updateChannel1(int data1[], Pair<Integer,Integer> range) {
         List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data1.length);
         for (int i = 0; i < data1.length; i++) {
             points.add(Pair.create(i, data1[i]));
         }
-        channel1.setYRange(median1 - Config.GRAPH_HEIGHT, median1 + Config.GRAPH_HEIGHT);
+        channel1.setYRange(range.first, range.second);
         channel1.setData(points);
 
+        int median = (range.second - range.first) / 2 + range.first;
         List<Pair<Integer, Integer>> median1Points = new ArrayList<Pair<Integer, Integer>>(2);
-        median1Points.add(Pair.create(0, median1));
-        median1Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median1));
-        this.median1.setYRange(median1 - Config.GRAPH_HEIGHT, median1 + Config.GRAPH_HEIGHT);
+        median1Points.add(Pair.create(0, median));
+        median1Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median));
+        this.median1.setYRange(range.first, range.second);
         this.median1.setData(median1Points);
     }
 
-    public void updateChannel2(int data2[], int median2) {
+    public void updateChannel2(int data2[], Pair<Integer,Integer> range) {
         List<Pair<Integer, Integer>> points = new ArrayList<Pair<Integer, Integer>>(data2.length);
         for (int i = 0; i < data2.length; i++) {
             points.add(Pair.create(i, data2[i]));
         }
-        channel2.setYRange(median2 - Config.GRAPH_HEIGHT, median2 + Config.GRAPH_HEIGHT);
+        channel2.setYRange(range.first, range.second);
         channel2.setData(points);
 
+        int median = (range.second - range.first) / 2 + range.first;
         List<Pair<Integer, Integer>> median2Points = new ArrayList<Pair<Integer, Integer>>(2);
-        median2Points.add(Pair.create(0, median2));
-        median2Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median2));
-        this.median2.setYRange(median2 - Config.GRAPH_HEIGHT, median2 + Config.GRAPH_HEIGHT);
+        median2Points.add(Pair.create(0, median));
+        median2Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median));
+        this.median2.setYRange(range.first, range.second);
         this.median2.setData(median2Points);
     }
 
