@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import care.dovetail.blinker.ChartView.Chart;
 
@@ -97,9 +98,14 @@ public class ChartFragment extends Fragment {
         this.median2.setData(median2Points);
     }
 
-    public void updateFeatures(List<Pair<Integer, Integer>> points, Pair<Integer,Integer> range) {
-        features.setYRange(range.first, range.second);
-        features.setData(points);
+    public void updateFeatures(Set<Feature> features, Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points =
+                new ArrayList<Pair<Integer, Integer>>(features.size());
+        for (Feature feature : features) {
+            points.add(Pair.create(feature.index, feature.value));
+        }
+        this.features.setYRange(range.first, range.second);
+        this.features.setData(points);
     }
 
     public void updateUI() {

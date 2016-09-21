@@ -4,7 +4,9 @@ import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
@@ -24,6 +26,9 @@ public class SignalProcessor {
 
     private final int positions1[] = new int[Config.GRAPH_LENGTH];
     private final int positions2[] = new int[Config.GRAPH_LENGTH];
+
+    private final Set<Feature> features = new HashSet<Feature>();
+
 
     public synchronized void update(int[] chunk1, int[] chunk2) {
         System.arraycopy(values1, chunk1.length, values1, 0, values1.length - chunk1.length);
@@ -68,10 +73,6 @@ public class SignalProcessor {
         return median2;
     }
 
-    public synchronized List<Pair<Integer, Integer>> blinks1() {
-        return findBlinks(values1, median1);
-    }
-
     public int getSector() {
         return (int) (Math.random() * 10);
     }
@@ -92,8 +93,24 @@ public class SignalProcessor {
         return positions2;
     }
 
-    private static List<Pair<Integer, Integer>> findBlinks(int values[], int median) {
-        List<Pair<Integer, Integer>> blinks = new ArrayList<Pair<Integer, Integer>>();
+    public synchronized List<Feature> getFeatures(Feature.Type type, Feature.Channel channel) {
+        List<Feature> subset = new ArrayList<Feature>();
+        for (Feature fp : features) {
+            if (type != null && type.equals(fp.type)
+                    && channel != null && channel.equals(fp.channel)) {
+                subset.add(fp);
+            }
+        }
+        return subset;
+    }
+
+    private synchronized void processFeatures() {
+        features.addAll(findBlinks(values1, median1, Feature.Channel.LEFT));
+        features.addAll(findBlinks(values2, median2, Feature.Channel.RIGHT));
+    }
+
+    private static Set<Feature> findBlinks(int values[], int median, Feature.Channel channel) {
+        Set<Feature> blinks = new HashSet<>();
         Pair<Integer, Integer> minMax = calculateMinMax(values);
         // Spike height should be within 85% of max (and median difference)
         int minSpikeHeight = (int) (Math.abs(minMax.second - median) * 0.85);
@@ -110,7 +127,8 @@ public class SignalProcessor {
             int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * 0.20);
             boolean isFlat = Math.abs(values[last] - values[i]) < minBaseDifference;
             if (isPeak && isBigEnough && isFlat) {
-                blinks.add(Pair.create(middle, values[middle]));
+                Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle], channel);
+                blinks.add(blink);
             }
         }
         return blinks;
