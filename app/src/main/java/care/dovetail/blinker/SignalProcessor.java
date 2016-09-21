@@ -27,6 +27,7 @@ public class SignalProcessor {
     private final int positions1[] = new int[Config.GRAPH_LENGTH];
     private final int positions2[] = new int[Config.GRAPH_LENGTH];
 
+    private int featureProcessCounter = 0;
     private final Set<Feature> features = new HashSet<Feature>();
 
 
@@ -54,6 +55,13 @@ public class SignalProcessor {
         for (int i = positions2.length - chunk2.length; i < positions2.length; i++) {
             int level = (currentValue2 - median2) / stepHeight;
             positions2[i] = median2 + level * stepHeight;
+        }
+
+        if (featureProcessCounter == BLINK_WINDOW) {
+            featureProcessCounter = 0;
+            processFeatures();
+        } else {
+            featureProcessCounter++;
         }
     }
 
@@ -128,6 +136,8 @@ public class SignalProcessor {
             boolean isFlat = Math.abs(values[last] - values[i]) < minBaseDifference;
             if (isPeak && isBigEnough && isFlat) {
                 Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle], channel);
+                blink.startIndex = i;
+                blink.endIndex = last;
                 blinks.add(blink);
             }
         }
