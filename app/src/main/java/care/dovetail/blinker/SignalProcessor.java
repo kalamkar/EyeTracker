@@ -9,9 +9,9 @@ import java.util.Set;
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
-    private static final int LENGTH_FOR_MEDIAN = Config.GRAPH_LENGTH;
-
     private static final int BLINK_WINDOW = 20;
+
+    private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 3;
 
     private int halfGraphHeight = (int) (Math.pow(2, 24) * 0.001);
     private int stepHeight = (int) (halfGraphHeight * 0.4) / 3;
@@ -135,8 +135,8 @@ public class SignalProcessor {
             // min spike height AND difference between left and right base is within tolerance
             boolean isPeak = (values[middle - 1] < values[middle])
                     && (values[middle] > values[middle + 1]);
-            int leftHeight = Math.abs(values[middle] - values[i]);
-            int rightHeight = Math.abs(values[middle] - values[last]);
+            int leftHeight = values[middle] - values[i];
+            int rightHeight = values[middle] - values[last];
             boolean isBigEnough = (leftHeight > minSpikeHeight) || (rightHeight > minSpikeHeight);
             int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * 0.40);
             boolean isFlat = Math.abs(values[last] - values[i]) < minBaseDifference;
