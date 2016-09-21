@@ -2,10 +2,8 @@ package care.dovetail.blinker;
 
 import android.util.Pair;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class SignalProcessor {
@@ -101,8 +99,16 @@ public class SignalProcessor {
         return positions2;
     }
 
-    public synchronized List<Feature> getFeatures(Feature.Type type, Feature.Channel channel) {
-        List<Feature> subset = new ArrayList<Feature>();
+    public synchronized Set<Feature> getFeatures() {
+        Set<Feature> subset = new HashSet<>();
+        for (Feature fp : features) {
+            subset.add(fp);
+        }
+        return subset;
+    }
+
+    public synchronized Set<Feature> getFeatures(Feature.Type type, Feature.Channel channel) {
+        Set<Feature> subset = new HashSet<>();
         for (Feature fp : features) {
             if (type != null && type.equals(fp.type)
                     && channel != null && channel.equals(fp.channel)) {
@@ -113,15 +119,15 @@ public class SignalProcessor {
     }
 
     private synchronized void processFeatures() {
-        features.addAll(findBlinks(values1, median1, Feature.Channel.LEFT));
-        features.addAll(findBlinks(values2, median2, Feature.Channel.RIGHT));
+        features.clear();
+        features.addAll(findBlinks(values2, median2, Feature.Channel.VERTICAL));
     }
 
     private static Set<Feature> findBlinks(int values[], int median, Feature.Channel channel) {
         Set<Feature> blinks = new HashSet<>();
         Pair<Integer, Integer> minMax = calculateMinMax(values);
         // Spike height should be within 85% of max (and median difference)
-        int minSpikeHeight = (int) (Math.abs(minMax.second - median) * 0.85);
+        int minSpikeHeight = (int) (Math.abs(minMax.second - median) * 0.65);
         for (int i = 0; i < values.length - BLINK_WINDOW; i++) {
             int middle = i + (BLINK_WINDOW / 2);
             int last =  i + BLINK_WINDOW - 1;
@@ -132,7 +138,7 @@ public class SignalProcessor {
             int leftHeight = Math.abs(values[middle] - values[i]);
             int rightHeight = Math.abs(values[middle] - values[last]);
             boolean isBigEnough = (leftHeight > minSpikeHeight) || (rightHeight > minSpikeHeight);
-            int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * 0.20);
+            int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * 0.40);
             boolean isFlat = Math.abs(values[last] - values[i]) < minBaseDifference;
             if (isPeak && isBigEnough && isFlat) {
                 Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle], channel);

@@ -8,8 +8,6 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -139,15 +137,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             chart.clear();
             if (filter) {
                 chart.updateChannel1(signals.positions1(), signals.range1());
-                // chart.updateChannel2(signals.positions2(), signals.range2());
+                 chart.updateChannel2(signals.positions2(), signals.range2());
             } else {
                 chart.updateChannel1(signals.channel1(), signals.range1());
-                // chart.updateChannel2(signals.channel2(), signals.range2());
+                 chart.updateChannel2(signals.channel2(), signals.range2());
             }
-            Set<Feature> features = new HashSet<>();
-            features.addAll(signals.getFeatures(Feature.Type.BLINK, Feature.Channel.LEFT));
-            features.addAll(signals.getFeatures(Feature.Type.BLINK, Feature.Channel.RIGHT));
-            chart.updateFeatures(features, signals.range1());
+            chart.updateFeatures(signals.getFeatures(), signals.range2());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
