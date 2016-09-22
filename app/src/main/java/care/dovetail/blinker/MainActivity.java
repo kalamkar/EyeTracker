@@ -1,6 +1,9 @@
 package care.dovetail.blinker;
 
 import android.app.Activity;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +29,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private Timer chartUpdateTimer = null;
     private Timer sectorUpdateTimer = null;
 
+    private Ringtone ringtone;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +44,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
         patchClient.startScan();
+
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
     }
 
     @Override
@@ -54,6 +62,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (sectorUpdateTimer != null) {
             sectorUpdateTimer.cancel();
         }
+        ringtone.stop();
         super.onStop();
     }
 
@@ -177,6 +186,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onFeature(Feature feature) {
         Log.i(TAG, "Found blink");
+        ringtone.play();
     }
 
     @Override

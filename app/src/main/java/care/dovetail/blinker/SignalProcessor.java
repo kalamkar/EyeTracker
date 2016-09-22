@@ -2,8 +2,10 @@ package care.dovetail.blinker;
 
 import android.util.Pair;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class SignalProcessor {
@@ -14,6 +16,8 @@ public class SignalProcessor {
     private static final int HALF_GRAPH_HEIGHT = (int) (Math.pow(2, 24) * 0.001);
     private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;
     private static final float BLINK_BASE_TOLERANCE = 0.40f;
+    private static final int MAX_RECENT_BLINKS = 10;
+    private static final int MIN_RECENT_BLINKS = 10;
 
     private final FeatureObserver observer;
 
@@ -30,6 +34,8 @@ public class SignalProcessor {
 
     private final int positions1[] = new int[Config.GRAPH_LENGTH];
     private final int positions2[] = new int[Config.GRAPH_LENGTH];
+
+    private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
     private int featureProcessCounter = 0;
     private final Set<Feature> features = new HashSet<Feature>();
@@ -61,7 +67,7 @@ public class SignalProcessor {
         updateStepPositions(positions2, chunk2, stepHeight,
                 recentMedian2, recentMedian2 - HALF_GRAPH_HEIGHT, recentMedian2 + HALF_GRAPH_HEIGHT);
 
-        checkBlink();
+        checkAndPostBlink();
 
         if (featureProcessCounter == BLINK_WINDOW) {
             featureProcessCounter = 0;
@@ -126,10 +132,12 @@ public class SignalProcessor {
         return subset;
     }
 
-    private synchronized void checkBlink() {
-        Pair<Integer, Integer> minMax = calculateMinMax(values2);
-        // TODO: Use real blink heights for this
-        int minSpikeHeight = (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
+    private synchronized void checkAndPostBlink() {
+        int minSpikeHeight = (int) (calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
+        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
+            Pair<Integer, Integer> minMax = calculateMinMax(values2);
+            minSpikeHeight = (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
+        }
         int last = values2.length - 1;
         int middle = last - (BLINK_WINDOW / 2);
         int first = last - BLINK_WINDOW + 1;
@@ -137,18 +145,29 @@ public class SignalProcessor {
                 values2[last], minSpikeHeight)) {
             Feature blink = new Feature(Feature.Type.BLINK, middle, values2[middle],
                     Feature.Channel.VERTICAL);
-            blink.height = values2[middle] - Math.abs(values2[last] - values2[first]);
+            blink.height = values2[middle] - Math.min(values2[last], values2[first])
+                    + (Math.abs(values2[last] - values2[first]) / 2);
             blink.startIndex = first;
             blink.endIndex = last;
+
+            recentBlinks.add(blink);
+            if (recentBlinks.size() > MAX_RECENT_BLINKS) {
+                recentBlinks.remove(0);
+            }
+
             observer.onFeature(blink);
         }
     }
 
     private synchronized void processFeatures() {
         features.clear();
-        Pair<Integer, Integer> minMax = calculateMinMax(values2);
-        // TODO: Use real blink heights for this
-        int maxBlinkHeight = Math.abs(minMax.second - recentMedian2);
+        int maxBlinkHeight = 0;
+        if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
+            maxBlinkHeight = calculateMedianHeight(recentBlinks);
+        } else {
+            Pair<Integer, Integer> minMax = calculateMinMax(values2);
+            maxBlinkHeight = Math.abs(minMax.second - recentMedian2);
+        }
         features.addAll(findBlinks(values2, maxBlinkHeight, Feature.Channel.VERTICAL));
     }
 
@@ -203,6 +222,18 @@ public class SignalProcessor {
             max = Math.max(max, value);
         }
         return Pair.create(min, max);
+    }
+
+    private static int calculateMedianHeight(List<Feature> features) {
+        if (features.size() == 0) {
+            return 0;
+        }
+        int copyOfValues[] = new int[features.size()];
+        for (int i = 0; i < copyOfValues.length; i++) {
+            copyOfValues[i] = features.get(i).height;
+        }
+        Arrays.sort(copyOfValues);
+        return copyOfValues[copyOfValues.length / 2];
     }
 
     private static int calculateMedian(int values[]) {
