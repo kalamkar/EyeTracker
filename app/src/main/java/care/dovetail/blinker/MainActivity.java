@@ -147,15 +147,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             chart.clear();
             if (filter) {
                 chart.updateChannel1(signals.positions1(), signals.range1());
-                 chart.updateChannel2(signals.positions2(), signals.range2());
+                chart.updateChannel2(signals.positions2(), signals.range2());
             } else {
                 chart.updateChannel1(signals.channel1(), signals.range1());
-                 chart.updateChannel2(signals.channel2(), signals.range2());
+                chart.updateChannel2(signals.channel2(), signals.range2());
             }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (chart != null) {
+                    if (chart.isResumed()) {
                         chart.updateUI();
                     }
                 }
@@ -189,7 +189,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     @Override
-    public void onNewValues(int[] chunk1, int[] chunk2) {
-        signals.update(chunk1, chunk2);
+    public void onNewValues(int channel1, int channel2) {
+        signals.update(channel1, channel2);
     }
 }

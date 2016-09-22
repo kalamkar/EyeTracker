@@ -39,7 +39,7 @@ public class ShimmerClient {
 
         void onDisconnect(String address);
 
-        void onNewValues(int values1[], int values2[]);
+        void onNewValues(int channel1, int channel2);
     }
 
     public ShimmerClient(Context context, BluetoothDeviceListener listener) {
@@ -256,7 +256,7 @@ public class ShimmerClient {
 //                "Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",
 //                timestamp, status, channel1, channel2));
 
-        listener.onNewValues(new int[]{channel1}, new int[]{channel2});
+        listener.onNewValues(channel1, channel2);
     }
 
     private static int parseU24(byte byte1, byte byte2, byte byte3) {

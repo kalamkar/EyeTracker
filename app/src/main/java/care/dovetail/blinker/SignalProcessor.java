@@ -29,9 +29,6 @@ public class SignalProcessor {
     private int recentMedian1;
     private int recentMedian2;
 
-    private final int positions1[] = new int[Config.GRAPH_LENGTH];
-    private final int positions2[] = new int[Config.GRAPH_LENGTH];
-
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
     public interface FeatureObserver {
@@ -43,12 +40,12 @@ public class SignalProcessor {
     }
 
 
-    public synchronized void update(int[] chunk1, int[] chunk2) {
-        System.arraycopy(values1, chunk1.length, values1, 0, values1.length - chunk1.length);
-        System.arraycopy(chunk1, 0, values1, values1.length - chunk1.length, chunk1.length);
+    public synchronized void update(int channel1, int channel2) {
+        System.arraycopy(values1, 1, values1, 0, values1.length - 1);
+        values1[values1.length - 1] = channel1;
 
-        System.arraycopy(values2, chunk2.length, values2, 0, values2.length - chunk2.length);
-        System.arraycopy(chunk2, 0, values2, values2.length - chunk2.length, chunk2.length);
+        System.arraycopy(values2, 1, values2, 0, values2.length - 1);
+        values2[values2.length - 1] = channel2;
 
         median1 = Utils.calculateMedian(values1);
         median2 = Utils.calculateMedian(values2);
@@ -58,13 +55,10 @@ public class SignalProcessor {
         recentMedian2 = Utils
                 .calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
 
-        int stepHeight = (int) (halfGraphHeight * 0.4) / 3;
-        updateStepPositions(positions1, chunk1, stepHeight,
-                recentMedian1, recentMedian1 - halfGraphHeight, recentMedian1 + halfGraphHeight);
-        updateStepPositions(positions2, chunk2, stepHeight,
-                recentMedian2, recentMedian2 - halfGraphHeight, recentMedian2 + halfGraphHeight);
-
-        checkAndPostBlink();
+        Feature blink = maybeGetBlink(values2, getMinSpikeHeight());
+        if (blink != null) {
+            onFeature(blink);
+        }
     }
 
     public int[] channel1() {
@@ -73,14 +67,6 @@ public class SignalProcessor {
 
     public int[] channel2() {
         return values2;
-    }
-
-    public int median1() {
-        return median1;
-    }
-
-    public int median2() {
-        return median2;
     }
 
     public int getSector() {
@@ -96,32 +82,11 @@ public class SignalProcessor {
     }
 
     public int[] positions1() {
-        return positions1;
+        return getStepPositions(values1, median1, halfGraphHeight);
     }
 
     public int[] positions2() {
-        return positions2;
-    }
-
-    private synchronized void checkAndPostBlink() {
-        int minSpikeHeight = (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
-        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
-            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
-            minSpikeHeight = (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
-        }
-        int last = values2.length - 1;
-        int middle = last - (BLINK_WINDOW / 2);
-        int first = last - BLINK_WINDOW + 1;
-        if (isBlink(values2[first], values2[middle - 1], values2[middle], values2[middle + 1],
-                values2[last], minSpikeHeight)) {
-            Feature blink = new Feature(Feature.Type.BLINK, middle, values2[middle],
-                    Feature.Channel.VERTICAL);
-            blink.height = Math.min(values2[middle] - values2[last], values2[middle] - values2[first])
-                    + (Math.abs(values2[last] - values2[first]) / 2);
-            blink.startIndex = first;
-            blink.endIndex = last;
-            onFeature(blink);
-        }
+        return getStepPositions(values2, median2, halfGraphHeight);
     }
 
     private void onFeature(Feature feature) {
@@ -139,6 +104,48 @@ public class SignalProcessor {
         observer.onFeature(feature);
     }
 
+    private int getMinSpikeHeight() {
+        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
+            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
+            return (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
+        }
+        return (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
+    }
+
+    private static int getLevel(int value, int stepHeight, int median, int min, int max) {
+        int currentValue = Math.max(min, Math.min(max, value));
+        return (currentValue - median) / stepHeight;
+    }
+
+    private static int[] getStepPositions(int values[], int median, int halfGraphHeight) {
+        int positions[] = new int[values.length];
+        int stepHeight = halfGraphHeight / 3;
+        int min = median - halfGraphHeight;
+        int max = median + halfGraphHeight;
+        for (int i = 0; i < positions.length; i++) {
+            int level = getLevel(values[i], stepHeight, median, min, max);
+            positions[i] = median + level * stepHeight;
+        }
+        return positions;
+    }
+
+    private static Feature maybeGetBlink(int values[], int minSpikeHeight) {
+        int last = values.length - 1;
+        int middle = last - (BLINK_WINDOW / 2);
+        int first = last - BLINK_WINDOW + 1;
+        if (isBlink(values[first], values[middle - 1], values[middle], values[middle + 1],
+                values[last], minSpikeHeight)) {
+            Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle],
+                    Feature.Channel.VERTICAL);
+            blink.height = Math.min(values[middle] - values[last], values[middle] - values[first])
+                    + (Math.abs(values[last] - values[first]) / 2);
+            blink.startIndex = first;
+            blink.endIndex = last;
+            return blink;
+        }
+        return null;
+    }
+
     private static boolean isBlink(int first, int beforeMiddle, int middle, int afterMiddle,
                                    int last, int minSpikeHeight) {
         // If middle is peak AND middle height from left base or right base is more than
@@ -151,15 +158,4 @@ public class SignalProcessor {
         boolean isFlat = Math.abs(last - first) < minBaseDifference;
         return isPeak && isBigEnough && isFlat;
     }
-
-    private static void updateStepPositions(int positions[], int chunk[], int stepHeight,
-                                            int median, int min, int max) {
-        int currentValue1 = Math.max(min, Math.min(max, Utils.calculateMedian(chunk)));
-        System.arraycopy(positions, chunk.length, positions, 0, positions.length - chunk.length);
-        for (int i = positions.length - chunk.length; i < positions.length; i++) {
-            int level = (currentValue1 - median) / stepHeight;
-            positions[i] = median + level * stepHeight;
-        }
-    }
-
 }
