@@ -1,10 +1,8 @@
 package care.dovetail.blinker;
 
-import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,11 +55,13 @@ public class SignalProcessor {
         System.arraycopy(values2, chunk2.length, values2, 0, values2.length - chunk2.length);
         System.arraycopy(chunk2, 0, values2, values2.length - chunk2.length, chunk2.length);
 
-        median1 = calculateMedian(values1);
-        median2 = calculateMedian(values2);
+        median1 = Utils.calculateMedian(values1);
+        median2 = Utils.calculateMedian(values2);
 
-        recentMedian1 = calculateMedian(values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-        recentMedian2 = calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        recentMedian1 = Utils
+                .calculateMedian(values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        recentMedian2 = Utils
+                .calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
 
         int stepHeight = (int) (halfGraphHeight * 0.4) / 3;
         updateStepPositions(positions1, chunk1, stepHeight,
@@ -124,9 +124,9 @@ public class SignalProcessor {
     }
 
     private synchronized void checkAndPostBlink() {
-        int minSpikeHeight = (int) (calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
+        int minSpikeHeight = (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
-            Pair<Integer, Integer> minMax = calculateMinMax(values2);
+            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
             minSpikeHeight = (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
         }
         int last = values2.length - 1;
@@ -152,11 +152,7 @@ public class SignalProcessor {
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                if (halfGraphHeight == (int) (Math.pow(2, 24) * 0.001)) {
-                    Log.d(TAG, String.format("Changing half graph height to %d",
-                            (int) (calculateMedianHeight(recentBlinks) * 1.2)));
-                }
-                halfGraphHeight = (int) (calculateMedianHeight(recentBlinks) * 1.2);
+                halfGraphHeight = (int) (Utils.calculateMedianHeight(recentBlinks) * 1.2);
             }
         }
 
@@ -167,9 +163,9 @@ public class SignalProcessor {
         features.clear();
         int maxBlinkHeight = 0;
         if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-            maxBlinkHeight = calculateMedianHeight(recentBlinks);
+            maxBlinkHeight = Utils.calculateMedianHeight(recentBlinks);
         } else {
-            Pair<Integer, Integer> minMax = calculateMinMax(values2);
+            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
             maxBlinkHeight = Math.abs(minMax.second - recentMedian2);
         }
         features.addAll(findBlinks(values2, maxBlinkHeight, Feature.Channel.VERTICAL));
@@ -211,7 +207,7 @@ public class SignalProcessor {
 
     private static void updateStepPositions(int positions[], int chunk[], int stepHeight,
                                             int median, int min, int max) {
-        int currentValue1 = Math.max(min, Math.min(max, calculateMedian(chunk)));
+        int currentValue1 = Math.max(min, Math.min(max, Utils.calculateMedian(chunk)));
         System.arraycopy(positions, chunk.length, positions, 0, positions.length - chunk.length);
         for (int i = positions.length - chunk.length; i < positions.length; i++) {
             int level = (currentValue1 - median) / stepHeight;
@@ -219,38 +215,4 @@ public class SignalProcessor {
         }
     }
 
-    private static Pair<Integer, Integer> calculateMinMax(int values[]) {
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
-        for (int value : values) {
-            min = Math.min(min, value);
-            max = Math.max(max, value);
-        }
-        return Pair.create(min, max);
-    }
-
-    private static int calculateMedianHeight(List<Feature> features) {
-        if (features.size() == 0) {
-            return 0;
-        }
-        int copyOfValues[] = new int[features.size()];
-        for (int i = 0; i < copyOfValues.length; i++) {
-            copyOfValues[i] = features.get(i).height;
-        }
-        Arrays.sort(copyOfValues);
-        return copyOfValues[copyOfValues.length / 2];
-    }
-
-    private static int calculateMedian(int values[]) {
-        int copyOfValues[] = values.clone();
-        Arrays.sort(copyOfValues);
-        return copyOfValues[copyOfValues.length / 2];
-    }
-
-    private static int calculateMedian(int values[], int start, int length) {
-        int copyOfValues[] = new int[length];
-        System.arraycopy(values, start, copyOfValues, 0, length);
-        Arrays.sort(copyOfValues);
-        return copyOfValues[copyOfValues.length / 2];
-    }
 }
