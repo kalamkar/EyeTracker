@@ -15,6 +15,7 @@ public class SignalProcessor {
     private static final float BLINK_BASE_TOLERANCE = 0.40f;
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 10;
+    private static final int NUM_STEPS = 10;
 
     private final FeatureObserver observer;
 
@@ -70,7 +71,22 @@ public class SignalProcessor {
     }
 
     public int getSector() {
-        return (int) (Math.random() * 10);
+        int level1 = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
+        int level2 = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
+        if (level1 < 2 && level2 < 1) {
+            return 8;
+        } else if (level1 > 2 && level2 > 1) {
+            return 0;
+        } else if (level1 == 0 && level2 > 1) {
+            return 1;
+        } else if (level1 > 2 && level2  < 0) {
+            return 6;
+        } else if (level1 < 0 && level2 < 0) {
+            return 2;
+        } else if (level1 < 0 && level2 == 0) {
+            return 3;
+        }
+        return 4;
     }
 
     public Pair<Integer, Integer> range1() {
@@ -112,19 +128,19 @@ public class SignalProcessor {
         return (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
     }
 
-    private static int getLevel(int value, int stepHeight, int median, int min, int max) {
+    private static int getLevel(int value, int median, int halfGraphHeight) {
+        int stepHeight = halfGraphHeight / NUM_STEPS;
+        int min = median - halfGraphHeight;
+        int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
         return (currentValue - median) / stepHeight;
     }
 
     private static int[] getStepPositions(int values[], int median, int halfGraphHeight) {
         int positions[] = new int[values.length];
-        int stepHeight = halfGraphHeight / 3;
-        int min = median - halfGraphHeight;
-        int max = median + halfGraphHeight;
         for (int i = 0; i < positions.length; i++) {
-            int level = getLevel(values[i], stepHeight, median, min, max);
-            positions[i] = median + level * stepHeight;
+            int level = getLevel(values[i], median, halfGraphHeight);
+            positions[i] = median + level * (halfGraphHeight / NUM_STEPS);
         }
         return positions;
     }

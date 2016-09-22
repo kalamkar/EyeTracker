@@ -111,8 +111,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
 
-//        sectorUpdateTimer = new Timer();
-//        sectorUpdateTimer.schedule(sectorUpdater, 0, 100);
+        sectorUpdateTimer = new Timer();
+        sectorUpdateTimer.schedule(sectorUpdater, 0, 100);
     }
 
     @Override
