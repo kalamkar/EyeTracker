@@ -1,5 +1,6 @@
 package care.dovetail.blinker;
 
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ public class SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 3;
-    private static final int HALF_GRAPH_HEIGHT = (int) (Math.pow(2, 24) * 0.001);
+
     private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;
     private static final float BLINK_BASE_TOLERANCE = 0.40f;
     private static final int MAX_RECENT_BLINKS = 10;
@@ -21,7 +22,7 @@ public class SignalProcessor {
 
     private final FeatureObserver observer;
 
-    private int stepHeight = (int) (HALF_GRAPH_HEIGHT * 0.4) / 3;
+    private int halfGraphHeight = (int) (Math.pow(2, 24) * 0.001);
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -62,10 +63,11 @@ public class SignalProcessor {
         recentMedian1 = calculateMedian(values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
         recentMedian2 = calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
 
+        int stepHeight = (int) (halfGraphHeight * 0.4) / 3;
         updateStepPositions(positions1, chunk1, stepHeight,
-                recentMedian1, recentMedian1 - HALF_GRAPH_HEIGHT, recentMedian1 + HALF_GRAPH_HEIGHT);
+                recentMedian1, recentMedian1 - halfGraphHeight, recentMedian1 + halfGraphHeight);
         updateStepPositions(positions2, chunk2, stepHeight,
-                recentMedian2, recentMedian2 - HALF_GRAPH_HEIGHT, recentMedian2 + HALF_GRAPH_HEIGHT);
+                recentMedian2, recentMedian2 - halfGraphHeight, recentMedian2 + halfGraphHeight);
 
         checkAndPostBlink();
 
@@ -98,11 +100,11 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> range1() {
-        return Pair.create(median1 - HALF_GRAPH_HEIGHT, median1 + HALF_GRAPH_HEIGHT);
+        return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
     }
 
     public Pair<Integer, Integer> range2() {
-        return Pair.create(median2 - HALF_GRAPH_HEIGHT, median2 + HALF_GRAPH_HEIGHT);
+        return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
     }
 
     public int[] positions1() {
@@ -117,17 +119,6 @@ public class SignalProcessor {
         Set<Feature> subset = new HashSet<>();
         for (Feature fp : features) {
             subset.add(fp);
-        }
-        return subset;
-    }
-
-    public synchronized Set<Feature> getFeatures(Feature.Type type, Feature.Channel channel) {
-        Set<Feature> subset = new HashSet<>();
-        for (Feature fp : features) {
-            if (type != null && type.equals(fp.type)
-                    && channel != null && channel.equals(fp.channel)) {
-                subset.add(fp);
-            }
         }
         return subset;
     }
@@ -149,14 +140,27 @@ public class SignalProcessor {
                     + (Math.abs(values2[last] - values2[first]) / 2);
             blink.startIndex = first;
             blink.endIndex = last;
+            onFeature(blink);
+        }
+    }
 
-            recentBlinks.add(blink);
+    private void onFeature(Feature feature) {
+        if (feature.type == Feature.Type.BLINK) {
+            recentBlinks.add(feature);
             if (recentBlinks.size() > MAX_RECENT_BLINKS) {
                 recentBlinks.remove(0);
             }
 
-            observer.onFeature(blink);
+            if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
+                if (halfGraphHeight == (int) (Math.pow(2, 24) * 0.001)) {
+                    Log.d(TAG, String.format("Changing half graph height to %d",
+                            (int) (calculateMedianHeight(recentBlinks) * 1.2)));
+                }
+                halfGraphHeight = (int) (calculateMedianHeight(recentBlinks) * 1.2);
+            }
         }
+
+        observer.onFeature(feature);
     }
 
     private synchronized void processFeatures() {
@@ -174,7 +178,7 @@ public class SignalProcessor {
     private static Set<Feature> findBlinks(int values[], int maxBlinkHeight,
                                            Feature.Channel channel) {
         Set<Feature> blinks = new HashSet<>();
-        // Spike height should be within 65% of max
+        // Spike height should be within tolerance level of max blink height
         int minSpikeHeight = (int) (maxBlinkHeight * BLINK_HEIGHT_TOLERANCE);
         for (int i = 0; i < values.length - BLINK_WINDOW; i++) {
             int middle = i + (BLINK_WINDOW / 2);
