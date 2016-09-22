@@ -15,7 +15,7 @@ public class SignalProcessor {
     private static final float BLINK_BASE_TOLERANCE = 0.40f;
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 10;
-    private static final int NUM_STEPS = 10;
+    private static final int NUM_STEPS = 3;
 
     private final FeatureObserver observer;
 
@@ -70,23 +70,14 @@ public class SignalProcessor {
         return values2;
     }
 
-    public int getSector() {
+    public Pair<Integer, String> getSector() {
         int level1 = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
         int level2 = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
-        if (level1 < 2 && level2 < 1) {
-            return 8;
-        } else if (level1 > 2 && level2 > 1) {
-            return 0;
-        } else if (level1 == 0 && level2 > 1) {
-            return 1;
-        } else if (level1 > 2 && level2  < 0) {
-            return 6;
-        } else if (level1 < 0 && level2 < 0) {
-            return 2;
-        } else if (level1 < 0 && level2 == 0) {
-            return 3;
-        }
-        return 4;
+        String levels = String.format("%d,%d", level1, level2);
+        level1 = level1 > 1 ? 1 : level1 < -1 ? -1 : level1;
+        level2 = level2 > 1 ? 1 : level2 < -1 ? -1 : level2;
+        int sectors[][] = new int[][] {{8, 5, 2}, {7, 4, 1}, {6, 3, 0}};
+        return Pair.create(sectors[level1 + 1][level2 + 1], levels);
     }
 
     public Pair<Integer, Integer> range1() {
@@ -133,7 +124,7 @@ public class SignalProcessor {
         int min = median - halfGraphHeight;
         int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
-        return (currentValue - median) / stepHeight;
+        return Math.round((currentValue - median) / stepHeight);
     }
 
     private static int[] getStepPositions(int values[], int median, int halfGraphHeight) {

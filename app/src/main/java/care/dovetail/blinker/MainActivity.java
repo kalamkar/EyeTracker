@@ -6,6 +6,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -169,9 +170,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int highlightSector = signals.getSector();
+                    Pair<Integer, String> sector = signals.getSector();
                     for (int i = 0; i < SECTOR_IDS.length; i++) {
-                        if (i == highlightSector) {
+                        if (i == sector.first) {
+                            ((TextView) findViewById(SECTOR_IDS[i])).setText(sector.second);
                             findViewById(SECTOR_IDS[i]).setVisibility(View.VISIBLE);
                         } else {
                             findViewById(SECTOR_IDS[i]).setVisibility(View.INVISIBLE);
@@ -184,7 +186,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        Log.i(TAG, "Found blink");
         ringtone.play();
     }
 
