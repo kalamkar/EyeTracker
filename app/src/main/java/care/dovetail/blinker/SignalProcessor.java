@@ -145,7 +145,7 @@ public class SignalProcessor {
                 values2[last], minSpikeHeight)) {
             Feature blink = new Feature(Feature.Type.BLINK, middle, values2[middle],
                     Feature.Channel.VERTICAL);
-            blink.height = values2[middle] - Math.min(values2[last], values2[first])
+            blink.height = Math.min(values2[middle] - values2[last], values2[middle] - values2[first])
                     + (Math.abs(values2[last] - values2[first]) / 2);
             blink.startIndex = first;
             blink.endIndex = last;
@@ -182,7 +182,8 @@ public class SignalProcessor {
             if (isBlink(values[i], values[middle - 1], values[middle], values[middle + 1],
                     values[last], minSpikeHeight)) {
                 Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle], channel);
-                blink.height = values[middle] - Math.abs(values[last] - values[i]);
+                blink.height = Math.min(values[middle] - values[last], values[middle] - values[i])
+                        + (Math.abs(values[last] - values[i]) / 2);
                 blink.startIndex = i;
                 blink.endIndex = last;
                 blinks.add(blink);
