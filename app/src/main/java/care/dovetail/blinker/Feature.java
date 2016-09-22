@@ -24,6 +24,7 @@ public class Feature {
     public final int value;
     public final Channel channel;
     public int confidence;
+    public int height;
     public int startIndex;
     public int endIndex;
 

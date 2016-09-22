@@ -13,14 +13,15 @@ import java.util.TimerTask;
 
 import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
 
-public class MainActivity extends Activity implements BluetoothDeviceListener {
+public class MainActivity extends Activity implements BluetoothDeviceListener,
+        SignalProcessor.FeatureObserver {
     private static final String TAG = "MainActivity";
 
     private static final int SECTOR_IDS[] = new int[] {R.id.num1, R.id.num2, R.id.num3, R.id.num4,
             R.id.num5, R.id.num6, R.id.num7, R.id.num8, R.id.num9};
 
     private ShimmerClient patchClient;
-    private final SignalProcessor signals = new SignalProcessor();
+    private final SignalProcessor signals = new SignalProcessor(this);
 
     private Timer chartUpdateTimer = null;
     private Timer sectorUpdateTimer = null;
@@ -172,6 +173,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener {
             });
         }
     };
+
+    @Override
+    public void onFeature(Feature feature) {
+        Log.i(TAG, "Found blink");
+    }
 
     @Override
     public void onNewValues(int[] chunk1, int[] chunk2) {
