@@ -3,9 +3,7 @@ package care.dovetail.blinker;
 import android.util.Pair;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
@@ -35,9 +33,6 @@ public class SignalProcessor {
     private final int positions2[] = new int[Config.GRAPH_LENGTH];
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
-
-    private int featureProcessCounter = 0;
-    private final Set<Feature> features = new HashSet<Feature>();
 
     public interface FeatureObserver {
         void onFeature(Feature feature);
@@ -70,13 +65,6 @@ public class SignalProcessor {
                 recentMedian2, recentMedian2 - halfGraphHeight, recentMedian2 + halfGraphHeight);
 
         checkAndPostBlink();
-
-        if (featureProcessCounter == BLINK_WINDOW) {
-            featureProcessCounter = 0;
-            processFeatures();
-        } else {
-            featureProcessCounter++;
-        }
     }
 
     public int[] channel1() {
@@ -115,14 +103,6 @@ public class SignalProcessor {
         return positions2;
     }
 
-    public synchronized Set<Feature> getFeatures() {
-        Set<Feature> subset = new HashSet<>();
-        for (Feature fp : features) {
-            subset.add(fp);
-        }
-        return subset;
-    }
-
     private synchronized void checkAndPostBlink() {
         int minSpikeHeight = (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
@@ -157,39 +137,6 @@ public class SignalProcessor {
         }
 
         observer.onFeature(feature);
-    }
-
-    private synchronized void processFeatures() {
-        features.clear();
-        int maxBlinkHeight = 0;
-        if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-            maxBlinkHeight = Utils.calculateMedianHeight(recentBlinks);
-        } else {
-            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
-            maxBlinkHeight = Math.abs(minMax.second - recentMedian2);
-        }
-        features.addAll(findBlinks(values2, maxBlinkHeight, Feature.Channel.VERTICAL));
-    }
-
-    private static Set<Feature> findBlinks(int values[], int maxBlinkHeight,
-                                           Feature.Channel channel) {
-        Set<Feature> blinks = new HashSet<>();
-        // Spike height should be within tolerance level of max blink height
-        int minSpikeHeight = (int) (maxBlinkHeight * BLINK_HEIGHT_TOLERANCE);
-        for (int i = 0; i < values.length - BLINK_WINDOW; i++) {
-            int middle = i + (BLINK_WINDOW / 2);
-            int last =  i + BLINK_WINDOW - 1;
-            if (isBlink(values[i], values[middle - 1], values[middle], values[middle + 1],
-                    values[last], minSpikeHeight)) {
-                Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle], channel);
-                blink.height = Math.min(values[middle] - values[last], values[middle] - values[i])
-                        + (Math.abs(values[last] - values[i]) / 2);
-                blink.startIndex = i;
-                blink.endIndex = last;
-                blinks.add(blink);
-            }
-        }
-        return blinks;
     }
 
     private static boolean isBlink(int first, int beforeMiddle, int middle, int afterMiddle,

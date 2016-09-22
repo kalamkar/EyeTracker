@@ -152,7 +152,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 chart.updateChannel1(signals.channel1(), signals.range1());
                  chart.updateChannel2(signals.channel2(), signals.range2());
             }
-            chart.updateFeatures(signals.getFeatures(), signals.range2());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
