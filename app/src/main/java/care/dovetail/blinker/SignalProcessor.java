@@ -71,13 +71,14 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, String> getSector() {
+        // TODO(abhi): Use median of a few recent values here instead of just one.
         int level1 = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
         int level2 = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
         String levels = String.format("%d,%d", level1, level2);
         level1 = level1 > 1 ? 1 : level1 < -1 ? -1 : level1;
         level2 = level2 > 1 ? 1 : level2 < -1 ? -1 : level2;
-        int sectors[][] = new int[][] {{8, 5, 2}, {7, 4, 1}, {6, 3, 0}};
-        return Pair.create(sectors[level1 + 1][level2 + 1], levels);
+        int sectors[][] = new int[][] {{8, 7, 6}, {5, 4, 3}, {2, 1, 0}};
+        return Pair.create(sectors[level2 + 1][level1 + 1], levels);
     }
 
     public Pair<Integer, Integer> range1() {
