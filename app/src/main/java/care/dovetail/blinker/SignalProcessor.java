@@ -15,8 +15,7 @@ public class SignalProcessor {
     private static final float BLINK_BASE_TOLERANCE = 0.40f;
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 10;
-    private static final int NUM_STEPS = 3;
-    private static final int ARRAY_SHIFT = NUM_STEPS / 2;
+    private static final int ARRAY_SHIFT = Config.NUM_STEPS / 2;
 
     private final FeatureObserver observer;
 
@@ -71,7 +70,7 @@ public class SignalProcessor {
         return values2;
     }
 
-    public Pair<Integer, String> getSector() {
+    public Pair<Integer, Integer> getSector() {
         // TODO(abhi): Use median of a few recent values here instead of just one.
         int level1 = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
         int level2 = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
@@ -80,9 +79,10 @@ public class SignalProcessor {
                 : level1 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level1;
         level2 = level2 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level2 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level2;
-        int sector = ((level2 + ARRAY_SHIFT) * NUM_STEPS) + (level1 + ARRAY_SHIFT);
-        sector = ((NUM_STEPS * NUM_STEPS) - 1) - sector;
-        return Pair.create(sector, levels);
+        return Pair.create(level2 + ARRAY_SHIFT, level1 + ARRAY_SHIFT);
+//        int sector = ((level2 + ARRAY_SHIFT) * Config.NUM_STEPS) + (level1 + ARRAY_SHIFT);
+//        sector = ((Config.NUM_STEPS * Config.NUM_STEPS) - 1) - sector;
+//        return Pair.create(sector, levels);
     }
 
     public Pair<Integer, Integer> range1() {
@@ -125,7 +125,7 @@ public class SignalProcessor {
     }
 
     private static int getLevel(int value, int median, int halfGraphHeight) {
-        float stepHeight = halfGraphHeight / (NUM_STEPS / 2); // divide by 2 as values  +ve and -ve
+        float stepHeight = halfGraphHeight / (Config.NUM_STEPS / 2); // divide by 2 as values  +ve and -ve
         int min = median - halfGraphHeight;
         int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
@@ -136,7 +136,7 @@ public class SignalProcessor {
         int positions[] = new int[values.length];
         for (int i = 0; i < positions.length; i++) {
             int level = getLevel(values[i], median, halfGraphHeight);
-            positions[i] = median + level * (halfGraphHeight / NUM_STEPS);
+            positions[i] = median + level * (halfGraphHeight / Config.NUM_STEPS);
         }
         return positions;
     }

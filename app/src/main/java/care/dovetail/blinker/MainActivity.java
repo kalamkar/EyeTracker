@@ -21,9 +21,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver {
     private static final String TAG = "MainActivity";
 
-    private static final int SECTOR_IDS[] = new int[] {R.id.num1, R.id.num2, R.id.num3, R.id.num4,
-            R.id.num5, R.id.num6, R.id.num7, R.id.num8, R.id.num9};
-
     private ShimmerClient patchClient;
     private final SignalProcessor signals = new SignalProcessor(this);
 
@@ -170,15 +167,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Pair<Integer, String> sector = signals.getSector();
-                    for (int i = 0; i < SECTOR_IDS.length; i++) {
-                        if (i == sector.first) {
-                            ((TextView) findViewById(SECTOR_IDS[i])).setText(sector.second);
-                            findViewById(SECTOR_IDS[i]).setVisibility(View.VISIBLE);
-                        } else {
-                            findViewById(SECTOR_IDS[i]).setVisibility(View.INVISIBLE);
-                        }
-                    }
+                    Pair<Integer, Integer> sector = signals.getSector();
+                    GridView grid = (GridView) findViewById(R.id.grid);
+                    grid.clear();
+                    grid.highlight(sector.first, sector.second);
+                    grid.invalidate();
                 }
             });
         }
