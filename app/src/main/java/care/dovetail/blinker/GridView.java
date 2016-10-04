@@ -27,8 +27,8 @@ public class GridView extends View {
     }
 
     public void highlight(int row, int column) {
-        float left = cellWidth * row;
-        float top = cellHeight * column;
+        float left = cellWidth * (Config.NUM_STEPS - row);
+        float top = cellHeight * (Config.NUM_STEPS - column);
         canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
     }
 

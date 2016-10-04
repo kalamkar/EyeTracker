@@ -71,18 +71,17 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> getSector() {
-        // TODO(abhi): Use median of a few recent values here instead of just one.
-        int level1 = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
-        int level2 = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
-        String levels = String.format("%d,%d", level1, level2);
+//        int latestValue1 = values1[values1.length - 1];
+//        int latestValue2 = values2[values2.length - 1];
+        int latestValue1 = Utils.calculateMedian(values1, values1.length - BLINK_WINDOW, BLINK_WINDOW);
+        int latestValue2 = Utils.calculateMedian(values2, values2.length - BLINK_WINDOW, BLINK_WINDOW);
+        int level1 = getLevel(latestValue1, median1, halfGraphHeight);
+        int level2 = getLevel(latestValue2, median2, halfGraphHeight);
         level1 = level1 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level1 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level1;
         level2 = level2 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level2 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level2;
-        return Pair.create(level2 + ARRAY_SHIFT, level1 + ARRAY_SHIFT);
-//        int sector = ((level2 + ARRAY_SHIFT) * Config.NUM_STEPS) + (level1 + ARRAY_SHIFT);
-//        sector = ((Config.NUM_STEPS * Config.NUM_STEPS) - 1) - sector;
-//        return Pair.create(sector, levels);
+        return Pair.create(level1 + ARRAY_SHIFT, level2 + ARRAY_SHIFT);
     }
 
     public Pair<Integer, Integer> range1() {
@@ -109,7 +108,7 @@ public class SignalProcessor {
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                halfGraphHeight = (int) (Utils.calculateMedianHeight(recentBlinks) * 1.2);
+                halfGraphHeight = Utils.calculateMedianHeight(recentBlinks);
             }
         }
 

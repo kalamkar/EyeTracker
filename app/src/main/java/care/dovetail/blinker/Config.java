@@ -7,5 +7,5 @@ public class Config {
 
     public static final int BLUETOOTH_ENABLE_REQUEST = 0;
 
-    static final int NUM_STEPS = 9;
+    static final int NUM_STEPS = 12;
 }
