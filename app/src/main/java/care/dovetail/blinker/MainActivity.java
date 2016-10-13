@@ -9,6 +9,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -22,7 +23,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
-    private final SignalProcessor signals = new SignalProcessor(this);
+    private SignalProcessor signals = new SignalProcessor(this, true);
 
     private Timer chartUpdateTimer = null;
     private Timer sectorUpdateTimer = null;
@@ -34,6 +35,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        ((ToggleButton) findViewById(R.id.filter)).setOnCheckedChangeListener(
+                new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        signals = new SignalProcessor(MainActivity.this, isChecked);
+                    }
+                });
     }
 
     @Override

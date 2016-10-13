@@ -5,14 +5,19 @@ import android.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 
+import biz.source_code.dsp.filter.FilterCharacteristicsType;
+import biz.source_code.dsp.filter.FilterPassType;
+import biz.source_code.dsp.filter.IirFilter;
+import biz.source_code.dsp.filter.IirFilterDesignFisher;
+
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 3;
 
-    private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;
-    private static final float BLINK_BASE_TOLERANCE = 0.40f;
+    private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;  // 0.45f
+    private static final float BLINK_BASE_TOLERANCE = 0.40f;    // 0.10f
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 10;
     private static final int ARRAY_SHIFT = Config.NUM_STEPS / 2;
@@ -30,23 +35,43 @@ public class SignalProcessor {
     private int recentMedian1;
     private int recentMedian2;
 
+    private final IirFilter filter1;
+    private final IirFilter filter2;
+    private final boolean useFilter;
+
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
     public interface FeatureObserver {
         void onFeature(Feature feature);
     }
 
-    public SignalProcessor(FeatureObserver observer) {
+    public SignalProcessor(FeatureObserver observer, boolean useFilter) {
         this.observer = observer;
+        this.useFilter = useFilter;
+
+        // Frequency values relative to sampling rate.
+        // bandpass 20bpm to 840bpm. 0.07 = 14Hz / 200Hz
+        filter1 = new IirFilter(IirFilterDesignFisher.design(
+                FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1, 0, 0.0015, 0.07));
+        filter2 = new IirFilter(IirFilterDesignFisher.design(
+                FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1, 0, 0.0015, 0.07));
     }
 
 
     public synchronized void update(int channel1, int channel2) {
         System.arraycopy(values1, 1, values1, 0, values1.length - 1);
-        values1[values1.length - 1] = channel1;
+        if (useFilter) {
+            values1[values1.length - 1] = (int) filter1.step(channel1);
+        } else {
+            values1[values1.length - 1] = channel1;
+        }
 
         System.arraycopy(values2, 1, values2, 0, values2.length - 1);
-        values2[values2.length - 1] = channel2;
+        if (useFilter) {
+            values2[values2.length - 1] = (int) filter2.step(channel2);
+        } else {
+            values2[values2.length - 1] = channel2;
+        }
 
         median1 = Utils.calculateMedian(values1);
         median2 = Utils.calculateMedian(values2);
@@ -73,6 +98,7 @@ public class SignalProcessor {
     public Pair<Integer, Integer> getSector() {
 //        int latestValue1 = values1[values1.length - 1];
 //        int latestValue2 = values2[values2.length - 1];
+        // Using median of blink window instead of just latest value.
         int latestValue1 = Utils.calculateMedian(values1, values1.length - BLINK_WINDOW, BLINK_WINDOW);
         int latestValue2 = Utils.calculateMedian(values2, values2.length - BLINK_WINDOW, BLINK_WINDOW);
         int level1 = getLevel(latestValue1, median1, halfGraphHeight);
