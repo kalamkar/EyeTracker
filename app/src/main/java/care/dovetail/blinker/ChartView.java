@@ -17,6 +17,10 @@ import java.util.List;
 public class ChartView extends View {
     private static final String TAG = "ChartView";
 
+    private final Paint paint = new Paint();
+    private Bitmap bitmap;
+    private List<Chart> charts = new ArrayList<Chart>();
+
     private enum Type {
         LINE,
         POINT
@@ -104,10 +108,6 @@ public class ChartView extends View {
             }
         }
     }
-
-    private final Paint paint = new Paint();
-    private Bitmap bitmap;
-    private List<Chart> charts = new ArrayList<Chart>();
 
     public ChartView(Context context, AttributeSet attrs) {
         super(context, attrs);
