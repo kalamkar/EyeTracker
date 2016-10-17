@@ -144,11 +144,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private final TimerTask chartUpdater = new TimerTask() {
         @Override
         public void run() {
-            if (MainActivity.this.isDestroyed()
-                    || ((ToggleButton) findViewById(R.id.pause)).isChecked()) {
-                return;
-            }
-
             boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
             final ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
             chart.clear();

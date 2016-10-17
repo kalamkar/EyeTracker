@@ -45,20 +45,11 @@
             android:layout_below="@+id/status" />
 
         <ToggleButton
-            android:id="@+id/pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:textOff="@string/action_pause"
-            android:textOn="@string/action_resume" />
-
-        <ToggleButton
             android:id="@+id/filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:layout_toLeftOf="@+id/pause"
+            android:layout_centerHorizontal="true"
             android:textOff="@string/filter"
             android:textOn="@string/filter"
             android:checked="true"/>
