@@ -22,4 +22,16 @@ dependencies {
     compile 'com.android.support:support-v4:24.2.1'
     compile files('libs/JTransforms-3.0.jar')
     compile files('libs/dsp-collection.jar')
+
+    compile (name:'common', ext:'aar')
+    compile (name:'commonwidget', ext:'aar')
+    compile (name:'panowidget', ext:'aar')
+
+    compile 'com.google.protobuf.nano:protobuf-javanano:3.0.0-alpha-7'
+}
+
+repositories {
+    flatDir {
+        dirs 'libs/vr'
+    }
 }
