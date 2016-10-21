@@ -15,7 +15,7 @@ import android.view.View;
 public class GridView extends View {
 
     private final Paint paint = new Paint();
-    private Bitmap bitmap;
+    private Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private Canvas canvas;
 
     private int cellWidth = 0;
@@ -23,17 +23,15 @@ public class GridView extends View {
 
     public GridView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        paint.setColor(Color.BLACK);
+        paint.setColor(Color.RED);
     }
 
     public void highlight(int row, int column) {
+        clearAll(bitmap.getWidth(), bitmap.getHeight());
         float left = cellWidth * (Config.NUM_STEPS - row);
         float top = cellHeight * (Config.NUM_STEPS - column);
         canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
-    }
-
-    public void clear() {
-        clearAll(bitmap.getWidth(), bitmap.getHeight());
+        invalidate();
     }
 
     @Override

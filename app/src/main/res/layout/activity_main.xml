@@ -8,7 +8,8 @@
         android:name="care.dovetail.blinker.ChartFragment"
         android:id="@+id/chart"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        tools:layout="@layout/fragment_chart"/>
 
     <RelativeLayout
         android:id="@+id/widgets"
@@ -56,10 +57,16 @@
 
     </RelativeLayout>
 
+    <care.dovetail.blinker.VrGridView
+        android:id="@+id/vrgrid"
+        android:layout_width="120dip"
+        android:layout_height="50dip"
+        android:layout_gravity="bottom"/>
+
     <care.dovetail.blinker.GridView
         android:id="@+id/grid"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
 </FrameLayout>
 
