@@ -79,9 +79,9 @@ public class ShimmerClient {
         }
         final BluetoothDevice device = adapter.getRemoteDevice(address);
 
-        new AsyncTask<Void, Void, Void>() {
+        new AsyncTask<Void, Void, ShimmerConnection>() {
             @Override
-            protected Void doInBackground(Void... params) {
+            protected ShimmerConnection doInBackground(Void... params) {
                 try {
                     BluetoothSocket socket =
                             device.createInsecureRfcommSocketToServiceRecord(SHIMMER_UUID);
@@ -90,15 +90,15 @@ public class ShimmerClient {
                         return null;
                     }
                     socket.connect();
-                    connection = new ShimmerConnection(socket);
+                    return new ShimmerConnection(socket);
                 } catch (IOException e) {
-                    Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
+                    // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
                 }
                 return null;
             }
 
             @Override
-            protected void onPostExecute(Void result) {
+            protected void onPostExecute(ShimmerConnection connection) {
                 if (connection == null) {
                     Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
                     connectionAttemptts--;
@@ -111,6 +111,7 @@ public class ShimmerClient {
                 listener.onConnect(device.getAddress());
                 if (connection.sendInquiry()) {
                     connection.start();
+                    ShimmerClient.this.connection = connection;
                 }
             }
         }.execute();

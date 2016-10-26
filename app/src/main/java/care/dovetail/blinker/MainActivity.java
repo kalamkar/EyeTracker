@@ -61,9 +61,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
-
-        sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(sectorUpdater, 0, 100);
     }
 
     @Override
@@ -127,6 +124,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
+
+        sectorUpdateTimer = new Timer();
+        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
     }
 
     @Override
@@ -183,8 +183,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
                     rightGrid.highlight(sector.first, sector.second);
-                    // VrGridView vrgrid = (VrGridView) findViewById(R.id.vrgrid);
-                    // vrgrid.highlight(sector.first, sector.second);
                 }
             });
         }
