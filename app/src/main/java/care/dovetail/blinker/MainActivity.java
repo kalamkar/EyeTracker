@@ -152,20 +152,29 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         @Override
         public void run() {
             boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
-            final ChartFragment chart = (ChartFragment) getFragmentManager().findFragmentById(R.id.chart);
-            chart.clear();
+            final ChartFragment leftChart =
+                    (ChartFragment) getFragmentManager().findFragmentById(R.id.leftChart);
+            final ChartFragment rightChart =
+                    (ChartFragment) getFragmentManager().findFragmentById(R.id.rightChart);
+            leftChart.clear();
+            rightChart.clear();
             if (filter) {
-                chart.updateChannel1(signals.positions1(), signals.range1());
-                chart.updateChannel2(signals.positions2(), signals.range2());
+                leftChart.updateChannel1(signals.positions1(), signals.range1());
+                leftChart.updateChannel2(signals.positions2(), signals.range2());
+                rightChart.updateChannel1(signals.positions1(), signals.range1());
+                rightChart.updateChannel2(signals.positions2(), signals.range2());
             } else {
-                chart.updateChannel1(signals.channel1(), signals.range1());
-                chart.updateChannel2(signals.channel2(), signals.range2());
+                leftChart.updateChannel1(signals.channel1(), signals.range1());
+                leftChart.updateChannel2(signals.channel2(), signals.range2());
+                rightChart.updateChannel1(signals.channel1(), signals.range1());
+                rightChart.updateChannel2(signals.channel2(), signals.range2());
             }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (chart.isResumed()) {
-                        chart.updateUI();
+                    if (leftChart.isResumed() && rightChart.isResumed()) {
+                        leftChart.updateUI();
+                        rightChart.updateUI();
                     }
                 }
             });
