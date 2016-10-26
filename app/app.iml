@@ -93,9 +93,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-fragment/24.2.1/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-media-compat/24.2.1/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-v4/24.2.1/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/common/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/commonwidget/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/panowidget/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-classes" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-runtime-classes" />
@@ -117,18 +114,15 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 24 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="support-annotations-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-v4-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-compat-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-media-compat-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-fragment-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-core-ui-24.2.1" level="project" />
-    <orderEntry type="library" exported="" name="common-" level="project" />
-    <orderEntry type="library" exported="" name="panowidget-" level="project" />
     <orderEntry type="library" exported="" name="protobuf-javanano-3.0.0-alpha-7" level="project" />
     <orderEntry type="library" exported="" name="support-core-utils-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="dsp-collection" level="project" />
     <orderEntry type="library" exported="" name="JTransforms-3.0" level="project" />
-    <orderEntry type="library" exported="" name="support-annotations-24.2.1" level="project" />
-    <orderEntry type="library" exported="" name="commonwidget-" level="project" />
   </component>
 </module>
