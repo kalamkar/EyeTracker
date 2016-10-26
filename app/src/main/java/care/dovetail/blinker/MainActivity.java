@@ -35,6 +35,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        findViewById(R.id.binocular).setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
         ((ToggleButton) findViewById(R.id.filter)).setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener() {
@@ -172,10 +179,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 @Override
                 public void run() {
                     Pair<Integer, Integer> sector = signals.getSector();
-                    GridView grid = (GridView) findViewById(R.id.grid);
-                    grid.highlight(sector.first, sector.second);
-                    VrGridView vrgrid = (VrGridView) findViewById(R.id.vrgrid);
-                    vrgrid.highlight(sector.first, sector.second);
+                    GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
+                    leftGrid.highlight(sector.first, sector.second);
+                    GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
+                    rightGrid.highlight(sector.first, sector.second);
+                    // VrGridView vrgrid = (VrGridView) findViewById(R.id.vrgrid);
+                    // vrgrid.highlight(sector.first, sector.second);
                 }
             });
         }

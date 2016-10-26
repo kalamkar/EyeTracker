@@ -18,7 +18,8 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin" >
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:background="@android:color/black">
 
         <TextView
             android:id="@+id/position"
@@ -57,16 +58,37 @@
 
     </RelativeLayout>
 
-    <care.dovetail.blinker.VrGridView
+    <!--care.dovetail.blinker.VrGridView
         android:id="@+id/vrgrid"
         android:layout_width="120dip"
         android:layout_height="50dip"
-        android:layout_gravity="bottom"/>
+        android:layout_gravity="bottom"/-->
 
-    <care.dovetail.blinker.GridView
-        android:id="@+id/grid"
+    <LinearLayout
+        android:id="@+id/binocular"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin">
+
+        <care.dovetail.blinker.GridView
+            android:id="@+id/leftGrid"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:background="@android:color/white"/>
+
+        <care.dovetail.blinker.GridView
+            android:id="@+id/rightGrid"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:background="@android:color/white"/>
+
+    </LinearLayout>
 
 </FrameLayout>
 
