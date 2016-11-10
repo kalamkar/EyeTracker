@@ -74,7 +74,7 @@ public class ChartView extends View {
                 Log.v(TAG, String.format("minMaxY %d %d", minMaxY.first, minMaxY.second));
             }
 
-            if (data == null || data.size() == 0) {
+            if (data == null || data.size() == 0 || bitmap == null) {
                 return;
             }
 
@@ -123,6 +123,9 @@ public class ChartView extends View {
     }
 
     public void clear() {
+        if (bitmap == null) {
+            return;
+        }
         clearAll(bitmap.getWidth(), bitmap.getHeight());
     }
 

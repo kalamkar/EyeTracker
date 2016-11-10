@@ -1,6 +1,11 @@
 package care.dovetail.blinker;
 
 import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -19,7 +24,7 @@ import java.util.TimerTask;
 import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
-        SignalProcessor.FeatureObserver {
+        SignalProcessor.FeatureObserver, SensorEventListener {
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
@@ -29,6 +34,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private Timer sectorUpdateTimer = null;
 
     private Ringtone ringtone;
+
+    private SensorManager sensorManager;
+    private Sensor acceleration;
+    private final int accel[] = new int[Config.GRAPH_LENGTH];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +59,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         signals = new SignalProcessor(MainActivity.this, isChecked);
                     }
                 });
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        acceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
     }
 
     @Override
@@ -61,6 +73,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
+
+        chartUpdateTimer = new Timer();
+        chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
+
+        sectorUpdateTimer = new Timer();
+        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
+
+        sensorManager.registerListener(this, acceleration, 5000);
     }
 
     @Override
@@ -77,6 +97,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             sectorUpdateTimer.cancel();
         }
         ringtone.stop();
+        sensorManager.unregisterListener(this);
         super.onStop();
     }
 
@@ -122,11 +143,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             }
         });
 
-        chartUpdateTimer = new Timer();
-        chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
-
-        sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
     }
 
     @Override
@@ -169,6 +185,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateChannel1(signals.channel1(), signals.range1());
                 rightChart.updateChannel2(signals.channel2(), signals.range2());
             }
+            leftChart.updateChannel3(accel, Pair.create(-100, 100));
+            rightChart.updateChannel3(accel, Pair.create(-100, 100));
+
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -205,5 +224,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onNewValues(int channel1, int channel2) {
         signals.update(channel1, channel2);
+    }
+
+    @Override
+    public final void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    public final void onSensorChanged(SensorEvent event) {
+        System.arraycopy(accel, 1, accel, 0, accel.length - 1);
+        accel[accel.length -1] = (int) (event.values[1] * 100);
     }
 }

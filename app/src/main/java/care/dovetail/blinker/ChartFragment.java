@@ -19,11 +19,13 @@ public class ChartFragment extends Fragment {
     private int darkBlue;
     private int lightGreen;
     private int darkGreen;
+    private int lightRed;
 
     private ChartView chartView;
 
     private Chart channel1;
     private Chart channel2;
+    private Chart channel3;
     private Chart median1;
     private Chart median2;
 
@@ -34,6 +36,7 @@ public class ChartFragment extends Fragment {
         lightBlue = getResources().getColor(android.R.color.holo_blue_light);
         darkGreen = getResources().getColor(android.R.color.holo_green_dark);
         lightGreen = getResources().getColor(android.R.color.holo_green_light);
+        lightRed = getResources().getColor(android.R.color.holo_red_light);
         return inflater.inflate(R.layout.fragment_chart, container, false);
     }
 
@@ -48,6 +51,9 @@ public class ChartFragment extends Fragment {
         channel2 = chartView.makeLineChart(darkGreen, 2);
         channel2.setXRange(0, Config.GRAPH_LENGTH);
 
+        channel3 = chartView.makeLineChart(lightRed, 1);
+        channel3.setXRange(0, Config.GRAPH_LENGTH);
+
         median1 = chartView.makeLineChart(lightBlue, 2);
         median1.setXRange(0, Config.GRAPH_LENGTH);
 
@@ -59,10 +65,10 @@ public class ChartFragment extends Fragment {
         chartView.clear();
     }
 
-    public void updateChannel1(int data1[], Pair<Integer,Integer> range) {
-        List<Pair<Integer, Integer>> points = new ArrayList<>(data1.length);
-        for (int i = 0; i < data1.length; i++) {
-            points.add(Pair.create(i, data1[i]));
+    public void updateChannel1(int data[], Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points = new ArrayList<>(data.length);
+        for (int i = 0; i < data.length; i++) {
+            points.add(Pair.create(i, data[i]));
         }
         channel1.setYRange(range.first, range.second);
         channel1.setData(points);
@@ -75,10 +81,10 @@ public class ChartFragment extends Fragment {
         this.median1.setData(median1Points);
     }
 
-    public void updateChannel2(int data2[], Pair<Integer,Integer> range) {
-        List<Pair<Integer, Integer>> points = new ArrayList<>(data2.length);
-        for (int i = 0; i < data2.length; i++) {
-            points.add(Pair.create(i, data2[i]));
+    public void updateChannel2(int data[], Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points = new ArrayList<>(data.length);
+        for (int i = 0; i < data.length; i++) {
+            points.add(Pair.create(i, data[i]));
         }
         channel2.setYRange(range.first, range.second);
         channel2.setData(points);
@@ -89,6 +95,15 @@ public class ChartFragment extends Fragment {
         median2Points.add(Pair.create(Config.GRAPH_LENGTH - 1, median));
         this.median2.setYRange(range.first, range.second);
         this.median2.setData(median2Points);
+    }
+
+    public void updateChannel3(int data[], Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points = new ArrayList<>(data.length);
+        for (int i = 0; i < data.length; i++) {
+            points.add(Pair.create(i, data[i]));
+        }
+        channel3.setYRange(range.first, range.second);
+        channel3.setData(points);
     }
 
     public void updateUI() {
