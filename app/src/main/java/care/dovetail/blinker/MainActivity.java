@@ -234,5 +234,28 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public final void onSensorChanged(SensorEvent event) {
         System.arraycopy(accel, 1, accel, 0, accel.length - 1);
         accel[accel.length -1] = (int) (event.values[1] * 100);
+
+        int prevValue = accel[accel.length/4*3];
+        int changes = 0;
+        for (int i=accel.length/4*3; i < accel.length -1; i++) {
+            changes += Math.abs(accel[i] - prevValue);
+            prevValue = accel[i];
+        }
+        if (changes > Config.SHAKING_THRESHOLD) {
+            Log.w(TAG, String.format("Headset shaking %d", changes));
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.shaking).setVisibility(View.VISIBLE);
+                }
+            });
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.shaking).setVisibility(View.INVISIBLE);
+                }
+            });
+        }
     }
 }

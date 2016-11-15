@@ -101,6 +101,14 @@
             android:textOn="@string/filter"
             android:checked="true"/>
 
+        <ImageView
+            android:src="?android:attr/alertDialogIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:id="@+id/shaking"/>
+
     </RelativeLayout>
 
 </FrameLayout>

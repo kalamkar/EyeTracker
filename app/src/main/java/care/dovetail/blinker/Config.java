@@ -7,5 +7,7 @@ public class Config {
 
     public static final int BLUETOOTH_ENABLE_REQUEST = 0;
 
-    static final int NUM_STEPS = 12;
+    public static final int NUM_STEPS = 12;
+
+    public static final int SHAKING_THRESHOLD = 3000;
 }
