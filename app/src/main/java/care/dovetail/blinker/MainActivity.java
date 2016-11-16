@@ -2,9 +2,6 @@ package care.dovetail.blinker;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -24,20 +21,17 @@ import java.util.TimerTask;
 import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
-        SignalProcessor.FeatureObserver, SensorEventListener {
+        SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
     private SignalProcessor signals = new SignalProcessor(this, true);
+    private AccelerationProcessor accelerometer;
 
     private Timer chartUpdateTimer = null;
     private Timer sectorUpdateTimer = null;
 
     private Ringtone ringtone;
-
-    private SensorManager sensorManager;
-    private Sensor acceleration;
-    private final int accel[] = new int[Config.GRAPH_LENGTH];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +54,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     }
                 });
 
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        acceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        accelerometer = new AccelerationProcessor(
+                (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
     }
 
     @Override
@@ -80,7 +74,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         sectorUpdateTimer = new Timer();
         sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
 
-        sensorManager.registerListener(this, acceleration, 5000);
+        accelerometer.start();
     }
 
     @Override
@@ -97,7 +91,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             sectorUpdateTimer.cancel();
         }
         ringtone.stop();
-        sensorManager.unregisterListener(this);
+        accelerometer.stop();
         super.onStop();
     }
 
@@ -185,8 +179,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateChannel1(signals.channel1(), signals.range1());
                 rightChart.updateChannel2(signals.channel2(), signals.range2());
             }
-            leftChart.updateChannel3(accel, Pair.create(-100, 100));
-            rightChart.updateChannel3(accel, Pair.create(-100, 100));
+            leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
+            rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
 
             runOnUiThread(new Runnable() {
                 @Override
@@ -223,39 +217,18 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onNewValues(int channel1, int channel2) {
-        signals.update(channel1, channel2);
+        if (!accelerometer.isShaking()) {
+            signals.update(channel1, channel2);
+        }
     }
 
     @Override
-    public final void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    @Override
-    public final void onSensorChanged(SensorEvent event) {
-        System.arraycopy(accel, 1, accel, 0, accel.length - 1);
-        accel[accel.length -1] = (int) (event.values[1] * 100);
-
-        int prevValue = accel[accel.length/4*3];
-        int changes = 0;
-        for (int i=accel.length/4*3; i < accel.length -1; i++) {
-            changes += Math.abs(accel[i] - prevValue);
-            prevValue = accel[i];
-        }
-        if (changes > Config.SHAKING_THRESHOLD) {
-            Log.w(TAG, String.format("Headset shaking %d", changes));
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.shaking).setVisibility(View.VISIBLE);
-                }
-            });
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.shaking).setVisibility(View.INVISIBLE);
-                }
-            });
-        }
+    public void onShakingChange(final boolean isShaking) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.shaking).setVisibility(isShaking ? View.VISIBLE : View.INVISIBLE);
+            }
+        });
     }
 }
