@@ -13,6 +13,12 @@ import biz.source_code.dsp.filter.IirFilterDesignFisher;
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
+    // Frequency values relative to sampling rate (200Hz).
+    // bandpass 0.5Hz to 5Hz
+    private static final double LOW_FREQUENCY  = 1.0 / 200;
+    private static final double HIGH_FREQUENCY = 5.0 / 200;
+    private static final int FILTER_ORDER = 1;
+
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 3;
 
@@ -49,12 +55,10 @@ public class SignalProcessor {
         this.observer = observer;
         this.useFilter = useFilter;
 
-        // Frequency values relative to sampling rate.
-        // bandpass 20bpm to 840bpm. 0.07 = 14Hz / 200Hz
-        filter1 = new IirFilter(IirFilterDesignFisher.design(
-                FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1, 0, 0.0015, 0.07));
-        filter2 = new IirFilter(IirFilterDesignFisher.design(
-                FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1, 0, 0.0015, 0.07));
+        filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0, LOW_FREQUENCY, HIGH_FREQUENCY));
+        filter2 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0, LOW_FREQUENCY, HIGH_FREQUENCY));
     }
 
 

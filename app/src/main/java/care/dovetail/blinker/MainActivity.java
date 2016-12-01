@@ -28,6 +28,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private SignalProcessor signals = new SignalProcessor(this, true);
     private AccelerationProcessor accelerometer;
 
+    private FileDataWriter writer = null;
+
     private Timer chartUpdateTimer = null;
     private Timer sectorUpdateTimer = null;
 
@@ -127,6 +129,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onConnect(String address) {
         Log.i(TAG, String.format("Connected to %s", address));
+        writer = new FileDataWriter(this);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -142,6 +145,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onDisconnect(String address) {
         Log.i(TAG, String.format("Disconnected from %s", address));
+        writer.close();
+        writer = null;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -219,6 +224,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public void onNewValues(int channel1, int channel2) {
         if (!accelerometer.isShaking()) {
             signals.update(channel1, channel2);
+        }
+        if (writer != null) {
+            writer.write(channel1, channel2);
         }
     }
 
