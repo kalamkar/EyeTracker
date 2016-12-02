@@ -10,7 +10,7 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.util.Log;
 
-import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class FileDataWriter {
 
     private final Context context;
     private File file;
-    private BufferedOutputStream output;
+    private DataOutputStream output;
 
     public FileDataWriter(Context context) {
         this.context = context;
@@ -36,7 +36,7 @@ public class FileDataWriter {
                         FILE_NAME_FORMAT.format(new Date())));
         try {
             file.createNewFile();
-            output = new BufferedOutputStream(new FileOutputStream(file));
+            output = new DataOutputStream(new FileOutputStream(file));
         } catch (Exception e){
             Log.e(TAG, "Error opening output RAW file.", e);
         }
@@ -47,8 +47,8 @@ public class FileDataWriter {
             return;
         }
         try {
-            output.write(channel1);
-            output.write(channel2);
+            output.writeInt(channel1);
+            output.writeInt(channel2);
         } catch (IOException e) {
             Log.e(TAG, "Error writing to RAW output file.", e);
         }
