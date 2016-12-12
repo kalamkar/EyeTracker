@@ -232,6 +232,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onShakingChange(final boolean isShaking) {
+        if (isShaking) {
+            signals = new SignalProcessor(this,
+                    ((ToggleButton) findViewById(R.id.filter)).isChecked());
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

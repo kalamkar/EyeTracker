@@ -11,6 +11,8 @@ import android.hardware.SensorManager;
 
 public class AccelerationProcessor implements SensorEventListener {
 
+    private static final int SAMPLING_PERIOD_MICROS = (1000 / 200) * 1000;
+
     public interface ShakingObserver {
         void onShakingChange(boolean isShaking);
     }
@@ -31,7 +33,7 @@ public class AccelerationProcessor implements SensorEventListener {
     }
 
     public void start() {
-        sensorManager.registerListener(this, acceleration, 5000);
+        sensorManager.registerListener(this, acceleration, SAMPLING_PERIOD_MICROS);
     }
 
     public void stop() {
@@ -69,10 +71,12 @@ public class AccelerationProcessor implements SensorEventListener {
         System.arraycopy(accelZ, 1, accelZ, 0, accelZ.length - 1);
         accelZ[accelZ.length -1] = (int) (event.values[2] * 100);
 
-        isShaking = calculateShaking(accelX) > Config.SHAKING_THRESHOLD
+        boolean isShaking = calculateShaking(accelX) > Config.SHAKING_THRESHOLD
                 || calculateShaking(accelY) > Config.SHAKING_THRESHOLD
                 || calculateShaking(accelZ) > Config.SHAKING_THRESHOLD;
-        observer.onShakingChange(isShaking);
+        if (this.isShaking != isShaking) {
+            observer.onShakingChange(isShaking);
+        }
     }
 
     private static int calculateShaking(int accel[]) {

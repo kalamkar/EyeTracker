@@ -13,24 +13,23 @@ import biz.source_code.dsp.filter.IirFilterDesignFisher;
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
-    // Frequency values relative to sampling rate (200Hz).
-    // bandpass 0.5Hz to 5Hz
-    private static final double LOW_FREQUENCY  = 1.0 / 200;
-    private static final double HIGH_FREQUENCY = 5.0 / 200;
+    private static final double LOW_FREQUENCY  = 0.0005; // 1.0; // 0.0005;
+    private static final double HIGH_FREQUENCY = 0.1;    // 5.0; // 0.1;
     private static final int FILTER_ORDER = 1;
 
     private static final int BLINK_WINDOW = 20;
-    private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 3;
+    private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 8; // 3; // 8;
 
     private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;  // 0.45f
     private static final float BLINK_BASE_TOLERANCE = 0.40f;    // 0.10f
+
     private static final int MAX_RECENT_BLINKS = 10;
-    private static final int MIN_RECENT_BLINKS = 10;
+    private static final int MIN_RECENT_BLINKS = 5;
     private static final int ARRAY_SHIFT = Config.NUM_STEPS / 2;
 
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = (int) (Math.pow(2, 24) * 0.001);
+    private int halfGraphHeight = 5000; // (int) (Math.pow(2, 24) * 0.001);
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -55,10 +54,13 @@ public class SignalProcessor {
         this.observer = observer;
         this.useFilter = useFilter;
 
+        // Frequency values relative to sampling rate (200Hz).
         filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0, LOW_FREQUENCY, HIGH_FREQUENCY));
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
+                LOW_FREQUENCY / 200.0f, HIGH_FREQUENCY / 200.0f));
         filter2 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0, LOW_FREQUENCY, HIGH_FREQUENCY));
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
+                LOW_FREQUENCY / 200.0f, HIGH_FREQUENCY / 200.0f));
     }
 
 
@@ -100,12 +102,12 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> getSector() {
-//        int latestValue1 = values1[values1.length - 1];
-//        int latestValue2 = values2[values2.length - 1];
+        int latestValue1 = values1[values1.length - 1];
+        int latestValue2 = values2[values2.length - 1];
         // Using median of blink window instead of just latest value.
-        int latestValue1 = Utils.calculateMedian(values1, values1.length - BLINK_WINDOW, BLINK_WINDOW);
-        int latestValue2 = Utils.calculateMedian(values2, values2.length - BLINK_WINDOW, BLINK_WINDOW);
-        int level1 = getLevel(latestValue1, median1, halfGraphHeight);
+//        int latestValue1 = Utils.calculateMedian(values1, values1.length - BLINK_WINDOW, BLINK_WINDOW);
+//        int latestValue2 = Utils.calculateMedian(values2, values2.length - BLINK_WINDOW, BLINK_WINDOW);
+        int level1 = getLevel(latestValue1, median1, (int) (halfGraphHeight * 0.7f));
         int level2 = getLevel(latestValue2, median2, halfGraphHeight);
         level1 = level1 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level1 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level1;
@@ -138,7 +140,7 @@ public class SignalProcessor {
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                halfGraphHeight = Utils.calculateMedianHeight(recentBlinks);
+                halfGraphHeight = Utils.calculateMedianHeight(recentBlinks) * 40 / 100;
             }
         }
 
