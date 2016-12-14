@@ -71,12 +71,10 @@ public class AccelerationProcessor implements SensorEventListener {
         System.arraycopy(accelZ, 1, accelZ, 0, accelZ.length - 1);
         accelZ[accelZ.length -1] = (int) (event.values[2] * 100);
 
-        boolean isShaking = calculateShaking(accelX) > Config.SHAKING_THRESHOLD
+        isShaking = calculateShaking(accelX) > Config.SHAKING_THRESHOLD
                 || calculateShaking(accelY) > Config.SHAKING_THRESHOLD
                 || calculateShaking(accelZ) > Config.SHAKING_THRESHOLD;
-        if (this.isShaking != isShaking) {
-            observer.onShakingChange(isShaking);
-        }
+        observer.onShakingChange(isShaking);
     }
 
     private static int calculateShaking(int accel[]) {
