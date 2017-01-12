@@ -175,6 +175,10 @@ public class ChartView extends View {
         if (max <= min) {
             return 0;
         }
+        if (min < 0) {
+            value += Math.abs(min);
+            return bitmap.getHeight() - (bitmap.getHeight() * value / (max - min));
+        }
         return bitmap.getHeight() - (bitmap.getHeight() * (value - min) / (max - min));
     }
 }
