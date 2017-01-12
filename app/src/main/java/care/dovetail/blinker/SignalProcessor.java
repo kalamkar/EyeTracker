@@ -94,13 +94,11 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> range1() {
-        return useFilter ? Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight)
-                : Utils.calculateMinMax(values1);
+        return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
     }
 
     public Pair<Integer, Integer> range2() {
-        return useFilter ? Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight)
-                : Utils.calculateMinMax(values2);
+        return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
     }
 
     public Pair<Integer, Integer> getSector() {
