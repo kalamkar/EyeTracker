@@ -13,8 +13,8 @@ import biz.source_code.dsp.filter.IirFilterDesignFisher;
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
-    private static final double LOW_FREQUENCY  = 0.0005; // 1.0; // 0.0005;
-    private static final double HIGH_FREQUENCY = 0.1;    // 5.0; // 0.1;
+    private static final double LOW_FREQUENCY  = 1.0;    // 1.0;
+    private static final double HIGH_FREQUENCY = 5.0;    // 5.0;
     private static final int FILTER_ORDER = 1;
 
     private static final int BLINK_WINDOW = 20;
@@ -66,18 +66,10 @@ public class SignalProcessor {
 
     public synchronized void update(int channel1, int channel2) {
         System.arraycopy(values1, 1, values1, 0, values1.length - 1);
-        if (useFilter) {
-            values1[values1.length - 1] = (int) filter1.step(channel1);
-        } else {
-            values1[values1.length - 1] = channel1;
-        }
+        values1[values1.length - 1] = (int) filter1.step(channel1);
 
         System.arraycopy(values2, 1, values2, 0, values2.length - 1);
-        if (useFilter) {
-            values2[values2.length - 1] = (int) filter2.step(channel2);
-        } else {
-            values2[values2.length - 1] = channel2;
-        }
+        values2[values2.length - 1] = (int) filter2.step(channel2);
 
         median1 = Utils.calculateMedian(values1);
         median2 = Utils.calculateMedian(values2);
@@ -94,11 +86,21 @@ public class SignalProcessor {
     }
 
     public int[] channel1() {
-        return values1;
+        return useFilter ? getStepPositions(values1, median1, halfGraphHeight) : values1;
     }
 
     public int[] channel2() {
-        return values2;
+        return useFilter ? getStepPositions(values2, median2, halfGraphHeight) : values2;
+    }
+
+    public Pair<Integer, Integer> range1() {
+        return useFilter ? Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight)
+                : Utils.calculateMinMax(values1);
+    }
+
+    public Pair<Integer, Integer> range2() {
+        return useFilter ? Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight)
+                : Utils.calculateMinMax(values2);
     }
 
     public Pair<Integer, Integer> getSector() {
@@ -114,22 +116,6 @@ public class SignalProcessor {
         level2 = level2 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level2 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level2;
         return Pair.create(level1 + ARRAY_SHIFT, level2 + ARRAY_SHIFT);
-    }
-
-    public Pair<Integer, Integer> range1() {
-        return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
-    }
-
-    public Pair<Integer, Integer> range2() {
-        return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
-    }
-
-    public int[] positions1() {
-        return getStepPositions(values1, median1, halfGraphHeight);
-    }
-
-    public int[] positions2() {
-        return getStepPositions(values2, median2, halfGraphHeight);
     }
 
     private void onFeature(Feature feature) {

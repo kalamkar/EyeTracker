@@ -173,17 +173,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     (ChartFragment) getFragmentManager().findFragmentById(R.id.rightChart);
             leftChart.clear();
             rightChart.clear();
-            if (filter) {
-                leftChart.updateChannel1(signals.positions1(), signals.range1());
-                leftChart.updateChannel2(signals.positions2(), signals.range2());
-                rightChart.updateChannel1(signals.positions1(), signals.range1());
-                rightChart.updateChannel2(signals.positions2(), signals.range2());
-            } else {
-                leftChart.updateChannel1(signals.channel1(), signals.range1());
-                leftChart.updateChannel2(signals.channel2(), signals.range2());
-                rightChart.updateChannel1(signals.channel1(), signals.range1());
-                rightChart.updateChannel2(signals.channel2(), signals.range2());
-            }
+
+            leftChart.updateChannel1(signals.channel1(), signals.range1());
+            leftChart.updateChannel2(signals.channel2(), signals.range2());
+            rightChart.updateChannel1(signals.channel1(), signals.range1());
+            rightChart.updateChannel2(signals.channel2(), signals.range2());
+
 //            leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
 //            rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
 
