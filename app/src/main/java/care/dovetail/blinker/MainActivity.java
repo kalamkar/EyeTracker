@@ -35,6 +35,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Ringtone ringtone;
 
+    private int bkgIndex = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -214,6 +216,16 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onFeature(Feature feature) {
         ringtone.play();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
+                leftGrid.background(bkgIndex);
+                GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
+                rightGrid.background(bkgIndex);
+                bkgIndex = bkgIndex + 1 < GridView.BACKGROUNDS.length ? bkgIndex + 1 : 0;
+            }
+        });
     }
 
     @Override
