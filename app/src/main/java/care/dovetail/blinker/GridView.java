@@ -2,6 +2,7 @@ package care.dovetail.blinker;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -13,6 +14,9 @@ import android.view.View;
  */
 
 public class GridView extends View {
+
+    public static final int IMAGES[] = {R.mipmap.ic_butterfly1, R.mipmap.ic_butterfly2,
+            R.mipmap.ic_butterfly3};
 
     private final Paint paint = new Paint();
     private Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
@@ -26,11 +30,13 @@ public class GridView extends View {
         paint.setColor(Color.RED);
     }
 
-    public void highlight(int row, int column) {
+    public void highlight(int row, int column, int index) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
         float left = cellWidth * (Config.NUM_STEPS - row);
         float top = cellHeight * (Config.NUM_STEPS - column);
-        canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
+        // canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
+        Bitmap image = getImage(index);
+        canvas.drawBitmap(image, left - image.getWidth() / 2, top - image.getHeight() / 2, paint);
         invalidate();
     }
 
@@ -52,5 +58,9 @@ public class GridView extends View {
         canvas = new Canvas();
         canvas.setBitmap(bitmap);
         canvas.drawColor(Color.TRANSPARENT);
+    }
+
+    private Bitmap getImage(int index) {
+        return BitmapFactory.decodeResource(getResources(), IMAGES[index]);
     }
 }
