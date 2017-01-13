@@ -13,6 +13,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,7 +23,6 @@ public class ShimmerClient {
     public static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     public static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
 
-    private int connectionAttemptts = 3;
     private final BluetoothDeviceListener listener;
 
     private final BluetoothAdapter adapter;
@@ -77,44 +77,51 @@ public class ShimmerClient {
             Log.e(TAG, "Bluetooth adapter is null or disabled.");
             return;
         }
-        final BluetoothDevice device = adapter.getRemoteDevice(address);
 
-        new AsyncTask<Void, Void, ShimmerConnection>() {
-            @Override
-            protected ShimmerConnection doInBackground(Void... params) {
-                try {
-                    BluetoothSocket socket =
-                            device.createInsecureRfcommSocketToServiceRecord(SHIMMER_UUID);
-                    if (socket == null) {
-                        Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
-                        return null;
-                    }
-                    socket.connect();
-                    return new ShimmerConnection(socket);
-                } catch (IOException e) {
-                    // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
-                }
-                return null;
-            }
+        new ConnectionTask(address, this).execute();
+    }
 
-            @Override
-            protected void onPostExecute(ShimmerConnection connection) {
-                if (connection == null) {
+    private static class ConnectionTask extends AsyncTask<Void, Void, ShimmerConnection> {
+
+        private final String address;
+        private final WeakReference<ShimmerClient> client;
+
+        private ConnectionTask(String address, ShimmerClient client) {
+            this.address = address;
+            this.client = new WeakReference<>(client);
+        }
+
+        @Override
+        protected ShimmerConnection doInBackground(Void... params) {
+            try {
+                BluetoothDevice device = client.get().adapter.getRemoteDevice(address);
+                BluetoothSocket socket =
+                        device.createInsecureRfcommSocketToServiceRecord(SHIMMER_UUID);
+                if (socket == null) {
                     Log.e(TAG, String.format("Could not connect to %s.", device.getName()));
-                    connectionAttemptts--;
-                    if (connectionAttemptts > 0) {
-                        connect(device.getAddress());
-                    }
-                    return;
+                    return null;
                 }
-
-                listener.onConnect(device.getAddress());
-                if (connection.sendInquiry()) {
-                    connection.start();
-                    ShimmerClient.this.connection = connection;
-                }
+                socket.connect();
+                return new ShimmerConnection(socket, client.get());
+            } catch (IOException e) {
+                // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
             }
-        }.execute();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(ShimmerConnection connection) {
+            if (connection == null) {
+                client.get().connect(address);
+                return;
+            }
+
+            client.get().listener.onConnect(address);
+            if (connection.sendInquiry()) {
+                connection.start();
+                client.get().connection = connection;
+            }
+        }
     }
 
     public boolean isConnected() {
@@ -144,13 +151,16 @@ public class ShimmerClient {
         }
     }
 
-    private class ShimmerConnection extends Thread {
+    private static class ShimmerConnection extends Thread {
         private final BluetoothSocket socket;
         private InputStream inStream;
         private OutputStream outStream;
 
-        public ShimmerConnection(BluetoothSocket socket) {
+        private final WeakReference<ShimmerClient> client;
+
+        public ShimmerConnection(BluetoothSocket socket, ShimmerClient client) {
             this.socket = socket;
+            this.client = new WeakReference<>(client);
             try {
                 inStream = socket.getInputStream();
                 outStream = socket.getOutputStream();
@@ -179,7 +189,7 @@ public class ShimmerClient {
                         Log.e(TAG, "Exception while reading Data Packet.", e);
                         break;
                     }
-                    processData(buffer);
+                    client.get().processData(buffer);
                 } else if (response == 0x02) {  // Inquiry response
                     byte[] buffer = new byte[128];
                     int numBytes;
@@ -207,7 +217,7 @@ public class ShimmerClient {
                     Log.w(TAG, String.format("Unknown response 0x%02x", response));
                 }
             }
-            onDisconnect(socket.getRemoteDevice());
+            client.get().onDisconnect(socket.getRemoteDevice());
         }
 
         public boolean startStreaming() {
