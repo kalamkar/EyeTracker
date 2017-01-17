@@ -11,9 +11,6 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.CompoundButton;
-import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -50,21 +47,29 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
-        ((ToggleButton) findViewById(R.id.filter)).setOnCheckedChangeListener(
-                new CompoundButton.OnCheckedChangeListener() {
+        findViewById(R.id.binocular).setOnClickListener(
+                new View.OnClickListener() {
                     @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        signals = new SignalProcessor(MainActivity.this, isChecked);
+                    public void onClick(View view) {
+                        boolean show = findViewById(R.id.leftChart).getVisibility() == View.VISIBLE;
+                        findViewById(R.id.leftChart).setVisibility(show ? View.INVISIBLE : View.VISIBLE);
+                        findViewById(R.id.rightChart).setVisibility(show ? View.INVISIBLE : View.VISIBLE);
                     }
                 });
 
         accelerometer = new AccelerationProcessor(
                 (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
+
+        findViewById(R.id.leftGrid).setVisibility(View.INVISIBLE);
+        findViewById(R.id.rightGrid).setVisibility(View.INVISIBLE);
+        findViewById(R.id.leftChart).setVisibility(View.INVISIBLE);
+        findViewById(R.id.rightChart).setVisibility(View.INVISIBLE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
         patchClient.startScan();
@@ -105,7 +110,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             @Override
             public void run() {
                 findViewById(R.id.progress).setVisibility(View.VISIBLE);
-                ((TextView) findViewById(R.id.status)).setText(R.string.connecting);
             }
         });
     }
@@ -120,28 +124,19 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onScanEnd() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.progress).setVisibility(View.GONE);
-            }
-        });
     }
 
     @Override
     public void onConnect(String address) {
         Log.i(TAG, String.format("Connected to %s", address));
         writer = new FileDataWriter(this);
+        showGrid(true);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (MainActivity.this.isDestroyed()) {
-                    return;
-                }
-                ((TextView) findViewById(R.id.status)).setText(R.string.connected);
+                findViewById(R.id.progress).setVisibility(View.INVISIBLE);
             }
         });
-
     }
 
     @Override
@@ -149,14 +144,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         Log.i(TAG, String.format("Disconnected from %s", address));
         writer.close();
         writer = null;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!MainActivity.this.isDestroyed()) {
-                    ((TextView) findViewById(R.id.status)).setText(R.string.disconnected);
-                }
-            }
-        });
+        showGrid(false);
         if (chartUpdateTimer != null) {
             chartUpdateTimer.cancel();
         }
@@ -168,7 +156,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private final TimerTask chartUpdater = new TimerTask() {
         @Override
         public void run() {
-            boolean filter = ((ToggleButton) findViewById(R.id.filter)).isChecked();
             final ChartFragment leftChart =
                     (ChartFragment) getFragmentManager().findFragmentById(R.id.leftChart);
             final ChartFragment rightChart =
@@ -241,13 +228,21 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onShakingChange(final boolean isShaking) {
         if (isShaking) {
-            signals = new SignalProcessor(this,
-                    ((ToggleButton) findViewById(R.id.filter)).isChecked());
+            signals = new SignalProcessor(this, true);
         }
+        showGrid(!isShaking);
+    }
+
+    private void showGrid(final boolean show) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                findViewById(R.id.shaking).setVisibility(isShaking ? View.VISIBLE : View.INVISIBLE);
+                if (MainActivity.this.isDestroyed() || patchClient == null
+                        || !patchClient.isConnected()) {
+                    return;
+                }
+                findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
             }
         });
     }

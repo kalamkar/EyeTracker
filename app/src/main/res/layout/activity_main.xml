@@ -53,14 +53,6 @@
                 android:layout_height="match_parent"
                 tools:layout="@layout/fragment_chart"/>
 
-
-            <ImageView
-                android:src="?android:attr/alertDialogIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|center_horizontal"
-                android:id="@+id/shaking"/>
-
         </FrameLayout>
 
     </LinearLayout>
@@ -74,40 +66,13 @@
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin">
 
-        <TextView
-            android:id="@+id/position"
-            style="@style/IconTip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"/>
-
-        <TextView
-            android:id="@+id/status"
-            style="@style/IconTip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:text="@string/connecting" />
-
         <ProgressBar
             android:id="@+id/progress"
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@+id/status" />
-
-        <ToggleButton
-            android:id="@+id/filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:textOff="@string/filter"
-            android:textOn="@string/filter"
-            android:checked="true"/>
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"/>
 
     </RelativeLayout>
 
