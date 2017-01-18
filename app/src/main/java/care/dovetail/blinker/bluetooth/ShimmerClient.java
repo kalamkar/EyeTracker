@@ -147,15 +147,18 @@ public class ShimmerClient {
 
         @Override
         protected void onPostExecute(ShimmerConnection connection) {
-            if (connection == null) {
-                client.get().connect(address);
+            if (client.get() == null) {
                 return;
             }
 
-            client.get().listener.onConnect(address);
-            if (connection.sendInquiry()) {
-                connection.start();
-                client.get().connection = connection;
+            if (connection == null) {
+                client.get().connect(address);
+            } else {
+                if (connection.sendInquiry()) {
+                    connection.start();
+                    client.get().connection = connection;
+                    client.get().listener.onConnect(address);
+                }
             }
         }
     }
