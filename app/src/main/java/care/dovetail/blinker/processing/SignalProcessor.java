@@ -20,7 +20,8 @@ public class SignalProcessor {
     private static final int FILTER_ORDER = 1;
 
     private static final int BLINK_WINDOW = 20;
-    private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 8; // 3; // 8;
+    private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
+    private static final int LENGTH_FOR_MEDIAN =  500;
     private static final int LENGTH_FOR_CHECK = Config.GRAPH_LENGTH / 2;
 
     private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;  // 0.45f
@@ -32,7 +33,7 @@ public class SignalProcessor {
 
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = 5000; // (int) (Math.pow(2, 24) * 0.001);
+    private int halfGraphHeight = 4000; // (int) (Math.pow(2, 24) * 0.001);
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -40,12 +41,8 @@ public class SignalProcessor {
     private int median1;
     private int median2;
 
-    private int recentMedian1;
-    private int recentMedian2;
-
     private final IirFilter filter1;
     private final IirFilter filter2;
-    private final boolean useFilter;
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
@@ -55,9 +52,8 @@ public class SignalProcessor {
         void onFeature(Feature feature);
     }
 
-    public SignalProcessor(FeatureObserver observer, boolean useFilter) {
+    public SignalProcessor(FeatureObserver observer) {
         this.observer = observer;
-        this.useFilter = useFilter;
 
         // Frequency values relative to sampling rate (200Hz).
         filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
@@ -75,13 +71,10 @@ public class SignalProcessor {
         System.arraycopy(values2, 1, values2, 0, values2.length - 1);
         values2[values2.length - 1] = (int) filter2.step(channel2);
 
-        median1 = Utils.calculateMedian(values1);
-        median2 = Utils.calculateMedian(values2);
-
-        recentMedian1 = Utils
-                .calculateMedian(values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-        recentMedian2 = Utils
-                .calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        median1 = Utils.calculateMedian(
+                values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        median2 = Utils.calculateMedian(
+                values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
 
         signalCheckCount++;
         if (signalCheckCount == LENGTH_FOR_CHECK) {
@@ -91,18 +84,23 @@ public class SignalProcessor {
             }
         }
 
-        Feature blink = maybeGetBlink(values2, getMinSpikeHeight());
+        int medianForBlink = Utils.calculateMedian(
+                values2, values2.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
+        int minSpikeHeight = getMinSpikeHeight(values2, recentBlinks, medianForBlink);
+        Feature blink = maybeGetBlink(values2, minSpikeHeight);
         if (blink != null) {
             onFeature(blink);
         }
     }
 
     public int[] channel1() {
-        return useFilter ? getStepPositions(values1, median1, halfGraphHeight) : values1;
+        // return values1;
+        return getStepPositions(values1, median1, halfGraphHeight);
     }
 
     public int[] channel2() {
-        return useFilter ? getStepPositions(values2, median2, halfGraphHeight) : values2;
+        // return values2;
+        return getStepPositions(values2, median2, halfGraphHeight);
     }
 
     public Pair<Integer, Integer> range1() {
@@ -143,10 +141,10 @@ public class SignalProcessor {
         observer.onFeature(feature);
     }
 
-    private int getMinSpikeHeight() {
+    private static int getMinSpikeHeight(int values[], List<Feature> recentBlinks, int median) {
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
-            Pair<Integer, Integer> minMax = Utils.calculateMinMax(values2);
-            return (int) (Math.abs(minMax.second - recentMedian2) * BLINK_HEIGHT_TOLERANCE);
+            int max = Utils.calculateMinMax(values).second;
+            return (int) (Math.abs(max - median) * BLINK_HEIGHT_TOLERANCE);
         }
         return (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
     }
@@ -201,6 +199,6 @@ public class SignalProcessor {
     private static boolean isGoodSignal(int values1[], int values2[]) {
         Pair<Integer, Integer> minMax1 = Utils.calculateMinMax(values1);
         Pair<Integer, Integer> minMax2 = Utils.calculateMinMax(values2);
-        return !(minMax1.first == minMax1.second && minMax2.first == minMax2.second);
+        return (minMax1.first != minMax1.second && minMax2.first != minMax2.second);
     }
 }

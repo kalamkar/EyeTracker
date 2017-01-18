@@ -28,7 +28,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
-    private SignalProcessor signals = new SignalProcessor(this, true);
+    private SignalProcessor signals = new SignalProcessor(this);
     private AccelerationProcessor accelerometer;
 
     private FileDataWriter writer = null;
@@ -241,7 +241,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onShakingChange(final boolean isShaking) {
         if (isShaking) {
-            signals = new SignalProcessor(this, true);
+            signals = new SignalProcessor(this);
         }
         showGrid(!isShaking);
     }
