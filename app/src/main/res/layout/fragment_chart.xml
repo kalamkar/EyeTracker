@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     tools:context="care.dovetail.blinker.MainActivity" >
 
-    <care.dovetail.blinker.ChartView
+    <care.dovetail.blinker.ui.ChartView
         android:id="@+id/eog"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

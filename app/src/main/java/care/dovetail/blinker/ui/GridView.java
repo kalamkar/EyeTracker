@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,6 +11,9 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import java.io.InputStream;
+
+import care.dovetail.blinker.Config;
+import care.dovetail.blinker.R;
 
 /**
  * Created by abhi on 9/28/16.

@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.ui;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -10,7 +10,9 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-import care.dovetail.blinker.ChartView.Chart;
+import care.dovetail.blinker.Config;
+import care.dovetail.blinker.R;
+import care.dovetail.blinker.ui.ChartView.Chart;
 
 public class ChartFragment extends Fragment {
     private static final String TAG = "ChartFragment";

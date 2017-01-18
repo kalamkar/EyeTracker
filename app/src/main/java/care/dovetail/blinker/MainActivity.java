@@ -15,7 +15,13 @@ import android.view.WindowManager;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import care.dovetail.blinker.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.blinker.bluetooth.ShimmerClient;
+import care.dovetail.blinker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.blinker.processing.AccelerationProcessor;
+import care.dovetail.blinker.processing.Feature;
+import care.dovetail.blinker.processing.SignalProcessor;
+import care.dovetail.blinker.ui.ChartFragment;
+import care.dovetail.blinker.ui.GridView;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
@@ -202,17 +208,24 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        ringtone.play();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
-                leftGrid.background(bkgIndex);
-                GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
-                rightGrid.background(bkgIndex);
-                bkgIndex = bkgIndex + 1 < GridView.BACKGROUNDS.length ? bkgIndex + 1 : 0;
-            }
-        });
+        if (Feature.Type.BLINK == feature.type) {
+            ringtone.play();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
+                    leftGrid.background(bkgIndex);
+                    GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
+                    rightGrid.background(bkgIndex);
+                    bkgIndex = bkgIndex + 1 < GridView.BACKGROUNDS.length ? bkgIndex + 1 : 0;
+                }
+            });
+        } else if (Feature.Type.BAD_SIGNAL == feature.type) {
+            Log.e(TAG, "Bad Signal detected, reconnecting...");
+            String address = patchClient.getAddress();
+            patchClient.close();
+            patchClient.connect(address);
+        }
     }
 
     @Override

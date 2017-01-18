@@ -6,6 +6,8 @@ import android.util.Pair;
 import java.util.Arrays;
 import java.util.List;
 
+import care.dovetail.blinker.processing.Feature;
+
 /**
  * Created by abhi on 9/22/16.
  */

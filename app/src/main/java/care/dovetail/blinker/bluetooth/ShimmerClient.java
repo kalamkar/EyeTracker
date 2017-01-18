@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -17,6 +17,8 @@ import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.UUID;
 
+import care.dovetail.blinker.Config;
+
 public class ShimmerClient {
     private static final String TAG = "ShimmerClient";
 
@@ -27,6 +29,7 @@ public class ShimmerClient {
 
     private final BluetoothAdapter adapter;
     private ShimmerConnection connection;
+    private String remoteAddress;
 
     public interface BluetoothDeviceListener {
         void onScanStart();
@@ -78,7 +81,40 @@ public class ShimmerClient {
             return;
         }
 
+        remoteAddress = address;
         new ConnectionTask(address, this).execute();
+    }
+
+    public boolean isConnected() {
+        return connection != null;
+    }
+
+    public String getAddress() {
+        return remoteAddress;
+    }
+
+    public void close() {
+        if (connection != null) {
+            Log.i(TAG, "Closing connection to Shimmer device.");
+            connection.close();
+            connection = null;
+        }
+    }
+
+    private void onDisconnect(BluetoothDevice device) {
+        listener.onDisconnect(device.getAddress());
+        remoteAddress = null;
+    }
+
+    public static void maybeEnableBluetooth(Activity activity) {
+        BluetoothManager bluetoothManager =
+                (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter bluetooth = bluetoothManager.getAdapter();
+
+        if (bluetooth == null || !bluetooth.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
+        }
     }
 
     private static class ConnectionTask extends AsyncTask<Void, Void, ShimmerConnection> {
@@ -121,33 +157,6 @@ public class ShimmerClient {
                 connection.start();
                 client.get().connection = connection;
             }
-        }
-    }
-
-    public boolean isConnected() {
-        return connection != null;
-    }
-
-    public void close() {
-        if (connection != null) {
-            Log.i(TAG, "Closing connection to Shimmer device.");
-            connection.close();
-            connection = null;
-        }
-    }
-
-    private void onDisconnect(BluetoothDevice device) {
-        listener.onDisconnect(device.getAddress());
-    }
-
-    public static void maybeEnableBluetooth(Activity activity) {
-        BluetoothManager bluetoothManager =
-                (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetooth = bluetoothManager.getAdapter();
-
-        if (bluetooth == null || !bluetooth.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
         }
     }
 

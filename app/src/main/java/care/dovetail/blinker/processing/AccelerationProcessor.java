@@ -1,9 +1,11 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.processing;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+
+import care.dovetail.blinker.Config;
 
 /**
  * Created by abhi on 11/16/16.

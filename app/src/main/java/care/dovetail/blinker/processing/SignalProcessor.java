@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.processing;
 
 import android.util.Pair;
 
@@ -9,6 +9,8 @@ import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
+import care.dovetail.blinker.Config;
+import care.dovetail.blinker.Utils;
 
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
@@ -19,6 +21,7 @@ public class SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_MEDIAN = BLINK_WINDOW * 8; // 3; // 8;
+    private static final int LENGTH_FOR_CHECK = Config.GRAPH_LENGTH / 2;
 
     private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;  // 0.45f
     private static final float BLINK_BASE_TOLERANCE = 0.40f;    // 0.10f
@@ -46,6 +49,8 @@ public class SignalProcessor {
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
+    private int signalCheckCount = 0;
+
     public interface FeatureObserver {
         void onFeature(Feature feature);
     }
@@ -63,7 +68,6 @@ public class SignalProcessor {
                 LOW_FREQUENCY / 200.0f, HIGH_FREQUENCY / 200.0f));
     }
 
-
     public synchronized void update(int channel1, int channel2) {
         System.arraycopy(values1, 1, values1, 0, values1.length - 1);
         values1[values1.length - 1] = (int) filter1.step(channel1);
@@ -78,6 +82,14 @@ public class SignalProcessor {
                 .calculateMedian(values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
         recentMedian2 = Utils
                 .calculateMedian(values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+
+        signalCheckCount++;
+        if (signalCheckCount == LENGTH_FOR_CHECK) {
+            signalCheckCount = 0;
+            if (!isGoodSignal(values1, values2)) {
+                onFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, Feature.Channel.ALL));
+            }
+        }
 
         Feature blink = maybeGetBlink(values2, getMinSpikeHeight());
         if (blink != null) {
@@ -184,5 +196,11 @@ public class SignalProcessor {
         int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * BLINK_BASE_TOLERANCE);
         boolean isFlat = Math.abs(last - first) < minBaseDifference;
         return isPeak && isBigEnough && isFlat;
+    }
+
+    private static boolean isGoodSignal(int values1[], int values2[]) {
+        Pair<Integer, Integer> minMax1 = Utils.calculateMinMax(values1);
+        Pair<Integer, Integer> minMax2 = Utils.calculateMinMax(values2);
+        return !(minMax1.first == minMax1.second && minMax2.first == minMax2.second);
     }
 }

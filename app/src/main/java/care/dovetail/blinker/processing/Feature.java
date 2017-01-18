@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.blinker.processing;
 
 /**
  * Created by abhi on 9/21/16.
@@ -8,7 +8,8 @@ public class Feature {
 
     public enum Type {
         BLINK,
-        TRIPLE_BLINK
+        TRIPLE_BLINK,
+        BAD_SIGNAL
     }
 
     public enum Channel {
@@ -16,7 +17,8 @@ public class Feature {
         RIGHT,
         VERTICAL,
         HORIZONTAL,
-        NONE
+        NONE,
+        ALL
     }
 
     public final Type type;
