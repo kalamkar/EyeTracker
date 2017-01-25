@@ -22,25 +22,18 @@ import care.dovetail.blinker.Config;
 public class ShimmerClient {
     private static final String TAG = "ShimmerClient";
 
-    public static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    public static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
+    private static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
 
     private final BluetoothDeviceListener listener;
 
     private final BluetoothAdapter adapter;
     private ShimmerConnection connection;
-    private String remoteAddress;
 
     public interface BluetoothDeviceListener {
-        void onScanStart();
+        void onConnect(String name);
 
-        void onScanResult(String deviceAddress);
-
-        void onScanEnd();
-
-        void onConnect(String address);
-
-        void onDisconnect(String address);
+        void onDisconnect(String name);
 
         void onNewValues(int channel1, int channel2);
     }
@@ -53,57 +46,34 @@ public class ShimmerClient {
         adapter = bluetoothManager.getAdapter();
     }
 
-    public void startScan() {
-        Log.i(TAG, "Starting scan for Shimmer device.");
-        listener.onScanStart();
-        Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
-        for (BluetoothDevice device : pairedDevices) {
-            String name = device.getName();
-            if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
-                Log.i(TAG, String.format("Found device %s", name));
-                listener.onScanResult(device.getAddress());
-            }
-        }
-    }
-
-    public void stopScan() {
-        Log.i(TAG, "Stopping scan for Shimmer device.");
-        listener.onScanEnd();
-    }
-
-    public void connect(String address) {
-        if (address == null || address.isEmpty()) {
-            Log.e(TAG, "No Shimmer device given to connect.");
-            return;
-        }
+    public void connect() {
         if (adapter == null || !adapter.isEnabled()) {
             Log.e(TAG, "Bluetooth adapter is null or disabled.");
             return;
         }
 
-        remoteAddress = address;
-        new ConnectionTask(address, this).execute();
+        close();
+        Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
+        for (BluetoothDevice device : pairedDevices) {
+            String name = device.getName();
+            if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
+                Log.i(TAG, String.format("Connecting to %s", device.getName()));
+                new ConnectionTask(device.getAddress(), this).execute();
+                break;
+            }
+        }
     }
 
     public boolean isConnected() {
         return connection != null;
     }
 
-    public String getAddress() {
-        return remoteAddress;
-    }
-
     public void close() {
         if (connection != null) {
-            Log.i(TAG, "Closing connection to Shimmer device.");
+            Log.i(TAG, String.format("Closing connection to %s", connection.getRemoteName()));
             connection.close();
             connection = null;
         }
-    }
-
-    private void onDisconnect(BluetoothDevice device) {
-        listener.onDisconnect(device.getAddress());
-        remoteAddress = null;
     }
 
     public static void maybeEnableBluetooth(Activity activity) {
@@ -151,14 +121,13 @@ public class ShimmerClient {
                 return;
             }
 
-            if (connection == null) {
-                client.get().connect(address);
-            } else {
-                if (connection.sendInquiry()) {
+            if (connection != null && connection.sendInquiry()) {
                     connection.start();
                     client.get().connection = connection;
-                    client.get().listener.onConnect(address);
-                }
+                    client.get().listener.onConnect(connection.getRemoteName());
+            } else {
+                client.get().close();
+                new ConnectionTask(address, client.get()).execute();
             }
         }
     }
@@ -170,7 +139,7 @@ public class ShimmerClient {
 
         private final WeakReference<ShimmerClient> client;
 
-        public ShimmerConnection(BluetoothSocket socket, ShimmerClient client) {
+        private ShimmerConnection(BluetoothSocket socket, ShimmerClient client) {
             this.socket = socket;
             this.client = new WeakReference<>(client);
             try {
@@ -179,6 +148,10 @@ public class ShimmerClient {
             } catch (IOException e) {
                 Log.e(TAG, "Could not get I/O streams.", e);
             }
+        }
+
+        public String getRemoteName() {
+            return socket.getRemoteDevice().getName();
         }
 
         @Override
@@ -229,15 +202,15 @@ public class ShimmerClient {
                     Log.w(TAG, String.format("Unknown response 0x%02x", response));
                 }
             }
-            client.get().onDisconnect(socket.getRemoteDevice());
+            client.get().listener.onDisconnect(getRemoteName());
         }
 
-        public boolean startStreaming() {
+        private boolean startStreaming() {
             Log.i(TAG, "Sending Start Stream command");
             return write(new byte[]{(byte) 0x07});
         }
 
-        public boolean sendInquiry() {
+        private boolean sendInquiry() {
             Log.i(TAG, "Sending Inquiry command");
             return write(new byte[]{(byte) 0x01});
         }
@@ -252,7 +225,7 @@ public class ShimmerClient {
             return true;
         }
 
-        public void close() {
+        private void close() {
             try {
                 socket.close();
             } catch (IOException e) {
@@ -263,7 +236,7 @@ public class ShimmerClient {
 
     private void processData(byte buffer[]) {
         if (buffer == null || buffer.length != 10) {
-            Log.w(TAG, String.format("Invalid buffer for data packet."));
+            Log.w(TAG, "Invalid buffer for data packet.");
             return;
         }
 

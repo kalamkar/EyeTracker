@@ -78,7 +78,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
-        patchClient.startScan();
+        patchClient.connect();
+        findViewById(R.id.progress).setVisibility(View.VISIBLE);
 
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
@@ -95,7 +96,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     protected void onStop() {
         if (patchClient != null) {
-            patchClient.stopScan();
             patchClient.close();
             patchClient = null;
         }
@@ -111,30 +111,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     @Override
-    public void onScanStart() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.progress).setVisibility(View.VISIBLE);
-            }
-        });
-    }
-
-    @Override
-    public void onScanResult(String deviceAddress) {
-        if (patchClient != null) {
-            patchClient.stopScan();
-            patchClient.connect(deviceAddress);
-        }
-    }
-
-    @Override
-    public void onScanEnd() {
-    }
-
-    @Override
-    public void onConnect(String address) {
-        Log.i(TAG, String.format("Connected to %s", address));
+    public void onConnect(String name) {
+        Log.i(TAG, String.format("Connected to %s", name));
         writer = new FileDataWriter(this);
         showGrid(true);
         runOnUiThread(new Runnable() {
@@ -146,8 +124,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     @Override
-    public void onDisconnect(String address) {
-        Log.i(TAG, String.format("Disconnected from %s", address));
+    public void onDisconnect(String name) {
+        Log.i(TAG, String.format("Disconnected from %s", name));
         writer.close();
         writer = null;
         showGrid(false);
@@ -155,7 +133,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             chartUpdateTimer.cancel();
         }
         if (patchClient != null) {
-            patchClient.startScan();
+            patchClient.connect();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.progress).setVisibility(View.VISIBLE);
+                }
+            });
         }
     }
 
@@ -222,9 +206,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             });
         } else if (Feature.Type.BAD_SIGNAL == feature.type) {
             Log.e(TAG, "Bad Signal detected, reconnecting...");
-            String address = patchClient.getAddress();
-            patchClient.close();
-            patchClient.connect(address);
+            patchClient.connect();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.progress).setVisibility(View.VISIBLE);
+                }
+            });
         }
     }
 

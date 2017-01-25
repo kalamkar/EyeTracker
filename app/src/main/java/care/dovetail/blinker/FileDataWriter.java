@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class FileDataWriter {
-    private static final String TAG = "EcgDataWriter";
+    private static final String TAG = "FileDataWriter";
 
     private static final SimpleDateFormat FILE_NAME_FORMAT =
             new SimpleDateFormat("MMM-dd-kk-mm-ss", Locale.US);
