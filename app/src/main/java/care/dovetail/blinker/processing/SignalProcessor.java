@@ -31,7 +31,6 @@ public class SignalProcessor {
 
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 5;
-    private static final int ARRAY_SHIFT = Config.NUM_STEPS / 2;
 
     private final FeatureObserver observer;
 
@@ -105,27 +104,21 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> range1() {
-        return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
+        // return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
+        return Pair.create(0, Config.NUM_STEPS - 1);
     }
 
     public Pair<Integer, Integer> range2() {
-        return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
+        // return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
+        return Pair.create(0, Config.NUM_STEPS - 1);
     }
 
     public Pair<Integer, Integer> getSector() {
         int latestValue1 = values1[values1.length - 1];
         int latestValue2 = values2[values2.length - 1];
-        // Using median of blink window instead of just latest value.
-//        int latestValue1 = Utils.calculateMedian(values1, values1.length - BLINK_WINDOW, BLINK_WINDOW);
-//        int latestValue2 = Utils.calculateMedian(values2, values2.length - BLINK_WINDOW, BLINK_WINDOW);
         int level1 = getLevel(latestValue1, median1, (int) (halfGraphHeight * 0.7f));
         int level2 = getLevel(latestValue2, median2, halfGraphHeight);
-        level1 = level1 > ARRAY_SHIFT ? ARRAY_SHIFT
-                : level1 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level1;
-        level2 = level2 > ARRAY_SHIFT ? ARRAY_SHIFT
-                : level2 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level2;
-        return Pair.create(Config.NUM_STEPS - (level1 + ARRAY_SHIFT),
-                Config.NUM_STEPS - (level2 + ARRAY_SHIFT));
+        return Pair.create(level1, level2);
     }
 
     private void onFeature(Feature feature) {
@@ -156,14 +149,14 @@ public class SignalProcessor {
         int min = median - halfGraphHeight;
         int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
-        return Math.round((currentValue - median) / stepHeight);
+        int level = (int) ((currentValue - median) / stepHeight);
+        return Config.NUM_STEPS - (level + (Config.NUM_STEPS / 2)) - 1;
     }
 
     private static int[] getStepPositions(int values[], int median, int halfGraphHeight) {
         int positions[] = new int[values.length];
         for (int i = 0; i < positions.length; i++) {
-            int level = getLevel(values[i], median, halfGraphHeight);
-            positions[i] = median + level * (halfGraphHeight / Config.NUM_STEPS);
+            positions[i] = getLevel(values[i], median, halfGraphHeight);
         }
         return positions;
     }
