@@ -34,10 +34,13 @@ public class SignalProcessor {
 
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = 4000; // (int) (Math.pow(2, 24) * 0.001);
+    private int halfGraphHeight = 4000;
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
+
+    private final int levels1[] = new int[Config.GRAPH_LENGTH];
+    private final int levels2[] = new int[Config.GRAPH_LENGTH];
 
     private int median1;
     private int median2;
@@ -76,6 +79,14 @@ public class SignalProcessor {
         median2 = Utils.calculateMedian(
                 values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
 
+        System.arraycopy(levels1, 1, levels1, 0, levels1.length - 1);
+        levels1[levels1.length - 1] = (Config.NUM_STEPS - 1) -
+                getLevel(values1[values1.length - 1], median1, halfGraphHeight);
+
+        System.arraycopy(levels2, 1, levels2, 0, levels2.length - 1);
+        levels2[levels2.length - 1] = (Config.NUM_STEPS - 1) -
+                getLevel(values2[values2.length - 1], median2, halfGraphHeight);
+
         signalCheckCount++;
         if (signalCheckCount == LENGTH_FOR_CHECK) {
             signalCheckCount = 0;
@@ -95,12 +106,12 @@ public class SignalProcessor {
 
     public int[] channel1() {
         // return values1;
-        return getStepPositions(values1, median1, halfGraphHeight);
+        return levels1;
     }
 
     public int[] channel2() {
         // return values2;
-        return getStepPositions(values2, median2, halfGraphHeight);
+        return levels2;
     }
 
     public Pair<Integer, Integer> range1() {
@@ -150,15 +161,7 @@ public class SignalProcessor {
         int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
         int level = (int) ((currentValue - median) / stepHeight);
-        return Config.NUM_STEPS - (level + (Config.NUM_STEPS / 2)) - 1;
-    }
-
-    private static int[] getStepPositions(int values[], int median, int halfGraphHeight) {
-        int positions[] = new int[values.length];
-        for (int i = 0; i < positions.length; i++) {
-            positions[i] = getLevel(values[i], median, halfGraphHeight);
-        }
-        return positions;
+        return (Config.NUM_STEPS - 1) - (level + (Config.NUM_STEPS / 2));
     }
 
     private static Feature maybeGetBlink(int values[], int minSpikeHeight) {
