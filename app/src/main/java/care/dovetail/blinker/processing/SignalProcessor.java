@@ -58,10 +58,10 @@ public class SignalProcessor {
         this.observer = observer;
 
         filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.butterworth, FILTER_ORDER, 0,
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
                 LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
         filter2 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.butterworth, FILTER_ORDER, 0,
+                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
                 LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
     }
 
