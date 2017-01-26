@@ -15,6 +15,8 @@ import care.dovetail.blinker.Utils;
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";
 
+    private static final double SAMPLING_FREQ  = 200.0;
+
     private static final double LOW_FREQUENCY  = 1.0;    // 1.0;
     private static final double HIGH_FREQUENCY = 5.0;    // 5.0;
     private static final int FILTER_ORDER = 1;
@@ -55,13 +57,12 @@ public class SignalProcessor {
     public SignalProcessor(FeatureObserver observer) {
         this.observer = observer;
 
-        // Frequency values relative to sampling rate (200Hz).
         filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-                LOW_FREQUENCY / 200.0f, HIGH_FREQUENCY / 200.0f));
+                FilterCharacteristicsType.butterworth, FILTER_ORDER, 0,
+                LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
         filter2 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-                LOW_FREQUENCY / 200.0f, HIGH_FREQUENCY / 200.0f));
+                FilterCharacteristicsType.butterworth, FILTER_ORDER, 0,
+                LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
     }
 
     public synchronized void update(int channel1, int channel2) {
@@ -123,7 +124,8 @@ public class SignalProcessor {
                 : level1 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level1;
         level2 = level2 > ARRAY_SHIFT ? ARRAY_SHIFT
                 : level2 < 0 - ARRAY_SHIFT ? 0 - ARRAY_SHIFT : level2;
-        return Pair.create(level1 + ARRAY_SHIFT, level2 + ARRAY_SHIFT);
+        return Pair.create(Config.NUM_STEPS - (level1 + ARRAY_SHIFT),
+                Config.NUM_STEPS - (level2 + ARRAY_SHIFT));
     }
 
     private void onFeature(Feature feature) {

@@ -35,6 +35,8 @@ public class GridView extends View {
 
     public GridView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        paint.setColor(Color.WHITE);
+        paint.setAlpha((int) Math.round(255.0 * 0.7));
         background(0);
     }
 
@@ -46,12 +48,15 @@ public class GridView extends View {
         }
     }
 
-    public void highlight(int row, int column, int index) {
+    public void highlight(int horizontalSector, int verticalSector, int index) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
-        float left = cellWidth * (Config.NUM_STEPS - row);
-        float top = cellHeight * (Config.NUM_STEPS - column);
-        Bitmap image = getImage(index);
-        canvas.drawBitmap(image, left - image.getWidth() / 2, top - image.getHeight() / 2, paint);
+        float left = cellWidth * horizontalSector;
+        float top = cellHeight * verticalSector;
+        // Bitmap image = getImage(index);
+        // canvas.drawBitmap(image, left - image.getWidth() / 2, top - image.getHeight() / 2, paint);
+        // canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
+        canvas.drawCircle(left + Math.round(cellWidth / 2), top + Math.round(cellHeight / 2),
+                Math.round(Math.min(cellHeight, cellWidth) / 2), paint);
         invalidate();
     }
 

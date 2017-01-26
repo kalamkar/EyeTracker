@@ -68,8 +68,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         findViewById(R.id.leftGrid).setVisibility(View.INVISIBLE);
         findViewById(R.id.rightGrid).setVisibility(View.INVISIBLE);
-        findViewById(R.id.leftChart).setVisibility(View.INVISIBLE);
-        findViewById(R.id.rightChart).setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -88,7 +86,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
 
         sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
+        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GAZE_UPDATE_MILLIS);
 
         accelerometer.start();
     }
