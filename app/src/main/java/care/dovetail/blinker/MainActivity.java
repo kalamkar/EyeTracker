@@ -177,12 +177,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int index = (int) (Math.random() * GridView.IMAGES.length);
                     Pair<Integer, Integer> sector = signals.getSector();
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
-                    leftGrid.highlight(sector.first, sector.second, index);
+                    leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
-                    rightGrid.highlight(sector.first, sector.second, index);
+                    rightGrid.highlight(sector.first, sector.second);
                 }
             });
         }

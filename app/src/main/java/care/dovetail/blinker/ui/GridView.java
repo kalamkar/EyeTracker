@@ -2,7 +2,6 @@ package care.dovetail.blinker.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -13,16 +12,12 @@ import android.view.View;
 import java.io.InputStream;
 
 import care.dovetail.blinker.Config;
-import care.dovetail.blinker.R;
 
 /**
  * Created by abhi on 9/28/16.
  */
 
 public class GridView extends View {
-
-    public static final int IMAGES[] = {R.mipmap.ic_butterfly1, R.mipmap.ic_butterfly2,
-            R.mipmap.ic_butterfly3};
 
     public static final String BACKGROUNDS[] = {"garden1.jpg", "garden2.jpg", "garden3.jpg"};
 
@@ -48,15 +43,13 @@ public class GridView extends View {
         }
     }
 
-    public void highlight(int horizontalSector, int verticalSector, int index) {
+    public void highlight(int horizontalSector, int verticalSector) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
         float left = cellWidth * horizontalSector;
         float top = cellHeight * verticalSector;
-        // Bitmap image = getImage(index);
-        // canvas.drawBitmap(image, left - image.getWidth() / 2, top - image.getHeight() / 2, paint);
-        // canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
-        canvas.drawCircle(left + Math.round(cellWidth / 2), top + Math.round(cellHeight / 2),
-                Math.round(Math.min(cellHeight, cellWidth) / 2), paint);
+        canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
+//        canvas.drawCircle(left + Math.round(cellWidth / 2), top + Math.round(cellHeight / 2),
+//                Math.round(Math.min(cellHeight, cellWidth) / 2), paint);
         invalidate();
     }
 
@@ -78,9 +71,5 @@ public class GridView extends View {
         canvas = new Canvas();
         canvas.setBitmap(bitmap);
         canvas.drawColor(Color.TRANSPARENT);
-    }
-
-    private Bitmap getImage(int index) {
-        return BitmapFactory.decodeResource(getResources(), IMAGES[index]);
     }
 }
