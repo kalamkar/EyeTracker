@@ -17,20 +17,21 @@ public class SignalProcessor {
 
     private static final double SAMPLING_FREQ  = 200.0;
 
-    private static final double LOW_FREQUENCY  = 1.0;    // 1.0;
-    private static final double HIGH_FREQUENCY = 5.0;    // 5.0;
-    private static final int FILTER_ORDER = 1;
+    private static final double LOW_FREQUENCY = 0.5;
+    private static final double HIGH_FREQUENCY = 3.0;
+    private static final int FILTER_ORDER = 2;
+
+    private static final float MAX_GAZE_TO_BLINK_RATIO = 0.2f;
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
     private static final int LENGTH_FOR_MEDIAN =  500;
-    private static final int LENGTH_FOR_CHECK = Config.GRAPH_LENGTH / 2;
-
-    private static final float BLINK_HEIGHT_TOLERANCE = 0.65f;  // 0.45f
-    private static final float BLINK_BASE_TOLERANCE = 0.40f;    // 0.10f
 
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 5;
+
+    private static final int MIN_BLINK_HEIGHT = 10000;
+    private static final int MAX_BLINK_HEIGHT = 30000;
 
     private final FeatureObserver observer;
 
@@ -38,19 +39,31 @@ public class SignalProcessor {
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
-
-    private final int levels1[] = new int[Config.GRAPH_LENGTH];
-    private final int levels2[] = new int[Config.GRAPH_LENGTH];
+    private final int blinks[] = new int[Config.GRAPH_LENGTH];
+    private final int feature1[] = new int[Config.GRAPH_LENGTH];
+    private final int feature2[] = new int[Config.GRAPH_LENGTH];
 
     private int median1;
     private int median2;
+    private int medianForBlink;
 
-    private final IirFilter filter1;
-    private final IirFilter filter2;
+    private final IirFilter filter1 = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
+            LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
+
+    private final IirFilter filter2 = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
+            LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
+
+    private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
+            4.0 / SAMPLING_FREQ, 10.0 / SAMPLING_FREQ));
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
+    private int lastBlinkIndex = -1;
+    private int lastBlinkHeight = 0;
 
-    private int signalCheckCount = 0;
+    private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(0, 0);
 
     public interface FeatureObserver {
         void onFeature(Feature feature);
@@ -58,13 +71,6 @@ public class SignalProcessor {
 
     public SignalProcessor(FeatureObserver observer) {
         this.observer = observer;
-
-        filter1 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-                LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
-        filter2 = new IirFilter(IirFilterDesignFisher.design(FilterPassType.bandpass,
-                FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-                LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
     }
 
     public synchronized void update(int channel1, int channel2) {
@@ -74,85 +80,100 @@ public class SignalProcessor {
         System.arraycopy(values2, 1, values2, 0, values2.length - 1);
         values2[values2.length - 1] = (int) filter2.step(channel2);
 
+        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
+        blinks[blinks.length - 1] = (int) blinkFilter.step(channel2);
+
+        System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
+        feature1[feature1.length - 1] = 0;
+
+        System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
+        feature2[feature2.length - 1] = 0;
+
+        lastBlinkIndex--;
+
         median1 = Utils.calculateMedian(
                 values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
         median2 = Utils.calculateMedian(
                 values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        medianForBlink = Utils.calculateMedian(
+                blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
-        System.arraycopy(levels1, 1, levels1, 0, levels1.length - 1);
-        levels1[levels1.length - 1] = (Config.NUM_STEPS - 1) -
-                getLevel(values1[values1.length - 1], median1, halfGraphHeight);
-
-        System.arraycopy(levels2, 1, levels2, 0, levels2.length - 1);
-        levels2[levels2.length - 1] = (Config.NUM_STEPS - 1) -
-                getLevel(values2[values2.length - 1], median2, halfGraphHeight);
-
-        signalCheckCount++;
-        if (signalCheckCount == LENGTH_FOR_CHECK) {
-            signalCheckCount = 0;
-            if (!isGoodSignal(values1, values2)) {
-                onFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, Feature.Channel.ALL));
-            }
-        }
-
-        int medianForBlink = Utils.calculateMedian(
-                values2, values2.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
-        int minSpikeHeight = getMinSpikeHeight(values2, recentBlinks, medianForBlink);
-        Feature blink = maybeGetBlink(values2, minSpikeHeight);
+        Feature blink = maybeGetBlink(blinks);
         if (blink != null) {
-            onFeature(blink);
+            if (blink.startIndex - BLINK_WINDOW > lastBlinkIndex) {
+                // New blink outside of last blink window
+                onFeature(blink);
+            } else if (lastBlinkHeight < (blink.values[0] - blink.values[1])) {
+                // New blink within last blink's window but biggger than last blink.
+                // Remove smaller last blink and add new blink.
+                Feature removedBlink = recentBlinks.remove(recentBlinks.size() - 1);
+                feature1[removedBlink.startIndex] = 0;
+                feature2[removedBlink.endIndex] = 0;
+                onFeature(blink);
+            }
+            // else ignore the new blink with height less than last blink height and within window
         }
+
+        int horizLevel = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
+        int vertLevel = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
+        sector = Pair.create(horizLevel, vertLevel);
     }
 
     public int[] channel1() {
-        // return values1;
-        return levels1;
+        return values1;
     }
 
     public int[] channel2() {
-        // return values2;
-        return levels2;
+        return values2;
+    }
+
+    public int[] blinks() {
+        return blinks;
+    }
+
+    public int[] feature1() {
+        return feature1;
+    }
+
+    public int[] feature2() {
+        return feature2;
     }
 
     public Pair<Integer, Integer> range1() {
-        // return Pair.create(median1 - halfGraphHeight, median1 + halfGraphHeight);
-        return Pair.create(0, Config.NUM_STEPS - 1);
+        return Pair.create(median1 - halfGraphHeight * 2, median1 + halfGraphHeight * 2);
     }
 
     public Pair<Integer, Integer> range2() {
-        // return Pair.create(median2 - halfGraphHeight, median2 + halfGraphHeight);
-        return Pair.create(0, Config.NUM_STEPS - 1);
+         return Pair.create(median2 - halfGraphHeight * 2, median2 + halfGraphHeight * 2);
+    }
+
+    public Pair<Integer, Integer> blinkRange() {
+        return Pair.create(medianForBlink - MAX_BLINK_HEIGHT, medianForBlink + MAX_BLINK_HEIGHT);
     }
 
     public Pair<Integer, Integer> getSector() {
-        int latestValue1 = values1[values1.length - 1];
-        int latestValue2 = values2[values2.length - 1];
-        int level1 = getLevel(latestValue1, median1, (int) (halfGraphHeight * 0.7f));
-        int level2 = getLevel(latestValue2, median2, halfGraphHeight);
-        return Pair.create(level1, level2);
+        return sector;
     }
 
     private void onFeature(Feature feature) {
         if (feature.type == Feature.Type.BLINK) {
+            lastBlinkHeight = feature.values[0] - feature.values[1];
+            lastBlinkIndex = feature.endIndex;
             recentBlinks.add(feature);
             if (recentBlinks.size() > MAX_RECENT_BLINKS) {
                 recentBlinks.remove(0);
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                halfGraphHeight = Utils.calculateMedianHeight(recentBlinks) * 40 / 100;
+                halfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
+                        * MAX_GAZE_TO_BLINK_RATIO);
             }
+
+            feature1[feature.startIndex] = feature.values[0];
+            feature2[feature.endIndex] = feature.values[1];
         }
 
         observer.onFeature(feature);
-    }
-
-    private static int getMinSpikeHeight(int values[], List<Feature> recentBlinks, int median) {
-        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
-            int max = Utils.calculateMinMax(values).second;
-            return (int) (Math.abs(max - median) * BLINK_HEIGHT_TOLERANCE);
-        }
-        return (int) (Utils.calculateMedianHeight(recentBlinks) * BLINK_HEIGHT_TOLERANCE);
     }
 
     private static int getLevel(int value, int median, int halfGraphHeight) {
@@ -164,39 +185,38 @@ public class SignalProcessor {
         return (Config.NUM_STEPS - 1) - (level + (Config.NUM_STEPS / 2));
     }
 
-    private static Feature maybeGetBlink(int values[], int minSpikeHeight) {
+    private static Feature maybeGetBlink(int values[]) {
         int last = values.length - 1;
-        int middle = last - (BLINK_WINDOW / 2);
         int first = last - BLINK_WINDOW + 1;
-        if (isBlink(values[first], values[middle - 1], values[middle], values[middle + 1],
-                values[last], minSpikeHeight)) {
-            Feature blink = new Feature(Feature.Type.BLINK, middle, values[middle],
-                    Feature.Channel.VERTICAL);
-            blink.height = Math.min(values[middle] - values[last], values[middle] - values[first])
-                    + (Math.abs(values[last] - values[first]) / 2);
-            blink.startIndex = first;
-            blink.endIndex = last;
-            return blink;
+
+        int maxIndex = first;
+        int minIndex = first;
+        for (int i = first; i <= last; i++) {
+            if (values[maxIndex] < values[i]) {
+                maxIndex = i;
+            }
+            if (values[minIndex] > values[i]) {
+                minIndex = i;
+            }
+        }
+
+        if (maxIndex == last || minIndex == last || maxIndex == 0 || minIndex == 0) {
+            // Ignore edges for blink to detect strict local minima and maxima.
+            return null;
+        }
+
+        boolean localMaxima = (values[maxIndex - 1] < values[maxIndex])
+                && (values[maxIndex] > values[maxIndex + 1]);
+        boolean localMinima = (values[minIndex - 1] > values[minIndex])
+                && (values[minIndex] < values[minIndex + 1]);
+
+        int height = values[maxIndex] - values[minIndex];
+        if (height > MIN_BLINK_HEIGHT && height < MAX_BLINK_HEIGHT
+                && localMaxima && localMinima) {
+            return new Feature(Feature.Type.BLINK, Math.min(minIndex, maxIndex),
+                    Math.max(minIndex, maxIndex),
+                    new int[] {values[maxIndex], values[minIndex]});
         }
         return null;
-    }
-
-    private static boolean isBlink(int first, int beforeMiddle, int middle, int afterMiddle,
-                                   int last, int minSpikeHeight) {
-        // If middle is peak AND middle height from left base or right base is more than
-        // min spike height AND difference between left and right base is within tolerance
-        boolean isPeak = (beforeMiddle < middle) && (middle > afterMiddle);
-        int leftHeight = middle - first;
-        int rightHeight = middle - last;
-        boolean isBigEnough = (leftHeight > minSpikeHeight) || (rightHeight > minSpikeHeight);
-        int minBaseDifference = (int) (Math.max(leftHeight, rightHeight) * BLINK_BASE_TOLERANCE);
-        boolean isFlat = Math.abs(last - first) < minBaseDifference;
-        return isPeak && isBigEnough && isFlat;
-    }
-
-    private static boolean isGoodSignal(int values1[], int values2[]) {
-        Pair<Integer, Integer> minMax1 = Utils.calculateMinMax(values1);
-        Pair<Integer, Integer> minMax2 = Utils.calculateMinMax(values2);
-        return (minMax1.first != minMax1.second && minMax2.first != minMax2.second);
     }
 }

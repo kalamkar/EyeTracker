@@ -22,6 +22,8 @@ public class ChartFragment extends Fragment {
     private int lightGreen;
     private int darkGreen;
     private int lightRed;
+    private int orange;
+    private int purple;
 
     private ChartView chartView;
 
@@ -30,6 +32,8 @@ public class ChartFragment extends Fragment {
     private Chart channel3;
     private Chart median1;
     private Chart median2;
+    private Chart feature1;
+    private Chart feature2;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,6 +43,8 @@ public class ChartFragment extends Fragment {
         darkGreen = getResources().getColor(android.R.color.holo_green_dark);
         lightGreen = getResources().getColor(android.R.color.holo_green_light);
         lightRed = getResources().getColor(android.R.color.holo_red_light);
+        orange = getResources().getColor(android.R.color.holo_orange_dark);
+        purple = getResources().getColor(android.R.color.holo_purple);
         return inflater.inflate(R.layout.fragment_chart, container, false);
     }
 
@@ -61,6 +67,12 @@ public class ChartFragment extends Fragment {
 
         median2 = chartView.makeLineChart(lightGreen, 2);
         median2.setXRange(0, Config.GRAPH_LENGTH);
+
+        feature1 = chartView.makePointsChart(orange, 5);
+        feature1.setXRange(0, Config.GRAPH_LENGTH);
+
+        feature2 = chartView.makePointsChart(purple, 5);
+        feature2.setXRange(0, Config.GRAPH_LENGTH);
     }
 
     public void clear() {
@@ -106,6 +118,28 @@ public class ChartFragment extends Fragment {
         }
         channel3.setYRange(range.first, range.second);
         channel3.setData(points);
+    }
+
+    public void updateFeature1(int data[], Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points = new ArrayList<>(data.length);
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] != 0) {
+                points.add(Pair.create(i, data[i]));
+            }
+        }
+        feature1.setYRange(range.first, range.second);
+        feature1.setData(points);
+    }
+
+    public void updateFeature2(int data[], Pair<Integer,Integer> range) {
+        List<Pair<Integer, Integer>> points = new ArrayList<>(data.length);
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] != 0) {
+                points.add(Pair.create(i, data[i]));
+            }
+        }
+        feature2.setYRange(range.first, range.second);
+        feature2.setData(points);
     }
 
     public void updateUI() {

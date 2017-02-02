@@ -29,7 +29,8 @@ public class Utils {
         }
         int copyOfValues[] = new int[features.size()];
         for (int i = 0; i < copyOfValues.length; i++) {
-            copyOfValues[i] = features.get(i).height;
+            Feature feature = features.get(i);
+            copyOfValues[i] = feature.values[0] - feature.values[1];
         }
         Arrays.sort(copyOfValues);
         return copyOfValues[copyOfValues.length / 2];

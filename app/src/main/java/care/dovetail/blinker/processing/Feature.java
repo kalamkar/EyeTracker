@@ -1,5 +1,7 @@
 package care.dovetail.blinker.processing;
 
+import java.util.Arrays;
+
 /**
  * Created by abhi on 9/21/16.
  */
@@ -22,18 +24,22 @@ public class Feature {
     }
 
     public final Type type;
-    public final int index;
-    public final int value;
-    public final Channel channel;
+    public final int startIndex;
+    public final int endIndex;
+    public final int values[];
+    public Channel channel;
     public int confidence;
-    public int height;
-    public int startIndex;
-    public int endIndex;
 
-    public Feature(Type type, int index, int value, Channel channel) {
+    public Feature(Type type, int startIndex, int endIndex, int values[]) {
         this.type = type;
-        this.index = index;
-        this.value = value;
-        this.channel = channel;
+        this.startIndex = startIndex;
+        this.endIndex = endIndex;
+        this.values = values;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s start = %d, end = %d values = %s", type, startIndex, endIndex,
+                Arrays.toString(values));
     }
 }
