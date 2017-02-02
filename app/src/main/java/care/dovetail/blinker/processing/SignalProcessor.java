@@ -21,7 +21,7 @@ public class SignalProcessor {
     private static final double HIGH_FREQUENCY = 3.0;
     private static final int FILTER_ORDER = 2;
 
-    private static final float MAX_GAZE_TO_BLINK_RATIO = 1.0f;
+    private static final float MAX_GAZE_TO_BLINK_RATIO = 0.6f;
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;

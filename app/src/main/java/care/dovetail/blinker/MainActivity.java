@@ -68,6 +68,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         findViewById(R.id.leftGrid).setVisibility(View.INVISIBLE);
         findViewById(R.id.rightGrid).setVisibility(View.INVISIBLE);
+//        findViewById(R.id.leftChart).setVisibility(View.INVISIBLE);
+//        findViewById(R.id.rightChart).setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -156,16 +158,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             rightChart.updateChannel1(signals.channel1(), signals.range1());
             rightChart.updateChannel2(signals.channel2(), signals.range2());
 
-            if (Config.SHOW_BLINKS) {
-                leftChart.updateFeature1(signals.feature1(), signals.range2());
-                rightChart.updateFeature1(signals.feature1(), signals.range2());
+            leftChart.updateFeature1(signals.feature1(), signals.range2());
+            rightChart.updateFeature1(signals.feature1(), signals.range2());
 
-                leftChart.updateFeature2(signals.feature2(), signals.range2());
-                rightChart.updateFeature2(signals.feature2(), signals.range2());
+            leftChart.updateFeature2(signals.feature2(), signals.range2());
+            rightChart.updateFeature2(signals.feature2(), signals.range2());
 
-//                leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
-//                rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
-            } else if (Config.SHOW_ACCEL) {
+            if (Config.SHOW_ACCEL) {
                 leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }

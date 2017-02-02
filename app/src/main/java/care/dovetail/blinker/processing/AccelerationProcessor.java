@@ -31,7 +31,7 @@ public class AccelerationProcessor implements SensorEventListener {
     public AccelerationProcessor(SensorManager sensorManager, ShakingObserver observer) {
         this.observer = observer;
         this.sensorManager = sensorManager;
-        acceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        acceleration = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
     public void start() {
