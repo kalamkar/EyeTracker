@@ -21,7 +21,7 @@ public class SignalProcessor {
     private static final double HIGH_FREQUENCY = 3.0;
     private static final int FILTER_ORDER = 2;
 
-    private static final float MAX_GAZE_TO_BLINK_RATIO = 0.2f;
+    private static final float MAX_GAZE_TO_BLINK_RATIO = 1.0f;
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
@@ -157,9 +157,16 @@ public class SignalProcessor {
 
     private void onFeature(Feature feature) {
         if (feature.type == Feature.Type.BLINK) {
-            lastBlinkHeight = feature.values[0] - feature.values[1];
-            lastBlinkIndex = feature.endIndex;
-            recentBlinks.add(feature);
+            // Use vertical channel values for blink height for gaze calculations. They are more
+            // relevant than the blink channel which are much higher.
+            int max = Math.max(values2[feature.startIndex], values2[feature.endIndex]);
+            int min = Math.min(values2[feature.startIndex], values2[feature.endIndex]);
+            Feature blink = new Feature(feature.type, feature.startIndex, feature.endIndex,
+                    new int[]{max, min});
+
+            lastBlinkHeight = max - min;
+            lastBlinkIndex = blink.endIndex;
+            recentBlinks.add(blink);
             if (recentBlinks.size() > MAX_RECENT_BLINKS) {
                 recentBlinks.remove(0);
             }
@@ -169,8 +176,8 @@ public class SignalProcessor {
                         * MAX_GAZE_TO_BLINK_RATIO);
             }
 
-            feature1[feature.startIndex] = feature.values[0];
-            feature2[feature.endIndex] = feature.values[1];
+            feature1[blink.startIndex] = blink.values[0];
+            feature2[blink.endIndex] = blink.values[1];
         }
 
         observer.onFeature(feature);

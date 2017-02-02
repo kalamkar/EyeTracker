@@ -13,6 +13,6 @@ public class Config {
 
     public static final int SHAKING_THRESHOLD = 3000;
 
-    public static final boolean SHOW_BLINKS = false;
+    public static final boolean SHOW_BLINKS = true;
     public static final boolean SHOW_ACCEL = false;
 }
