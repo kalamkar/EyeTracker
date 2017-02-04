@@ -109,7 +109,7 @@ public class ShimmerClient {
                 }
                 socket.connect();
                 return new ShimmerConnection(socket, client.get());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
             }
             return null;

@@ -33,8 +33,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private FileDataWriter writer = null;
 
-    private Timer chartUpdateTimer = null;
-    private Timer sectorUpdateTimer = null;
+    private Timer chartUpdateTimer;
+    private Timer sectorUpdateTimer;
 
     private Ringtone ringtone;
 
@@ -75,36 +75,16 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     protected void onStart() {
         super.onStart();
-
-        // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
-        patchClient = new ShimmerClient(this, this);
-        patchClient.connect();
+        startBluetooth();
         findViewById(R.id.progress).setVisibility(View.VISIBLE);
-
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
-
-        chartUpdateTimer = new Timer();
-        chartUpdateTimer.schedule(chartUpdater, 0, Config.GRAPH_UPDATE_MILLIS);
-
-        sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(sectorUpdater, 0, Config.GAZE_UPDATE_MILLIS);
-
         accelerometer.start();
     }
 
     @Override
     protected void onStop() {
-        if (patchClient != null) {
-            patchClient.close();
-            patchClient = null;
-        }
-        if (chartUpdateTimer != null) {
-            chartUpdateTimer.cancel();
-        }
-        if (sectorUpdateTimer != null) {
-            sectorUpdateTimer.cancel();
-        }
+        stopBluetooth();
         ringtone.stop();
         accelerometer.stop();
         super.onStop();
@@ -129,9 +109,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         writer.close();
         writer = null;
         showGrid(false);
-        if (chartUpdateTimer != null) {
-            chartUpdateTimer.cancel();
-        }
+        chartUpdateTimer.cancel();
+        sectorUpdateTimer.cancel();
         if (patchClient != null) {
             patchClient.connect();
             runOnUiThread(new Runnable() {
@@ -143,7 +122,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         }
     }
 
-    private final TimerTask chartUpdater = new TimerTask() {
+    private class ChartUpdater extends TimerTask {
         @Override
         public void run() {
             final ChartFragment leftChart =
@@ -179,9 +158,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 }
             });
         }
-    };
+    }
 
-    private final TimerTask sectorUpdater = new TimerTask() {
+    private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
             runOnUiThread(new Runnable() {
@@ -195,7 +174,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 }
             });
         }
-    };
+    }
 
     @Override
     public void onFeature(Feature feature) {
@@ -237,6 +216,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public void onShakingChange(final boolean isShaking) {
         if (isShaking) {
             signals = new SignalProcessor(this);
+            stopBluetooth();
+            startBluetooth();
         }
         showGrid(!isShaking);
     }
@@ -253,5 +234,30 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
             }
         });
+    }
+
+    private void startBluetooth() {
+        // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
+        patchClient = new ShimmerClient(this, this);
+        patchClient.connect();
+
+        chartUpdateTimer = new Timer();
+        chartUpdateTimer.schedule(new ChartUpdater(), 0, Config.GRAPH_UPDATE_MILLIS);
+
+        sectorUpdateTimer = new Timer();
+        sectorUpdateTimer.schedule(new SectorUpdater(), 0, Config.GAZE_UPDATE_MILLIS);
+    }
+
+    private void stopBluetooth() {
+        if (patchClient != null) {
+            patchClient.close();
+            patchClient = null;
+        }
+        if (chartUpdateTimer != null) {
+            chartUpdateTimer.cancel();
+        }
+        if (sectorUpdateTimer != null) {
+            sectorUpdateTimer.cancel();
+        }
     }
 }
