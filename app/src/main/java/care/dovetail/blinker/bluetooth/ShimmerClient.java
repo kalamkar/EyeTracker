@@ -57,7 +57,6 @@ public class ShimmerClient {
         for (BluetoothDevice device : pairedDevices) {
             String name = device.getName();
             if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
-                Log.i(TAG, String.format("Connecting to %s", device.getName()));
                 new ConnectionTask(device.getAddress(), this).execute();
                 break;
             }
@@ -126,8 +125,7 @@ public class ShimmerClient {
                     client.get().connection = connection;
                     client.get().listener.onConnect(connection.getRemoteName());
             } else {
-                client.get().close();
-                new ConnectionTask(address, client.get()).execute();
+                client.get().connect();
             }
         }
     }
@@ -156,7 +154,7 @@ public class ShimmerClient {
 
         @Override
         public void run() {
-            while (true) {
+            while (inStream != null && outStream != null) {
                 int response;
                 try {
                     response = inStream.read();
@@ -202,7 +200,9 @@ public class ShimmerClient {
                     Log.w(TAG, String.format("Unknown response 0x%02x", response));
                 }
             }
-            client.get().listener.onDisconnect(getRemoteName());
+            if (client.get() != null) {
+                client.get().listener.onDisconnect(getRemoteName());
+            }
         }
 
         private boolean startStreaming() {
@@ -227,10 +227,14 @@ public class ShimmerClient {
 
         private void close() {
             try {
+                inStream.close();
+                outStream.close();
                 socket.close();
             } catch (IOException e) {
                 Log.e(TAG, "Could not close socket.", e);
             }
+            inStream = null;
+            outStream = null;
         }
     }
 
