@@ -22,6 +22,7 @@ import care.dovetail.blinker.processing.Feature;
 import care.dovetail.blinker.processing.SignalProcessor;
 import care.dovetail.blinker.ui.ChartFragment;
 import care.dovetail.blinker.ui.GridView;
+import care.dovetail.blinker.ui.SettingsDialog;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
@@ -57,26 +58,19 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        boolean show = findViewById(R.id.leftChart).getVisibility() == View.VISIBLE;
-                        findViewById(R.id.leftChart).setVisibility(show ? View.INVISIBLE : View.VISIBLE);
-                        findViewById(R.id.rightChart).setVisibility(show ? View.INVISIBLE : View.VISIBLE);
+                        new SettingsDialog().show(getFragmentManager(), null);
                     }
                 });
 
         accelerometer = new AccelerationProcessor(
                 (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
-
-        findViewById(R.id.leftGrid).setVisibility(View.INVISIBLE);
-        findViewById(R.id.rightGrid).setVisibility(View.INVISIBLE);
-//        findViewById(R.id.leftChart).setVisibility(View.INVISIBLE);
-//        findViewById(R.id.rightChart).setVisibility(View.INVISIBLE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         startBluetooth();
-        findViewById(R.id.progress).setVisibility(View.VISIBLE);
+        showDualView(false);
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
         accelerometer.start();
@@ -94,13 +88,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public void onConnect(String name) {
         Log.i(TAG, String.format("Connected to %s", name));
         writer = new FileDataWriter(this);
-        showGrid(true);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.progress).setVisibility(View.INVISIBLE);
-            }
-        });
+        showDualView(true);
     }
 
     @Override
@@ -108,17 +96,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         Log.i(TAG, String.format("Disconnected from %s", name));
         writer.close();
         writer = null;
-        showGrid(false);
+        showDualView(false);
         chartUpdateTimer.cancel();
         sectorUpdateTimer.cancel();
         if (patchClient != null) {
             patchClient.connect();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.progress).setVisibility(View.VISIBLE);
-                }
-            });
         }
     }
 
@@ -190,15 +172,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     bkgIndex = bkgIndex + 1 < GridView.BACKGROUNDS.length ? bkgIndex + 1 : 0;
                 }
             });
-        } else if (Feature.Type.BAD_SIGNAL == feature.type) {
-            Log.e(TAG, "Bad Signal detected, reconnecting...");
-            patchClient.connect();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.progress).setVisibility(View.VISIBLE);
-                }
-            });
         }
     }
 
@@ -215,25 +188,36 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onShakingChange(final boolean isShaking) {
         if (isShaking) {
-            signals = new SignalProcessor(this);
-            stopBluetooth();
-            startBluetooth();
+            resetBluetooth();
         }
-        showGrid(!isShaking);
     }
 
-    private void showGrid(final boolean show) {
+    private void showDualView(final boolean show) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (MainActivity.this.isDestroyed() || patchClient == null
-                        || !patchClient.isConnected()) {
+                if (MainActivity.this.isDestroyed()) {
                     return;
                 }
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftChart).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightChart).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftProgress).setVisibility(
+                        show ?  View.INVISIBLE : View.VISIBLE);
+                findViewById(R.id.rightProgress).setVisibility(
+                        show ?  View.INVISIBLE : View.VISIBLE);
             }
         });
+    }
+
+    public void resetBluetooth() {
+        boolean showChart = ((App) getApplication()).getShowChart();
+        findViewById(R.id.leftChart).setVisibility(showChart ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.rightChart).setVisibility(showChart ? View.VISIBLE : View.INVISIBLE);
+        signals = new SignalProcessor(this);
+        stopBluetooth();
+        startBluetooth();
     }
 
     private void startBluetooth() {
