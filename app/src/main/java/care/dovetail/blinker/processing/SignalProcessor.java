@@ -21,7 +21,9 @@ public class SignalProcessor {
     private static final double HIGH_FREQUENCY = 3.0;
     private static final int FILTER_ORDER = 2;
 
-    private static final float MAX_GAZE_TO_BLINK_RATIO = 0.6f;
+    private static final float BLINK_TO_GAZE_MULTIPLIER = 0.6f;
+
+    private static final float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.7f;
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
@@ -43,9 +45,12 @@ public class SignalProcessor {
     private final int feature1[] = new int[Config.GRAPH_LENGTH];
     private final int feature2[] = new int[Config.GRAPH_LENGTH];
 
-    private int median1;
-    private int median2;
-    private int medianForBlink;
+    private int horizontalBase;
+    private int verticalBase;
+    private int blinkBaseline;
+
+    private final int horizontalBaseline[] = new int[Config.GRAPH_LENGTH];
+    private final int verticalBaseline[] = new int[Config.GRAPH_LENGTH];
 
     private final IirFilter filter1 = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
@@ -91,11 +96,11 @@ public class SignalProcessor {
 
         lastBlinkIndex--;
 
-        median1 = Utils.calculateMedian(
-                values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-        median2 = Utils.calculateMedian(
-                values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-        medianForBlink = Utils.calculateMedian(
+//        horizontalBase = Utils.calculateMedian(
+//                values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+//        verticalBase = Utils.calculateMedian(
+//                values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        blinkBaseline = Utils.calculateMedian(
                 blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
         Feature blink = maybeGetBlink(blinks);
@@ -114,8 +119,9 @@ public class SignalProcessor {
             // else ignore the new blink with height less than last blink height and within window
         }
 
-        int horizLevel = getLevel(values1[values1.length - 1], median1, halfGraphHeight);
-        int vertLevel = getLevel(values2[values2.length - 1], median2, halfGraphHeight);
+        int horizLevel = getLevel(values1[values1.length - 1], horizontalBase,
+                (int) (halfGraphHeight * VERTICAL_TO_HORIZONTAL_MULTIPLIER));
+        int vertLevel = getLevel(values2[values2.length - 1], verticalBase, halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
     }
 
@@ -140,15 +146,17 @@ public class SignalProcessor {
     }
 
     public Pair<Integer, Integer> range1() {
-        return Pair.create(median1 - halfGraphHeight * 2, median1 + halfGraphHeight * 2);
+        return Pair.create(
+                horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
     }
 
     public Pair<Integer, Integer> range2() {
-         return Pair.create(median2 - halfGraphHeight * 2, median2 + halfGraphHeight * 2);
+         return Pair.create(
+                 verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
     }
 
     public Pair<Integer, Integer> blinkRange() {
-        return Pair.create(medianForBlink - MAX_BLINK_HEIGHT, medianForBlink + MAX_BLINK_HEIGHT);
+        return Pair.create(blinkBaseline - MAX_BLINK_HEIGHT, blinkBaseline + MAX_BLINK_HEIGHT);
     }
 
     public Pair<Integer, Integer> getSector() {
@@ -159,12 +167,24 @@ public class SignalProcessor {
         if (feature.type == Feature.Type.BLINK) {
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
-            int max = Math.max(values2[feature.startIndex], values2[feature.endIndex]);
-            int min = Math.min(values2[feature.startIndex], values2[feature.endIndex]);
+            Pair<Integer, Integer> vMinMax = Utils.calculateMinMax(
+                    values2, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW);
             Feature blink = new Feature(feature.type, feature.startIndex, feature.endIndex,
-                    new int[]{max, min});
+                    new int[]{vMinMax.second, vMinMax.first});
+            Pair<Integer, Integer> hMinMax = Utils.calculateMinMax(
+                    values1, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW);
 
-            lastBlinkHeight = max - min;
+            System.arraycopy(verticalBaseline, 1, verticalBaseline, 0, verticalBaseline.length - 1);
+            verticalBaseline[verticalBaseline.length - 1] = vMinMax.first;
+
+            System.arraycopy(horizontalBaseline, 1, horizontalBaseline, 0,
+                    horizontalBaseline.length - 1);
+            horizontalBaseline[horizontalBaseline.length - 1] = hMinMax.second;
+
+            verticalBase = Utils.calculateMedian(verticalBaseline);
+            horizontalBase = Utils.calculateMedian(horizontalBaseline);
+
+            lastBlinkHeight = vMinMax.second - vMinMax.first;
             lastBlinkIndex = blink.endIndex;
             recentBlinks.add(blink);
             if (recentBlinks.size() > MAX_RECENT_BLINKS) {
@@ -173,7 +193,7 @@ public class SignalProcessor {
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
                 halfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
-                        * MAX_GAZE_TO_BLINK_RATIO);
+                        * BLINK_TO_GAZE_MULTIPLIER);
             }
 
             feature1[blink.startIndex] = blink.values[0];
