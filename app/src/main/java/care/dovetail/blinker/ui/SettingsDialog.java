@@ -27,6 +27,8 @@ public class SettingsDialog extends DialogFragment {
     private final static String TAG = "SettingsDialog";
 
     private ToggleButton showChart;
+    private SeekBar numSteps;
+    private TextView numStepsValue;
     private SeekBar blinkToGaze;
     private TextView blinkToGazeValue;
     private SeekBar verticalToHorizontal;
@@ -55,12 +57,16 @@ public class SettingsDialog extends DialogFragment {
                 getActivity().getSharedPreferences(getActivity().getPackageName(), 0);
 
         showChart = (ToggleButton) view.findViewById(R.id.showChart);
+        numSteps = (SeekBar) view.findViewById(R.id.num_steps);
+        numStepsValue = (TextView)  view.findViewById(R.id.num_steps_value);
         blinkToGaze = (SeekBar) view.findViewById(R.id.blink_to_gaze);
         blinkToGazeValue = (TextView)  view.findViewById(R.id.blink_to_gaze_value);
         verticalToHorizontal = (SeekBar) view.findViewById(R.id.v_to_h);
         vToHValue = (TextView)  view.findViewById(R.id.v_to_h_value);
 
         showChart.setChecked(prefs.getBoolean(Config.SHOW_CHART, true));
+        numSteps.setProgress(prefs.getInt(Config.PREF_NUM_STEPS, 5));
+        numStepsValue.setText(Integer.toString(prefs.getInt(Config.PREF_NUM_STEPS, 5)));
         blinkToGaze.setProgress((int) (prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f) * 10));
         blinkToGazeValue.setText(Float.toString(prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f)));
         verticalToHorizontal.setProgress((int) (prefs.getFloat(Config.PREF_V_TO_H, 0.7f) * 10));
@@ -74,6 +80,18 @@ public class SettingsDialog extends DialogFragment {
             }
         });
 
+        numSteps.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                numStepsValue.setText(Integer.toString(progress));
+                getActivity().getSharedPreferences(getActivity().getPackageName(), 0)
+                        .edit().putInt(Config.PREF_NUM_STEPS, progress).apply();
+            }
+
+            @Override  public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
         blinkToGaze.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -82,11 +100,8 @@ public class SettingsDialog extends DialogFragment {
                         .edit().putFloat(Config.PREF_BLINK_TO_GAZE, (float) progress / 10).apply();
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
         verticalToHorizontal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -97,11 +112,8 @@ public class SettingsDialog extends DialogFragment {
                         .edit().putFloat(Config.PREF_V_TO_H, (float) progress / 10).apply();
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 

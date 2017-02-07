@@ -11,8 +11,6 @@ import android.view.View;
 
 import java.io.InputStream;
 
-import care.dovetail.blinker.Config;
-
 /**
  * Created by abhi on 9/28/16.
  */
@@ -25,6 +23,8 @@ public class GridView extends View {
     private Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private Canvas canvas;
 
+    private int numSteps = 5;
+
     private int cellWidth = 0;
     private int cellHeight = 0;
 
@@ -33,6 +33,12 @@ public class GridView extends View {
         paint.setColor(Color.WHITE);
         paint.setAlpha((int) Math.round(255.0 * 0.7));
         background(0);
+    }
+
+    public void setNumSteps(int numSteps) {
+        this.numSteps = numSteps;
+        cellWidth = getWidth() / numSteps;
+        cellHeight = getHeight() / numSteps;
     }
 
     public void background(int index) {
@@ -56,8 +62,8 @@ public class GridView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         clearAll(w, h);
-        cellWidth = w / Config.NUM_STEPS;
-        cellHeight = h / Config.NUM_STEPS;
+        cellWidth = w / numSteps;
+        cellHeight = h / numSteps;
         super.onSizeChanged(w, h, oldw, oldh);
     }
 

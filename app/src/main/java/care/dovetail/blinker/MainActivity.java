@@ -206,6 +206,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
+                int numSteps = getSharedPreferences(getPackageName(), 0).getInt(Config.PREF_NUM_STEPS, 5);
+                ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
+                ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
+
                 boolean showChart = show && getSharedPreferences(getPackageName(), 0)
                         .getBoolean(Config.SHOW_CHART, true);
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
@@ -224,7 +228,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     public void startBluetooth() {
         SharedPreferences prefs = getSharedPreferences(getPackageName(), 0);
-        signals = new SignalProcessor(this, prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f),
+        signals = new SignalProcessor(this, prefs.getInt(Config.PREF_NUM_STEPS, 5),
+                prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f),
                 prefs.getFloat(Config.PREF_V_TO_H, 0.7f));
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.

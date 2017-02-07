@@ -18,5 +18,6 @@
     <string name="chart">Chart</string>
     <string name="blink_to_gaze">Blink to Gaze multiplier</string>
     <string name="v_to_h">Vertical to horizontal multiplier</string>
+    <string name="grid_size">Grid size</string>
 
 </resources>

@@ -31,6 +31,7 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
+    private final int numSteps;
     private final float blinkToGazeMultiplier;
     private final float verticalToHorizontalMultiplier;
     private final FeatureObserver observer;
@@ -72,8 +73,9 @@ public class SignalProcessor {
         void onFeature(Feature feature);
     }
 
-    public SignalProcessor(FeatureObserver observer, float blinkToGazeMultiplier,
+    public SignalProcessor(FeatureObserver observer, int numSteps, float blinkToGazeMultiplier,
                            float verticalToHorizontalMultiplier) {
+        this.numSteps = numSteps;
         this.blinkToGazeMultiplier = blinkToGazeMultiplier;
         this.verticalToHorizontalMultiplier = verticalToHorizontalMultiplier;
         this.observer = observer;
@@ -120,9 +122,10 @@ public class SignalProcessor {
             // else ignore the new blink with height less than last blink height and within window
         }
 
-        int horizLevel = getLevel(values1[values1.length - 1], horizontalBase,
+        int horizLevel = getLevel(values1[values1.length - 1], numSteps, horizontalBase,
                 (int) (halfGraphHeight * verticalToHorizontalMultiplier));
-        int vertLevel = getLevel(values2[values2.length - 1], verticalBase, halfGraphHeight);
+        int vertLevel = getLevel(values2[values2.length - 1], numSteps, verticalBase,
+                halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
     }
 
@@ -204,13 +207,13 @@ public class SignalProcessor {
         observer.onFeature(feature);
     }
 
-    private static int getLevel(int value, int median, int halfGraphHeight) {
-        float stepHeight = halfGraphHeight / (Config.NUM_STEPS / 2); // divide by 2 as values  +ve and -ve
+    private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
+        float stepHeight = halfGraphHeight / (numSteps / 2); // divide by 2 as values  +ve and -ve
         int min = median - halfGraphHeight;
         int max = median + halfGraphHeight;
         int currentValue = Math.max(min, Math.min(max, value));
         int level = (int) ((currentValue - median) / stepHeight);
-        return (Config.NUM_STEPS - 1) - (level + (Config.NUM_STEPS / 2));
+        return (numSteps - 1) - (level + (numSteps / 2));
     }
 
     private static Feature maybeGetBlink(int values[]) {
