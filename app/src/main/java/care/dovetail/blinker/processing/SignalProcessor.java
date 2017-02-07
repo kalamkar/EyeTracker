@@ -21,10 +21,6 @@ public class SignalProcessor {
     private static final double HIGH_FREQUENCY = 3.0;
     private static final int FILTER_ORDER = 2;
 
-    private static final float BLINK_TO_GAZE_MULTIPLIER = 0.6f;
-
-    private static final float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.7f;
-
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
     private static final int LENGTH_FOR_MEDIAN =  500;
@@ -35,6 +31,8 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
+    private final float blinkToGazeMultiplier;
+    private final float verticalToHorizontalMultiplier;
     private final FeatureObserver observer;
 
     private int halfGraphHeight = 4000;
@@ -74,7 +72,10 @@ public class SignalProcessor {
         void onFeature(Feature feature);
     }
 
-    public SignalProcessor(FeatureObserver observer) {
+    public SignalProcessor(FeatureObserver observer, float blinkToGazeMultiplier,
+                           float verticalToHorizontalMultiplier) {
+        this.blinkToGazeMultiplier = blinkToGazeMultiplier;
+        this.verticalToHorizontalMultiplier = verticalToHorizontalMultiplier;
         this.observer = observer;
     }
 
@@ -120,7 +121,7 @@ public class SignalProcessor {
         }
 
         int horizLevel = getLevel(values1[values1.length - 1], horizontalBase,
-                (int) (halfGraphHeight * VERTICAL_TO_HORIZONTAL_MULTIPLIER));
+                (int) (halfGraphHeight * verticalToHorizontalMultiplier));
         int vertLevel = getLevel(values2[values2.length - 1], verticalBase, halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
     }
@@ -193,7 +194,7 @@ public class SignalProcessor {
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
                 halfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
-                        * BLINK_TO_GAZE_MULTIPLIER);
+                        * blinkToGazeMultiplier);
             }
 
             feature1[blink.startIndex] = blink.values[0];

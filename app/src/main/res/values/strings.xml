@@ -16,5 +16,7 @@
 
     <string name="ble_not_supported">Bluetooth LE not supported.</string>
     <string name="chart">Chart</string>
+    <string name="blink_to_gaze">Blink to Gaze multiplier</string>
+    <string name="v_to_h">Vertical to horizontal multiplier</string>
 
 </resources>

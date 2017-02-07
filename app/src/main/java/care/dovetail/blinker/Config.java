@@ -16,4 +16,6 @@ public class Config {
     public static final boolean SHOW_ACCEL = false;
 
     public static final String SHOW_CHART = "show_chart";
+    public static final String PREF_BLINK_TO_GAZE = "blink_to_gaze";
+    public static final String PREF_V_TO_H = "v_to_h";
 }

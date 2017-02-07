@@ -1,18 +1,82 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/activity_horizontal_margin"
     tools:context="care.dovetail.blinker.MainActivity" >
 
-    <ToggleButton
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/toggles"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:gravity="center">
+
+        <ToggleButton
+            android:id="@+id/showChart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:textOff="@string/chart"
+            android:textOn="@string/chart"/>
+    </LinearLayout>
+
+    <TextView
+        android:text="@string/blink_to_gaze"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/activity_horizontal_margin"
-        android:padding="@dimen/activity_horizontal_margin"
-        android:id="@+id/showChart"
-        android:textOff="@string/chart"
-        android:textOn="@string/chart"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"/>
+        android:id="@+id/blink_to_gaze_label"
+        android:layout_gravity="center_vertical"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
+        android:layout_below="@+id/toggles"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="@dimen/activity_vertical_margin"/>
+
+    <SeekBar
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/blink_to_gaze_label"
+        android:id="@+id/blink_to_gaze"
+        android:max="15"
+        android:layout_toStartOf="@+id/blink_to_gaze_value"/>
+
+    <TextView
+        android:id="@+id/blink_to_gaze_value"
+        android:text="0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/blink_to_gaze_label"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:text="@string/v_to_h"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/v_to_h_label"
+        android:layout_gravity="center_vertical"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
+        android:layout_below="@+id/blink_to_gaze"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="@dimen/activity_vertical_margin"/>
+
+    <SeekBar
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/v_to_h"
+        android:max="10"
+        android:layout_below="@+id/v_to_h_label"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/v_to_h_value"/>
+
+    <TextView
+        android:id="@+id/v_to_h_value"
+        android:text="0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/v_to_h_label"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

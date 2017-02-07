@@ -2,6 +2,7 @@ package care.dovetail.blinker;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -29,7 +30,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private static final String TAG = "MainActivity";
 
     private ShimmerClient patchClient;
-    private SignalProcessor signals = new SignalProcessor(this);
+    private SignalProcessor signals;
     private AccelerationProcessor accelerometer;
 
     private FileDataWriter writer = null;
@@ -127,6 +128,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             leftChart.updateFeature2(signals.feature2(), signals.range2());
             rightChart.updateFeature2(signals.feature2(), signals.range2());
 
+            leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
+            rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
+
             if (Config.SHOW_ACCEL) {
                 leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
@@ -219,7 +223,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        signals = new SignalProcessor(this);
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), 0);
+        signals = new SignalProcessor(this, prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f),
+                prefs.getFloat(Config.PREF_V_TO_H, 0.7f));
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
