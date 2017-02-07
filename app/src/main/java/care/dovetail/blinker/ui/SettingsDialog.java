@@ -53,7 +53,14 @@ public class SettingsDialog extends DialogFragment {
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-        ((MainActivity) getActivity()).resetBluetooth();
+        ((MainActivity) getActivity()).startBluetooth();
+        getActivity().findViewById(R.id.binocular).setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         super.onDismiss(dialog);
     }
 }

@@ -54,11 +54,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
-        findViewById(R.id.binocular).setOnClickListener(
-                new View.OnClickListener() {
+        findViewById(R.id.binocular).setOnLongClickListener(
+                new View.OnLongClickListener() {
                     @Override
-                    public void onClick(View view) {
+                    public boolean onLongClick(View view) {
+                        stopBluetooth();
                         new SettingsDialog().show(getFragmentManager(), null);
+                        return true;
                     }
                 });
 
@@ -188,7 +190,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     @Override
     public void onShakingChange(final boolean isShaking) {
         if (isShaking) {
-            resetBluetooth();
+            stopBluetooth();
+            startBluetooth();
         }
     }
 
@@ -199,10 +202,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
+                boolean showChart = show && ((App) getApplication()).getShowChart();
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftChart).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightChart).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftChart).setVisibility(
+                        showChart ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightChart).setVisibility(
+                        showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(
@@ -211,16 +217,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         });
     }
 
-    public void resetBluetooth() {
-        boolean showChart = ((App) getApplication()).getShowChart();
-        findViewById(R.id.leftChart).setVisibility(showChart ? View.VISIBLE : View.INVISIBLE);
-        findViewById(R.id.rightChart).setVisibility(showChart ? View.VISIBLE : View.INVISIBLE);
+    public void startBluetooth() {
         signals = new SignalProcessor(this);
-        stopBluetooth();
-        startBluetooth();
-    }
 
-    private void startBluetooth() {
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
         patchClient.connect();
@@ -232,7 +231,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         sectorUpdateTimer.schedule(new SectorUpdater(), 0, Config.GAZE_UPDATE_MILLIS);
     }
 
-    private void stopBluetooth() {
+    public void stopBluetooth() {
         if (patchClient != null) {
             patchClient.close();
             patchClient = null;
