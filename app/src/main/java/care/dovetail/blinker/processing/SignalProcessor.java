@@ -28,6 +28,7 @@ public class SignalProcessor {
     private static final int MAX_RECENT_BLINKS = 10;
     private static final int MIN_RECENT_BLINKS = 5;
 
+    private static final int SMALL_BLINK_HEIGHT = 4000;
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
@@ -168,22 +169,22 @@ public class SignalProcessor {
     }
 
     private void onFeature(Feature feature) {
-        if (feature.type == Feature.Type.BLINK) {
+        if (feature.type == Feature.Type.SMALL_BLINK || feature.type == Feature.Type.BLINK) {
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
             Pair<Integer, Integer> vMinMax = Utils.calculateMinMax(
-                    values2, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW);
+                    values2, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
             Feature blink = new Feature(feature.type, feature.startIndex, feature.endIndex,
                     new int[]{vMinMax.second, vMinMax.first});
             Pair<Integer, Integer> hMinMax = Utils.calculateMinMax(
-                    values1, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW);
+                    values1, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
 
             System.arraycopy(verticalBaseline, 1, verticalBaseline, 0, verticalBaseline.length - 1);
             verticalBaseline[verticalBaseline.length - 1] = vMinMax.first;
 
             System.arraycopy(horizontalBaseline, 1, horizontalBaseline, 0,
                     horizontalBaseline.length - 1);
-            horizontalBaseline[horizontalBaseline.length - 1] = hMinMax.second;
+            horizontalBaseline[horizontalBaseline.length - 1] = hMinMax.first;
 
             verticalBase = Utils.calculateMedian(verticalBaseline);
             horizontalBase = Utils.calculateMedian(horizontalBaseline);
@@ -242,11 +243,16 @@ public class SignalProcessor {
                 && (values[minIndex] < values[minIndex + 1]);
 
         int height = values[maxIndex] - values[minIndex];
-        if (height > MIN_BLINK_HEIGHT && height < MAX_BLINK_HEIGHT
-                && localMaxima && localMinima) {
-            return new Feature(Feature.Type.BLINK, Math.min(minIndex, maxIndex),
-                    Math.max(minIndex, maxIndex),
-                    new int[] {values[maxIndex], values[minIndex]});
+        if (localMaxima && localMinima && maxIndex < minIndex) {
+            if (height > SMALL_BLINK_HEIGHT && height < MIN_BLINK_HEIGHT) {
+                return new Feature(Feature.Type.SMALL_BLINK, Math.min(minIndex, maxIndex),
+                        Math.max(minIndex, maxIndex),
+                        new int[]{values[maxIndex], values[minIndex]});
+            } else if (height > MIN_BLINK_HEIGHT && height < MAX_BLINK_HEIGHT) {
+                return new Feature(Feature.Type.BLINK, Math.min(minIndex, maxIndex),
+                        Math.max(minIndex, maxIndex),
+                        new int[]{values[maxIndex], values[minIndex]});
+            }
         }
         return null;
     }

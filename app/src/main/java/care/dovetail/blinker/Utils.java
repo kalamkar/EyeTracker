@@ -47,8 +47,8 @@ public class Utils {
     }
 
     public static int calculateMedian(int values[], int start, int length) {
-        int copyOfValues[] = new int[length];
-        System.arraycopy(values, start, copyOfValues, 0, length);
+        int copyOfValues[] = new int[Math.min(length, values.length - start)];
+        System.arraycopy(values, start, copyOfValues, 0, copyOfValues.length);
         Arrays.sort(copyOfValues);
         return copyOfValues[copyOfValues.length / 2];
     }

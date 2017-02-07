@@ -128,23 +128,25 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             leftChart.updateFeature2(signals.feature2(), signals.range2());
             rightChart.updateFeature2(signals.feature2(), signals.range2());
 
-            leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
-            rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
+//            leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
+//            rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
 
             if (Config.SHOW_ACCEL) {
                 leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (leftChart.isResumed() && rightChart.isResumed()) {
-                        leftChart.updateUI();
-                        rightChart.updateUI();
+            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (leftChart.isResumed() && rightChart.isResumed()) {
+                            leftChart.updateUI();
+                            rightChart.updateUI();
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 

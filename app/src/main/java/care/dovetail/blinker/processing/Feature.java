@@ -10,6 +10,7 @@ public class Feature {
 
     public enum Type {
         BLINK,
+        SMALL_BLINK,
         TRIPLE_BLINK,
         BAD_SIGNAL
     }
