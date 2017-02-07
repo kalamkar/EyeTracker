@@ -202,7 +202,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
-                boolean showChart = show && ((App) getApplication()).getShowChart();
+                boolean showChart = show && getSharedPreferences(getPackageName(), 0)
+                        .getBoolean(Config.SHOW_CHART, true);
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftChart).setVisibility(

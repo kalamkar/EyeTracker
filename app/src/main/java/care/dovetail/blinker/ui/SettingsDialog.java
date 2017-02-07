@@ -12,7 +12,7 @@ import android.view.Window;
 import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 
-import care.dovetail.blinker.App;
+import care.dovetail.blinker.Config;
 import care.dovetail.blinker.MainActivity;
 import care.dovetail.blinker.R;
 
@@ -42,11 +42,13 @@ public class SettingsDialog extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ToggleButton showChart = (ToggleButton) view.findViewById(R.id.showChart);
-        showChart.setChecked(((App) getActivity().getApplication()).getShowChart());
+        showChart.setChecked(getActivity().getSharedPreferences(getActivity().getPackageName(), 0)
+                .getBoolean(Config.SHOW_CHART, true));
         showChart.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                ((App) getActivity().getApplication()).setShowChart(isChecked);
+                getActivity().getSharedPreferences(getActivity().getPackageName(), 0)
+                        .edit().putBoolean(Config.SHOW_CHART, isChecked).apply();
             }
         });
     }

@@ -14,4 +14,6 @@ public class Config {
     public static final int SHAKING_THRESHOLD = 3000;
 
     public static final boolean SHOW_ACCEL = false;
+
+    public static final String SHOW_CHART = "show_chart";
 }
