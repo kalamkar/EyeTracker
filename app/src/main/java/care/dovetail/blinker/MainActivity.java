@@ -12,6 +12,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -55,7 +56,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
-        findViewById(R.id.binocular).setOnLongClickListener(
+        findViewById(R.id.settings).setOnLongClickListener(
                 new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View view) {
@@ -140,10 +141,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (leftChart.isResumed() && rightChart.isResumed()) {
-                            leftChart.updateUI();
-                            rightChart.updateUI();
+                        if (!leftChart.isResumed() || !rightChart.isResumed()) {
+                            return;
                         }
+                        leftChart.updateUI();
+                        rightChart.updateUI();
+                        ((TextView) findViewById(R.id.leftNumber)).setText(
+                                Integer.toString(signals.getHalfGraphHeight()));
+                        ((TextView) findViewById(R.id.rightNumber)).setText(
+                                Integer.toString(signals.getHalfGraphHeight()));
                     }
                 });
             }
@@ -208,7 +214,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
-                int numSteps = getSharedPreferences(getPackageName(), 0).getInt(Config.PREF_NUM_STEPS, 5);
+                int numSteps =
+                        getSharedPreferences(getPackageName(), 0).getInt(Config.PREF_NUM_STEPS, 5);
                 ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
                 ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
 
@@ -220,6 +227,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightChart).setVisibility(
                         showChart ? View.VISIBLE : View.INVISIBLE);
+//                findViewById(R.id.leftNumber).setVisibility(
+//                        showChart ? View.VISIBLE : View.INVISIBLE);
+//                findViewById(R.id.rightNumber).setVisibility(
+//                        showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(

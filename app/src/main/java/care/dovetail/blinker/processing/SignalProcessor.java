@@ -32,12 +32,14 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
+    private static final float MAX_HEIGHT_CHANGE = 0.25f;
+
     private final int numSteps;
     private final float blinkToGazeMultiplier;
     private final float verticalToHorizontalMultiplier;
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = 4000;
+    private int halfGraphHeight = 2000;
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -82,6 +84,10 @@ public class SignalProcessor {
         this.observer = observer;
     }
 
+    public int getHalfGraphHeight() {
+        return halfGraphHeight;
+    }
+
     public synchronized void update(int channel1, int channel2) {
         System.arraycopy(values1, 1, values1, 0, values1.length - 1);
         values1[values1.length - 1] = (int) filter1.step(channel1);
@@ -100,10 +106,12 @@ public class SignalProcessor {
 
         lastBlinkIndex--;
 
-//        horizontalBase = Utils.calculateMedian(
-//                values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-//        verticalBase = Utils.calculateMedian(
-//                values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
+            horizontalBase = Utils.calculateMedian(
+                    values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+            verticalBase = Utils.calculateMedian(
+                    values2, values2.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
+        }
         blinkBaseline = Utils.calculateMedian(
                 blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
@@ -197,8 +205,18 @@ public class SignalProcessor {
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                halfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
+                int newHalfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
                         * blinkToGazeMultiplier);
+                // If the increase or decrease in new graph height is more than 25% then increase or
+                // decrease only by 25%
+                if (Math.abs(newHalfGraphHeight - halfGraphHeight) / halfGraphHeight
+                        < MAX_HEIGHT_CHANGE) {
+                    halfGraphHeight = newHalfGraphHeight;
+                } else {
+                    halfGraphHeight = newHalfGraphHeight > halfGraphHeight
+                            ? (int) (halfGraphHeight * (1 + MAX_HEIGHT_CHANGE))
+                            : (int) (halfGraphHeight * (1 - MAX_HEIGHT_CHANGE));
+                }
             }
 
             feature1[blink.startIndex] = blink.values[0];
