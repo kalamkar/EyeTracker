@@ -137,7 +137,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }
 
-            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
+//            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -152,7 +152,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                                 Integer.toString(signals.getHalfGraphHeight()));
                     }
                 });
-            }
+//            }
         }
     }
 

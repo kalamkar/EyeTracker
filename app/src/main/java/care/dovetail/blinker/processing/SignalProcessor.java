@@ -41,6 +41,8 @@ public class SignalProcessor {
 
     private int halfGraphHeight = 2000;
 
+    private int blinkWindowIndex = 0;
+
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
@@ -67,8 +69,6 @@ public class SignalProcessor {
             4.0 / SAMPLING_FREQ, 10.0 / SAMPLING_FREQ));
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
-    private int lastBlinkIndex = -1;
-    private int lastBlinkHeight = 0;
 
     private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(0, 0);
 
@@ -104,8 +104,6 @@ public class SignalProcessor {
         System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
         feature2[feature2.length - 1] = 0;
 
-        lastBlinkIndex--;
-
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
             horizontalBase = Utils.calculateMedian(
                     values1, values1.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
@@ -115,20 +113,12 @@ public class SignalProcessor {
         blinkBaseline = Utils.calculateMedian(
                 blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
-        Feature blink = maybeGetBlink(blinks);
-        if (blink != null) {
-            if (blink.startIndex - BLINK_WINDOW > lastBlinkIndex) {
-                // New blink outside of last blink window
-                onFeature(blink);
-            } else if (lastBlinkHeight < (blink.values[0] - blink.values[1])) {
-                // New blink within last blink's window but biggger than last blink.
-                // Remove smaller last blink and add new blink.
-                Feature removedBlink = recentBlinks.remove(recentBlinks.size() - 1);
-                feature1[removedBlink.startIndex] = 0;
-                feature2[removedBlink.endIndex] = 0;
+        if (++blinkWindowIndex == BLINK_WINDOW) {
+            blinkWindowIndex = 0;
+            Feature blink = maybeGetBlink(blinks);
+            if (blink != null) {
                 onFeature(blink);
             }
-            // else ignore the new blink with height less than last blink height and within window
         }
 
         int horizLevel = getLevel(values1[values1.length - 1], numSteps, horizontalBase,
@@ -197,8 +187,6 @@ public class SignalProcessor {
             verticalBase = Utils.calculateMedian(verticalBaseline);
             horizontalBase = Utils.calculateMedian(horizontalBaseline);
 
-            lastBlinkHeight = vMinMax.second - vMinMax.first;
-            lastBlinkIndex = blink.endIndex;
             recentBlinks.add(blink);
             if (recentBlinks.size() > MAX_RECENT_BLINKS) {
                 recentBlinks.remove(0);
@@ -237,7 +225,7 @@ public class SignalProcessor {
 
     private static Feature maybeGetBlink(int values[]) {
         int last = values.length - 1;
-        int first = last - BLINK_WINDOW + 1;
+        int first = Math.max(0, last - (BLINK_WINDOW * 2) + 1);
 
         int maxIndex = first;
         int minIndex = first;
