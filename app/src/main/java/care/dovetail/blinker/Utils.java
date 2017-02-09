@@ -53,6 +53,19 @@ public class Utils {
         return copyOfValues[copyOfValues.length / 2];
     }
 
+    public static int calculateStdDeviation(int values[]) {
+        double total = 0;
+        for (int value : values) {
+            total += value;
+        }
+        int mean = (int) (total / values.length);
+        total = 0;
+        for (int value : values) {
+            total += Math.pow(Math.abs(value - mean), 2);
+        }
+        return (int) Math.sqrt(total / values.length);
+    }
+
     public static int calculateInSampleSize(
             BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image

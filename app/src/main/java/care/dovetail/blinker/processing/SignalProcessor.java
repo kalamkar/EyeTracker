@@ -34,6 +34,8 @@ public class SignalProcessor {
 
     private static final float MAX_HEIGHT_CHANGE = 0.25f;
 
+    private static final int MAX_STDDEV_FOR_QUALITY = 10000;
+
     private final int numSteps;
     private final float blinkToGazeMultiplier;
     private final float verticalToHorizontalMultiplier;
@@ -42,6 +44,8 @@ public class SignalProcessor {
     private int halfGraphHeight = 2000;
 
     private int blinkWindowIndex = 0;
+
+    private int standardDeviation = MAX_STDDEV_FOR_QUALITY + 1;
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -88,6 +92,14 @@ public class SignalProcessor {
         return halfGraphHeight;
     }
 
+    public int getStandardDeviation() {
+        return standardDeviation;
+    }
+
+    public boolean isGoodSignal() {
+        return standardDeviation < MAX_STDDEV_FOR_QUALITY;
+    }
+
     public synchronized void update(int channel1, int channel2) {
         System.arraycopy(values1, 1, values1, 0, values1.length - 1);
         values1[values1.length - 1] = (int) filter1.step(channel1);
@@ -103,6 +115,8 @@ public class SignalProcessor {
 
         System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
         feature2[feature2.length - 1] = 0;
+
+        standardDeviation = Utils.calculateStdDeviation(values1);
 
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
             horizontalBase = Utils.calculateMedian(

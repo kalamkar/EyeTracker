@@ -137,7 +137,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }
 
-//            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
+            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -146,13 +146,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         }
                         leftChart.updateUI();
                         rightChart.updateUI();
-                        ((TextView) findViewById(R.id.leftNumber)).setText(
-                                Integer.toString(signals.getHalfGraphHeight()));
-                        ((TextView) findViewById(R.id.rightNumber)).setText(
-                                Integer.toString(signals.getHalfGraphHeight()));
+                        String numbers = String.format("%d", signals.getHalfGraphHeight());
+                        ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
+                        ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
                     }
                 });
-//            }
+            }
         }
     }
 
@@ -162,7 +161,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Pair<Integer, Integer> sector = signals.getSector();
+                    Pair<Integer, Integer> sector = Pair.create(0, 0);
+                    if (signals.isGoodSignal()) {
+                        sector = signals.getSector();
+                    }
+                    findViewById(R.id.leftProgress).setVisibility(
+                            signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.rightProgress).setVisibility(
+                            signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                     leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
@@ -227,10 +233,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightChart).setVisibility(
                         showChart ? View.VISIBLE : View.INVISIBLE);
-//                findViewById(R.id.leftNumber).setVisibility(
-//                        showChart ? View.VISIBLE : View.INVISIBLE);
-//                findViewById(R.id.rightNumber).setVisibility(
-//                        showChart ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftNumber).setVisibility(
+                        showChart ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(
+                        showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(
