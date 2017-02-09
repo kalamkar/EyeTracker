@@ -137,7 +137,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }
 
-            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
+//            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -151,7 +151,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
                     }
                 });
-            }
+//            }
         }
     }
 
@@ -233,10 +233,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightChart).setVisibility(
                         showChart ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftNumber).setVisibility(
-                        showChart ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(
-                        showChart ? View.VISIBLE : View.INVISIBLE);
+//                findViewById(R.id.leftNumber).setVisibility(
+//                        showChart ? View.VISIBLE : View.INVISIBLE);
+//                findViewById(R.id.rightNumber).setVisibility(
+//                        showChart ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(
