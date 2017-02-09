@@ -161,7 +161,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Pair<Integer, Integer> sector = Pair.create(0, 0);
+                    int numSteps = getSharedPreferences(getPackageName(), 0)
+                            .getInt(Config.PREF_NUM_STEPS, 5);
+                    Pair<Integer, Integer> sector = Pair.create(numSteps / 2, numSteps / 2);
                     if (signals.isGoodSignal()) {
                         sector = signals.getSector();
                     }
