@@ -32,8 +32,8 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int MAX_GRAPH_HEIGHT = 4500;
-    private static final float MAX_HEIGHT_CHANGE = 0.25f;
+    private static final int MAX_GRAPH_HEIGHT = 4000;
+    private static final float MAX_HEIGHT_CHANGE = 0.15f;
 
     private final int numSteps;
     private final float blinkToGazeMultiplier;
@@ -41,7 +41,7 @@ public class SignalProcessor {
     private final FeatureObserver observer;
 
     private int halfGraphHeight = 2000;
-
+    private int numBlinks = 0;
     private int blinkWindowIndex = 0;
 
     private int standardDeviation = (halfGraphHeight * 5) + 1;
@@ -93,6 +93,10 @@ public class SignalProcessor {
 
     public int getStandardDeviation() {
         return standardDeviation;
+    }
+
+    public int getNumBlinks() {
+        return numBlinks;
     }
 
     public boolean isGoodSignal() {
@@ -181,6 +185,7 @@ public class SignalProcessor {
 
     private void onFeature(Feature feature) {
         if (feature.type == Feature.Type.SMALL_BLINK || feature.type == Feature.Type.BLINK) {
+            numBlinks++;
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
             Pair<Integer, Integer> vMinMax = Utils.calculateMinMax(
@@ -205,7 +210,7 @@ public class SignalProcessor {
                 recentBlinks.remove(0);
             }
 
-            if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
+            if (recentBlinks.size() >= MIN_RECENT_BLINKS && isGoodSignal()) {
                 int newHalfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
                         * blinkToGazeMultiplier);
                 // If the increase or decrease in new graph height is more than 25% then increase or

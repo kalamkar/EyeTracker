@@ -145,7 +145,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         }
                         leftChart.updateUI();
                         rightChart.updateUI();
-                        String numbers = String.format("%d", signals.getHalfGraphHeight());
+                        String numbers = String.format("%d\n%d", signals.getHalfGraphHeight(),
+                                signals.getNumBlinks());
                         ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
                         ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
                     }
