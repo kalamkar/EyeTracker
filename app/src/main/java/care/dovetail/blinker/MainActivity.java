@@ -2,7 +2,6 @@ package care.dovetail.blinker;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -29,6 +28,8 @@ import care.dovetail.blinker.ui.SettingsDialog;
 public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
+
+    private final Settings settings = new Settings(this);
 
     private ShimmerClient patchClient;
     private SignalProcessor signals;
@@ -161,8 +162,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int numSteps = getSharedPreferences(getPackageName(), 0)
-                            .getInt(Config.PREF_NUM_STEPS, 5);
+                    int numSteps = settings.getNumSteps();
                     Pair<Integer, Integer> sector = Pair.create(numSteps / 2, numSteps / 2);
                     if (signals.isGoodSignal()) {
                         sector = signals.getSector();
@@ -222,13 +222,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
-                int numSteps =
-                        getSharedPreferences(getPackageName(), 0).getInt(Config.PREF_NUM_STEPS, 5);
+                int numSteps = settings.getNumSteps();
                 ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
                 ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
 
-                boolean showChart = show && getSharedPreferences(getPackageName(), 0)
-                        .getBoolean(Config.SHOW_CHART, true);
+                boolean showChart = show && settings.shouldShowChart();
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftChart).setVisibility(
@@ -248,10 +246,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        SharedPreferences prefs = getSharedPreferences(getPackageName(), 0);
-        signals = new SignalProcessor(this, prefs.getInt(Config.PREF_NUM_STEPS, 5),
-                prefs.getFloat(Config.PREF_BLINK_TO_GAZE, 0.6f),
-                prefs.getFloat(Config.PREF_V_TO_H, 0.7f));
+        signals = new SignalProcessor(this, settings.getNumSteps(), settings.getBlinkToGaze(),
+                settings.getVtoH());
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient = new ShimmerClient(this, this);
