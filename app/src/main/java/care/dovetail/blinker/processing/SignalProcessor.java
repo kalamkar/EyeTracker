@@ -32,9 +32,8 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
+    private static final int MAX_GRAPH_HEIGHT = 4500;
     private static final float MAX_HEIGHT_CHANGE = 0.25f;
-
-    private static final int MAX_STDDEV_FOR_QUALITY = 10000;
 
     private final int numSteps;
     private final float blinkToGazeMultiplier;
@@ -45,7 +44,7 @@ public class SignalProcessor {
 
     private int blinkWindowIndex = 0;
 
-    private int standardDeviation = MAX_STDDEV_FOR_QUALITY + 1;
+    private int standardDeviation = (halfGraphHeight * 5) + 1;
 
     private final int values1[] = new int[Config.GRAPH_LENGTH];
     private final int values2[] = new int[Config.GRAPH_LENGTH];
@@ -97,7 +96,7 @@ public class SignalProcessor {
     }
 
     public boolean isGoodSignal() {
-        return standardDeviation < MAX_STDDEV_FOR_QUALITY;
+        return standardDeviation < (halfGraphHeight * 5);
     }
 
     public synchronized void update(int channel1, int channel2) {
@@ -219,6 +218,8 @@ public class SignalProcessor {
                             ? (int) (halfGraphHeight * (1 + MAX_HEIGHT_CHANGE))
                             : (int) (halfGraphHeight * (1 - MAX_HEIGHT_CHANGE));
                 }
+                // Limit half graph height to MAX_GRAPH_HEIGHT
+                halfGraphHeight = Math.min(halfGraphHeight, MAX_GRAPH_HEIGHT);
             }
 
             feature1[blink.startIndex] = blink.values[0];

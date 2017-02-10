@@ -10,6 +10,7 @@ public class Settings {
     private static final String TAG = "Settings";
 
     private static final String SHOW_CHART = "show_chart";
+    private static final String SHOW_BLINKS = "show_blinks";
     private static final String BLINK_TO_GAZE = "blink_to_gaze";
     private static final String V_TO_H = "v_to_h";
     private static final String NUM_STEPS = "num_steps";
@@ -28,6 +29,16 @@ public class Settings {
     public void setShowChart(boolean showChart) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putBoolean(SHOW_CHART, showChart).apply();
+    }
+
+    public boolean shouldShowBlinks() {
+        return context.getSharedPreferences(
+                context.getPackageName(), 0).getBoolean(SHOW_BLINKS, true);
+    }
+
+    public void setShowBlinks(boolean showBlinks) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putBoolean(SHOW_BLINKS, showBlinks).apply();
     }
 
     public int getNumSteps() {
