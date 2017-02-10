@@ -5,19 +5,14 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
-
-import java.io.InputStream;
 
 /**
  * Created by abhi on 9/28/16.
  */
 
 public class GridView extends View {
-
-    public static final String BACKGROUNDS[] = {"garden1.jpg", "garden2.jpg", "garden3.jpg"};
 
     private final Paint paint = new Paint();
     private Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
@@ -32,21 +27,12 @@ public class GridView extends View {
         super(context, attrs);
         paint.setColor(Color.WHITE);
         paint.setAlpha((int) Math.round(255.0 * 0.7));
-        background(0);
     }
 
     public void setNumSteps(int numSteps) {
         this.numSteps = numSteps;
         cellWidth = getWidth() / numSteps;
         cellHeight = getHeight() / numSteps;
-    }
-
-    public void background(int index) {
-        try {
-            InputStream inStream = getResources().getAssets().open(BACKGROUNDS[index]);
-            setBackground(Drawable.createFromStream(inStream, null));
-        } catch (Throwable t) {
-        }
     }
 
     public void highlight(int horizontalSector, int verticalSector) {

@@ -20,11 +20,16 @@
             android:layout_weight="1"
             android:layout_marginRight="@dimen/activity_horizontal_margin">
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/garden3"
+                android:scaleType="centerCrop"/>
+
             <care.dovetail.blinker.ui.GridView
                 android:id="@+id/leftGrid"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/white"/>
+                android:layout_height="match_parent"/>
 
             <include layout="@layout/grid" />
 
@@ -59,11 +64,16 @@
             android:layout_weight="1"
             android:layout_marginLeft="@dimen/activity_horizontal_margin">
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/garden3"
+                android:scaleType="centerCrop"/>
+
             <care.dovetail.blinker.ui.GridView
                 android:id="@+id/rightGrid"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/white"/>
+                android:layout_height="match_parent"/>
 
             <include layout="@layout/grid" />
 
