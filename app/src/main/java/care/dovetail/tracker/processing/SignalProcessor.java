@@ -1,4 +1,4 @@
-package care.dovetail.blinker.processing;
+package care.dovetail.tracker.processing;
 
 import android.util.Pair;
 
@@ -9,8 +9,8 @@ import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
-import care.dovetail.blinker.Config;
-import care.dovetail.blinker.Utils;
+import care.dovetail.tracker.Config;
+import care.dovetail.tracker.Utils;
 
 public class SignalProcessor {
     private static final String TAG = "SignalProcessor";

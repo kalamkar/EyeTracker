@@ -1,4 +1,4 @@
-package care.dovetail.blinker.bluetooth;
+package care.dovetail.tracker.bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -17,7 +17,7 @@ import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.UUID;
 
-import care.dovetail.blinker.Config;
+import care.dovetail.tracker.Config;
 
 public class ShimmerClient {
     private static final String TAG = "ShimmerClient";

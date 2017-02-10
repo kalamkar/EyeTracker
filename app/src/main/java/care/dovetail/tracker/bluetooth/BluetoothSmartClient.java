@@ -1,4 +1,4 @@
-package care.dovetail.blinker.bluetooth;
+package care.dovetail.tracker.bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -18,7 +18,7 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
-import care.dovetail.blinker.Config;
+import care.dovetail.tracker.Config;
 
 public class BluetoothSmartClient extends BluetoothGattCallback {
 	private static final String TAG = "BluetoothSmartClient";

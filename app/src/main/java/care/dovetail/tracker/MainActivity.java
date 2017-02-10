@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.tracker;
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,14 +16,14 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import care.dovetail.blinker.bluetooth.ShimmerClient;
-import care.dovetail.blinker.bluetooth.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.blinker.processing.AccelerationProcessor;
-import care.dovetail.blinker.processing.Feature;
-import care.dovetail.blinker.processing.SignalProcessor;
-import care.dovetail.blinker.ui.ChartFragment;
-import care.dovetail.blinker.ui.GridView;
-import care.dovetail.blinker.ui.SettingsDialog;
+import care.dovetail.tracker.bluetooth.ShimmerClient;
+import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.tracker.processing.AccelerationProcessor;
+import care.dovetail.tracker.processing.Feature;
+import care.dovetail.tracker.processing.SignalProcessor;
+import care.dovetail.tracker.ui.ChartFragment;
+import care.dovetail.tracker.ui.GridView;
+import care.dovetail.tracker.ui.SettingsDialog;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {

@@ -1,4 +1,4 @@
-package care.dovetail.blinker.ui;
+package care.dovetail.tracker.ui;
 
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -16,9 +16,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import care.dovetail.blinker.MainActivity;
-import care.dovetail.blinker.R;
-import care.dovetail.blinker.Settings;
+import care.dovetail.tracker.MainActivity;
+import care.dovetail.tracker.R;
+import care.dovetail.tracker.Settings;
 
 /**
  * Created by abhi on 2/6/17.

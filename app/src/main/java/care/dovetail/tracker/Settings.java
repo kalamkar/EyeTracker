@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.tracker;
 
 import android.content.Context;
 

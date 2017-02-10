@@ -1,4 +1,4 @@
-package care.dovetail.blinker;
+package care.dovetail.tracker;
 
 public class Config {
     public static final int GRAPH_LENGTH = 500;
