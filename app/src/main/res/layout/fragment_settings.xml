@@ -28,6 +28,13 @@
             android:padding="@dimen/activity_horizontal_margin"
             android:textOff="@string/blinks"
             android:textOn="@string/blinks"/>
+        <ToggleButton
+            android:id="@+id/whackAMole"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:textOff="@string/whack_a_mole"
+            android:textOn="@string/whack_a_mole"/>
     </LinearLayout>
 
     <TextView

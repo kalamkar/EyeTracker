@@ -31,6 +31,7 @@ public class SettingsDialog extends DialogFragment {
 
     private ToggleButton showChart;
     private ToggleButton showBlinks;
+    private ToggleButton whackAMole;
     private SeekBar numSteps;
     private TextView numStepsValue;
     private SeekBar blinkToGaze;
@@ -68,6 +69,7 @@ public class SettingsDialog extends DialogFragment {
 
         showChart = (ToggleButton) view.findViewById(R.id.showChart);
         showBlinks = (ToggleButton) view.findViewById(R.id.showBlinks);
+        whackAMole = (ToggleButton) view.findViewById(R.id.whackAMole);
         numSteps = (SeekBar) view.findViewById(R.id.num_steps);
         numStepsValue = (TextView)  view.findViewById(R.id.num_steps_value);
         blinkToGaze = (SeekBar) view.findViewById(R.id.blink_to_gaze);
@@ -77,6 +79,7 @@ public class SettingsDialog extends DialogFragment {
 
         showChart.setChecked(settings.shouldShowChart());
         showBlinks.setChecked(settings.shouldShowBlinks());
+        whackAMole.setChecked(settings.shouldWhackAMole());
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
         blinkToGaze.setProgress((int) (settings.getBlinkToGaze() * 10));
@@ -95,6 +98,13 @@ public class SettingsDialog extends DialogFragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 settings.setShowBlinks(isChecked);
+            }
+        });
+
+        whackAMole.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                settings.setWhackAMole(isChecked);
             }
         });
 

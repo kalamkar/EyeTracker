@@ -64,4 +64,8 @@ public class Utils {
         }
         return (int) Math.sqrt(total / values.length);
     }
+
+    public static int random(int min, int max) {
+        return (int) (Math.random() * (max - min) + min);
+    }
 }

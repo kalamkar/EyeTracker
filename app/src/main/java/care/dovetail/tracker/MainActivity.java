@@ -42,6 +42,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Ringtone ringtone;
 
+    private Pair<Integer, Integer> moleSector = null;
+    private int moleChangeCount = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -161,14 +164,25 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int numSteps = settings.getNumSteps();
-                    Pair<Integer, Integer> sector = Pair.create(numSteps / 2, numSteps / 2);
-                    if (signals.isGoodSignal()) {
+                    Pair<Integer, Integer> sector = null;
+                    if (settings.shouldWhackAMole()) {
+                        if (moleChangeCount == 0) {
+                            moleSector = Pair.create(Utils.random(0, settings.getNumSteps()),
+                                    Utils.random(0, settings.getNumSteps()));
+                            moleChangeCount = Utils.random(10, 50); // 1 to 5 seconds
+                        } else {
+                            moleChangeCount--;
+                        }
+                        sector = moleSector;
+                    } else if (signals.isGoodSignal()) {
                         sector = signals.getSector();
+                    } else {
+                        int numSteps = settings.getNumSteps();
+                        sector = Pair.create(numSteps / 2, numSteps / 2);
                     }
-                    findViewById(R.id.leftProgress).setVisibility(
+                    findViewById(R.id.leftWarning).setVisibility(
                             signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.rightProgress).setVisibility(
+                    findViewById(R.id.rightWarning).setVisibility(
                             signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                     leftGrid.highlight(sector.first, sector.second);
@@ -260,5 +274,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (sectorUpdateTimer != null) {
             sectorUpdateTimer.cancel();
         }
+        moleChangeCount = 0;
+        moleSector = null;
     }
 }

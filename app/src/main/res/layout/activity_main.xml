@@ -42,6 +42,13 @@
                 android:layout_marginBottom="@dimen/activity_vertical_margin"
                 tools:layout="@layout/fragment_chart"/>
 
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:id="@+id/leftWarning"
+                android:src="@android:drawable/ic_dialog_alert"/>
+
             <TextView
                 android:id="@+id/leftNumber"
                 android:layout_width="150dp"
@@ -85,6 +92,13 @@
                 android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_marginBottom="@dimen/activity_vertical_margin"
                 tools:layout="@layout/fragment_chart"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:id="@+id/rightWarning"
+                android:src="@android:drawable/ic_dialog_alert"/>
 
             <TextView
                 android:id="@+id/rightNumber"
