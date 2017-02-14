@@ -29,6 +29,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
 
+    public static final int GRAPH_UPDATE_MILLIS = 100;
+
+    public static final int GAZE_UPDATE_MILLIS = 100;
+
     private final Settings settings = new Settings(this);
 
     private ShimmerClient patchClient;
@@ -134,7 +138,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 //            leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
 //            rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
 
-            if (Config.SHOW_ACCEL) {
+            if (settings.shouldShowAccel()) {
                 leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
                 rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
             }
@@ -202,9 +206,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onNewValues(int channel1, int channel2) {
-        if (!accelerometer.isShaking()) {
-            signals.update(channel1, channel2);
-        }
+        signals.update(channel1, channel2);
         if (writer != null) {
             Pair<Integer, Integer> estimate = signals.getSector();
             writer.write(channel1, channel2, estimate.first, estimate.second,
@@ -260,10 +262,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         patchClient.connect();
 
         chartUpdateTimer = new Timer();
-        chartUpdateTimer.schedule(new ChartUpdater(), 0, Config.GRAPH_UPDATE_MILLIS);
+        chartUpdateTimer.schedule(new ChartUpdater(), 0, GRAPH_UPDATE_MILLIS);
 
         sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(new SectorUpdater(), 0, Config.GAZE_UPDATE_MILLIS);
+        sectorUpdateTimer.schedule(new SectorUpdater(), 0, GAZE_UPDATE_MILLIS);
     }
 
     public void stopBluetooth() {

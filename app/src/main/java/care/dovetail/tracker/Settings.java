@@ -12,6 +12,7 @@ public class Settings {
     private static final String SHOW_CHART = "show_chart";
     private static final String SHOW_BLINKS = "show_blinks";
     private static final String WHACK_A_MOLE = "whack_a_mole";
+    private static final String SHOW_ACCEL = "show_accel";
     private static final String BLINK_TO_GAZE = "blink_to_gaze";
     private static final String V_TO_H = "v_to_h";
     private static final String NUM_STEPS = "num_steps";
@@ -50,6 +51,16 @@ public class Settings {
     public void setWhackAMole(boolean whackAMole) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putBoolean(WHACK_A_MOLE, whackAMole).apply();
+    }
+
+    public boolean shouldShowAccel() {
+        return context.getSharedPreferences(
+                context.getPackageName(), 0).getBoolean(SHOW_ACCEL, false);
+    }
+
+    public void setShowAccel(boolean showAccel) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putBoolean(SHOW_ACCEL, showAccel).apply();
     }
 
     public int getNumSteps() {

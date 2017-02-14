@@ -13,6 +13,8 @@ import care.dovetail.tracker.Config;
 
 public class AccelerationProcessor implements SensorEventListener {
 
+    private static final int SHAKING_THRESHOLD = 5000;
+
     private static final int SAMPLING_PERIOD_MICROS = (1000 / 200) * 1000;
 
     public interface ShakingObserver {
@@ -73,9 +75,9 @@ public class AccelerationProcessor implements SensorEventListener {
         System.arraycopy(accelZ, 1, accelZ, 0, accelZ.length - 1);
         accelZ[accelZ.length -1] = (int) (event.values[2] * 100);
 
-        isShaking = calculateShaking(accelX) > Config.SHAKING_THRESHOLD
-                || calculateShaking(accelY) > Config.SHAKING_THRESHOLD
-                || calculateShaking(accelZ) > Config.SHAKING_THRESHOLD;
+        isShaking = calculateShaking(accelX) > SHAKING_THRESHOLD
+                || calculateShaking(accelY) > SHAKING_THRESHOLD
+                || calculateShaking(accelZ) > SHAKING_THRESHOLD;
         observer.onShakingChange(isShaking);
     }
 
