@@ -206,9 +206,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             signals.update(channel1, channel2);
         }
         if (writer != null) {
-            writer.write(channel1, channel2,
-                    Utils.columnRowToSector(signals.getSector(), settings.getNumSteps()),
-                    Utils.columnRowToSector(moleSector, settings.getNumSteps()));
+            Pair<Integer, Integer> estimate = signals.getSector();
+            writer.write(channel1, channel2, estimate.first, estimate.second,
+                    moleSector.first, moleSector.second);
         }
     }
 

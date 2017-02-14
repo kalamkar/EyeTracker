@@ -1,6 +1,5 @@
 package care.dovetail.tracker;
 
-import android.util.Log;
 import android.util.Pair;
 
 import java.util.Arrays;
@@ -70,17 +69,5 @@ public class Utils {
 
     public static int random(int min, int max) {
         return (int) (Math.random() * (max - min) + min);
-    }
-
-    public static int columnRowToSector(Pair<Integer, Integer> columnRow, int numSteps) {
-        if (columnRow == null) {
-            return -1;
-        }
-        if (columnRow.first < 0 || columnRow.first > numSteps - 1
-                || columnRow.second < 0 || columnRow.second > numSteps - 1) {
-            Log.w(TAG, String.format("col %d, row %d, num steps %d",
-                    columnRow.first, columnRow.second, numSteps));
-        }
-        return columnRow.second * numSteps + columnRow.first;
     }
 }

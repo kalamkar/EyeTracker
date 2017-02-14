@@ -38,20 +38,21 @@ public class FileDataWriter {
         try {
             file.createNewFile();
             output = new DataOutputStream(new FileOutputStream(file));
-            output.write(String.format(
-                    "Horizontal, Vertical, Estimated Sector, Actual Sector\n").getBytes());
+            output.write(String.format("Horizontal, Vertical, Estimated Column, Estimated Row, " +
+                    "Actual Column, Actual Row\n").getBytes());
         } catch (Exception e){
             Log.e(TAG, "Error opening output CSV file.", e);
         }
     }
 
-    public void write(int channel1, int channel2, int gazeSector, int realSector) {
+    public void write(int channel1, int channel2, int column, int row,
+                      int realColumn, int realRow) {
         if (output == null) {
             return;
         }
         try {
-            output.write(String.format("%d,%d,%d,%d\n",
-                    channel1, channel2, gazeSector, realSector).getBytes());
+            output.write(String.format("%d,%d,%d,%d,%d,%d\n", channel1, channel2, column, row,
+                    realColumn, realRow).getBytes());
         } catch (IOException e) {
             Log.e(TAG, "Error writing to output file.", e);
         }
