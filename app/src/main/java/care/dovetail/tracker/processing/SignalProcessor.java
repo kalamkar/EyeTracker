@@ -1,5 +1,6 @@
 package care.dovetail.tracker.processing;
 
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
@@ -235,12 +236,19 @@ public class SignalProcessor {
     }
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
-        float stepHeight = halfGraphHeight / (numSteps / 2); // divide by 2 as values  +ve and -ve
-        int min = median - halfGraphHeight;
-        int max = median + halfGraphHeight;
-        int currentValue = Math.max(min, Math.min(max, value));
-        int level = (int) ((currentValue - median) / stepHeight);
-        return (numSteps - 1) - (level + (numSteps / 2));
+        int min = median - halfGraphHeight + 1;
+        int max = median + halfGraphHeight - 1;
+        // Limiting the value between +ve and -ve maximums
+        // Shift the graph up so that it is between 0 and 2*halfGraph Height
+        int currentValue = Math.max(min, Math.min(max, value)) - min ;
+        if (currentValue >= 2 * halfGraphHeight || currentValue < 0) {
+            Log.w(TAG, String.format("Incorrect normalized value %d for value %d, median %d,"
+                    + "half height %d", currentValue, value, median, halfGraphHeight));
+        }
+        float stepHeight = (halfGraphHeight * 2) / numSteps;
+        int level = (int) Math.floor(currentValue / stepHeight);
+        // Inverse the level
+        return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
 
     private static Feature maybeGetBlink(int values[]) {

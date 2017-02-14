@@ -1,5 +1,6 @@
 package care.dovetail.tracker;
 
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.Arrays;
@@ -12,6 +13,8 @@ import care.dovetail.tracker.processing.Feature;
  */
 
 public class Utils {
+    private final static String TAG = "Utils";
+
     public static Pair<Integer, Integer> calculateMinMax(int values[]) {
         return calculateMinMax(values, 0, values.length);
     }
@@ -71,7 +74,12 @@ public class Utils {
 
     public static int columnRowToSector(Pair<Integer, Integer> columnRow, int numSteps) {
         if (columnRow == null) {
-            return  -1;
+            return -1;
+        }
+        if (columnRow.first < 0 || columnRow.first > numSteps - 1
+                || columnRow.second < 0 || columnRow.second > numSteps - 1) {
+            Log.w(TAG, String.format("col %d, row %d, num steps %d",
+                    columnRow.first, columnRow.second, numSteps));
         }
         return columnRow.second * (numSteps-1) + columnRow.first * (numSteps-1);
     }
