@@ -208,7 +208,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (writer != null) {
             Pair<Integer, Integer> estimate = signals.getSector();
             writer.write(channel1, channel2, estimate.first, estimate.second,
-                    moleSector.first, moleSector.second);
+                    moleSector == null ? -1 : moleSector.first,
+                    moleSector == null ? -1 : moleSector.second);
         }
     }
 
