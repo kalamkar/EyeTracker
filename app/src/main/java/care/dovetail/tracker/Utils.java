@@ -68,4 +68,11 @@ public class Utils {
     public static int random(int min, int max) {
         return (int) (Math.random() * (max - min) + min);
     }
+
+    public static int columnRowToSector(Pair<Integer, Integer> columnRow, int numSteps) {
+        if (columnRow == null) {
+            return  -1;
+        }
+        return columnRow.second * (numSteps-1) + columnRow.first * (numSteps-1);
+    }
 }

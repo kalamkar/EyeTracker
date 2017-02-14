@@ -32,25 +32,28 @@ public class FileDataWriter {
         this.context = context;
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         file = new File(dir,
-                String.format("%s-%s.raw", context.getResources().getString(R.string.app_name),
+                String.format("%s-%s.csv", context.getResources().getString(R.string.app_name),
                         FILE_NAME_FORMAT.format(new Date())));
+        Log.d(TAG, String.format("Creating file %s", file.getName()));
         try {
             file.createNewFile();
             output = new DataOutputStream(new FileOutputStream(file));
+            output.write(String.format(
+                    "Horizontal, Vertical, Estimated Sector, Actual Sector\n").getBytes());
         } catch (Exception e){
-            Log.e(TAG, "Error opening output RAW file.", e);
+            Log.e(TAG, "Error opening output CSV file.", e);
         }
     }
 
-    public void write(int channel1, int channel2) {
+    public void write(int channel1, int channel2, int gazeSector, int realSector) {
         if (output == null) {
             return;
         }
         try {
-            output.writeInt(channel1);
-            output.writeInt(channel2);
+            output.write(String.format("%d,%d,%d,%d\n",
+                    channel1, channel2, gazeSector, realSector).getBytes());
         } catch (IOException e) {
-            Log.e(TAG, "Error writing to RAW output file.", e);
+            Log.e(TAG, "Error writing to output file.", e);
         }
     }
 
@@ -61,8 +64,8 @@ public class FileDataWriter {
             output = null;
             DownloadManager downloads =
                     (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            downloads.addCompletedDownload(file.getName(), "EOG Raw Data", true,
-                    "application/x-binary", file.getAbsolutePath(), file.length(), false);
+            downloads.addCompletedDownload(file.getName(), "CSV EOG Data", true,
+                    "text/csv", file.getAbsolutePath(), file.length(), false);
             MediaScannerConnection.scanFile(context, new String[] { file.getAbsolutePath() }, null,
                     null);
         } catch (Exception e){

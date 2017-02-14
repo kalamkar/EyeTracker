@@ -165,7 +165,7 @@ public class ShimmerClient {
                 if (response == 0x00) {     // Data packet
                     byte[] buffer = new byte[10];    // u16, u8, 124r, i24r
                     try {
-                        for (int i = 0; i < buffer.length; i++) {
+                        for (int i = 0; (i < buffer.length) && inStream != null; i++) {
                             buffer[i] = (byte) inStream.read();
                         }
                     } catch (IOException e) {
