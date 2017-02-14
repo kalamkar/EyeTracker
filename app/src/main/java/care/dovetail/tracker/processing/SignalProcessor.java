@@ -33,7 +33,8 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int MAX_GRAPH_HEIGHT = 4000;
+    private static final int MAX_GRAPH_HEIGHT = 3800;
+    private static final int MIN_GRAPH_HEIGHT = 1800;
     private static final float MAX_HEIGHT_CHANGE = 0.15f;
 
     private final int numSteps;
@@ -224,8 +225,9 @@ public class SignalProcessor {
                             ? (int) (halfGraphHeight * (1 + MAX_HEIGHT_CHANGE))
                             : (int) (halfGraphHeight * (1 - MAX_HEIGHT_CHANGE));
                 }
-                // Limit half graph height to MAX_GRAPH_HEIGHT
-                halfGraphHeight = Math.min(halfGraphHeight, MAX_GRAPH_HEIGHT);
+                // Limit half graph height between MIN_GRAPH_HEIGHT and MAX_GRAPH_HEIGHT
+                halfGraphHeight =
+                        Math.max(MIN_GRAPH_HEIGHT, Math.min(halfGraphHeight, MAX_GRAPH_HEIGHT));
             }
 
             feature1[blink.startIndex] = blink.values[0];
