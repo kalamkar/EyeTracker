@@ -81,6 +81,6 @@ public class Utils {
             Log.w(TAG, String.format("col %d, row %d, num steps %d",
                     columnRow.first, columnRow.second, numSteps));
         }
-        return columnRow.second * (numSteps-1) + columnRow.first * (numSteps-1);
+        return columnRow.second * numSteps + columnRow.first;
     }
 }
