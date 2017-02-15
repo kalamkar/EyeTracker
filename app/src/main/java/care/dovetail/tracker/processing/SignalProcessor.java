@@ -33,9 +33,9 @@ public class SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int MAX_GRAPH_HEIGHT = 3800;
-    private static final int MIN_GRAPH_HEIGHT = 1800;
-    private static final float MAX_HEIGHT_CHANGE = 0.15f;
+    private static final int MAX_GRAPH_HEIGHT = 3000;
+    private static final int MIN_GRAPH_HEIGHT = 2000;
+    private static final float MAX_HEIGHT_CHANGE = 0.25f;
 
     private final int numSteps;
     private final float blinkToGazeMultiplier;
