@@ -124,41 +124,41 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             leftChart.clear();
             rightChart.clear();
 
-            leftChart.updateChannel1(signals.channel1(), signals.range1());
-            leftChart.updateChannel2(signals.channel2(), signals.range2());
-            rightChart.updateChannel1(signals.channel1(), signals.range1());
-            rightChart.updateChannel2(signals.channel2(), signals.range2());
+            if (settings.shouldShowChart()) {
+                leftChart.updateChannel1(signals.channel1(), signals.range1());
+                leftChart.updateChannel2(signals.channel2(), signals.range2());
+                rightChart.updateChannel1(signals.channel1(), signals.range1());
+                rightChart.updateChannel2(signals.channel2(), signals.range2());
 
-            leftChart.updateFeature1(signals.feature1(), signals.range2());
-            rightChart.updateFeature1(signals.feature1(), signals.range2());
+                leftChart.updateFeature1(signals.feature1(), signals.range2());
+                rightChart.updateFeature1(signals.feature1(), signals.range2());
 
-            leftChart.updateFeature2(signals.feature2(), signals.range2());
-            rightChart.updateFeature2(signals.feature2(), signals.range2());
-
-//            leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
-//            rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
-
-            if (settings.shouldShowAccel()) {
-                leftChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
-                rightChart.updateChannel3(accelerometer.getY(), Pair.create(-100, 100));
+                leftChart.updateFeature2(signals.feature2(), signals.range2());
+                rightChart.updateFeature2(signals.feature2(), signals.range2());
             }
 
-//            if (findViewById(R.id.leftChart).getVisibility() == View.VISIBLE) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!leftChart.isResumed() || !rightChart.isResumed()) {
-                            return;
-                        }
-                        leftChart.updateUI();
-                        rightChart.updateUI();
-                        String numbers = String.format("%d\n%d", signals.getHalfGraphHeight(),
-                                signals.getNumBlinks());
-                        ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
-                        ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
+            if (settings.shouldShowBlinks()) {
+                leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
+                rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
+            } else if (settings.shouldShowAccel()) {
+                leftChart.updateChannel3(accelerometer.getY(), Pair.create(-1000, 1000));
+                rightChart.updateChannel3(accelerometer.getY(), Pair.create(-1000, 1000));
+            }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!leftChart.isResumed() || !rightChart.isResumed()) {
+                        return;
                     }
-                });
-//            }
+                    leftChart.updateUI();
+                    rightChart.updateUI();
+                    String numbers = String.format("%d\n%d", signals.getHalfGraphHeight(),
+                            signals.getNumBlinks());
+                    ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
+                    ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
+                }
+            });
         }
     }
 
@@ -199,7 +199,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        if (Feature.Type.BLINK == feature.type && settings.shouldShowBlinks()) {
+        if (Feature.Type.BLINK == feature.type || Feature.Type.SMALL_BLINK == feature.type) {
             ringtone.play();
         }
     }
@@ -234,17 +234,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
                 ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
 
-                boolean showChart = show && settings.shouldShowChart();
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftChart).setVisibility(
-                        showChart ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightChart).setVisibility(
-                        showChart ? View.VISIBLE : View.INVISIBLE);
-//                findViewById(R.id.leftNumber).setVisibility(
-//                        showChart ? View.VISIBLE : View.INVISIBLE);
-//                findViewById(R.id.rightNumber).setVisibility(
-//                        showChart ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftNumber).setVisibility(
+                        show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(
+                        show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(
