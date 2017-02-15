@@ -56,7 +56,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/num_steps_label"
         android:layout_gravity="center_vertical"
-        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
         android:layout_below="@+id/toggles"
         android:layout_alignParentStart="true"
         android:layout_marginTop="@dimen/activity_vertical_margin"/>
@@ -84,7 +83,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/blink_to_gaze_label"
         android:layout_gravity="center_vertical"
-        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
         android:layout_below="@+id/num_steps"
         android:layout_alignParentStart="true"
         android:layout_marginTop="@dimen/activity_vertical_margin"/>
@@ -112,7 +110,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/v_to_h_label"
         android:layout_gravity="center_vertical"
-        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
         android:layout_below="@+id/blink_to_gaze"
         android:layout_alignParentStart="true"
         android:layout_marginTop="@dimen/activity_vertical_margin"/>
