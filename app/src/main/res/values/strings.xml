@@ -4,6 +4,8 @@
     <string name="app_name">Tracker</string>
 
     <string name="ble_not_supported">Bluetooth LE not supported.</string>
+
+    <string name="day_dream">DayDream</string>
     <string name="chart">Chart</string>
     <string name="blinks">Blinks</string>
     <string name="whack_a_mole">Whack-A-Mole</string>

@@ -74,6 +74,19 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         accelerometer = new AccelerationProcessor(
                 (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
+
+        if (settings.isDayDream()) {
+            findViewById(R.id.left).setPadding(
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+            findViewById(R.id.right).setPadding(
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+        }
     }
 
     @Override

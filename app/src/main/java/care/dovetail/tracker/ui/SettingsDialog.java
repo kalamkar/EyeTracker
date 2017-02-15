@@ -29,6 +29,7 @@ public class SettingsDialog extends DialogFragment {
 
     private Settings settings;
 
+    private ToggleButton dayDream;
     private ToggleButton showChart;
     private ToggleButton showBlinks;
     private ToggleButton whackAMole;
@@ -68,6 +69,7 @@ public class SettingsDialog extends DialogFragment {
         SharedPreferences prefs =
                 getActivity().getSharedPreferences(getActivity().getPackageName(), 0);
 
+        dayDream = (ToggleButton) view.findViewById(R.id.dayDream);
         showChart = (ToggleButton) view.findViewById(R.id.showChart);
         showBlinks = (ToggleButton) view.findViewById(R.id.showBlinks);
         whackAMole = (ToggleButton) view.findViewById(R.id.whackAMole);
@@ -79,6 +81,7 @@ public class SettingsDialog extends DialogFragment {
         verticalToHorizontal = (SeekBar) view.findViewById(R.id.v_to_h);
         vToHValue = (TextView)  view.findViewById(R.id.v_to_h_value);
 
+        dayDream.setChecked(settings.isDayDream());
         showChart.setChecked(settings.shouldShowChart());
         showBlinks.setChecked(settings.shouldShowBlinks());
         whackAMole.setChecked(settings.shouldWhackAMole());
@@ -89,6 +92,13 @@ public class SettingsDialog extends DialogFragment {
         blinkToGazeValue.setText(Float.toString(settings.getBlinkToGaze()));
         verticalToHorizontal.setProgress((int) (settings.getVtoH() * 10));
         vToHValue.setText(Float.toString(settings.getVtoH()));
+
+        dayDream.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                settings.setDayDream(isChecked);
+            }
+        });
 
         showChart.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

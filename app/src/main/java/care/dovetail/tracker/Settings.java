@@ -9,6 +9,7 @@ import android.content.Context;
 public class Settings {
     private static final String TAG = "Settings";
 
+    private static final String DAY_DREAM = "DAY_DREAM";
     private static final String SHOW_CHART = "show_chart";
     private static final String SHOW_BLINKS = "show_blinks";
     private static final String WHACK_A_MOLE = "whack_a_mole";
@@ -21,6 +22,16 @@ public class Settings {
 
     public Settings(Context context) {
         this.context = context;
+    }
+
+    public boolean isDayDream() {
+        return context.getSharedPreferences(
+                context.getPackageName(), 0).getBoolean(DAY_DREAM, true);
+    }
+
+    public void setDayDream(boolean dayDream) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putBoolean(DAY_DREAM, dayDream).apply();
     }
 
     public boolean shouldShowChart() {
