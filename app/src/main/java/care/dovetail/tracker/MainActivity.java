@@ -199,7 +199,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        if (Feature.Type.BLINK == feature.type || Feature.Type.SMALL_BLINK == feature.type) {
+        if (Feature.Type.BLINK == feature.type) {
             ringtone.play();
         }
     }
