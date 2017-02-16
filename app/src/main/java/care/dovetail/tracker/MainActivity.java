@@ -30,9 +30,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
 
-    public static final int GRAPH_UPDATE_MILLIS = 100;
-
-    public static final int GAZE_UPDATE_MILLIS = 100;
+    private static final int GRAPH_UPDATE_MILLIS = 100;
+    private static final int GAZE_UPDATE_MILLIS = 100;
+    private static final int MIN_SIGNAL_QUALITY = 50;
 
     private final Settings settings = new Settings(this);
 
@@ -161,7 +161,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     }
                     leftChart.updateUI();
                     rightChart.updateUI();
-                    String numbers = String.format("%d\n%d", signals.getHalfGraphHeight(),
+                    String numbers = String.format("%d\n%d", signals.getSignalQuality(),
                             signals.getNumBlinks());
                     ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
                     ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
@@ -176,6 +176,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    boolean isGoodSignal = signals.getSignalQuality() > MIN_SIGNAL_QUALITY;
                     Pair<Integer, Integer> sector = null;
                     if (settings.shouldWhackAMole()) {
                         if (moleChangeCount == 0) {
@@ -186,16 +187,16 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                             moleChangeCount--;
                         }
                         sector = moleSector;
-                    } else if (signals.isGoodSignal()) {
+                    } else if (isGoodSignal) {
                         sector = signals.getSector();
                     } else {
                         int numSteps = settings.getNumSteps();
                         sector = Pair.create(numSteps / 2, numSteps / 2);
                     }
                     findViewById(R.id.leftWarning).setVisibility(
-                            signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
+                            isGoodSignal ?  View.INVISIBLE : View.VISIBLE);
                     findViewById(R.id.rightWarning).setVisibility(
-                            signals.isGoodSignal() ?  View.INVISIBLE : View.VISIBLE);
+                            isGoodSignal ?  View.INVISIBLE : View.VISIBLE);
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                     leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
@@ -207,9 +208,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        if (Feature.Type.BLINK == feature.type) {
-            ringtone.play();
-        }
+//        if (Feature.Type.BLINK == feature.type) {
+//            ringtone.play();
+//        }
     }
 
     @Override

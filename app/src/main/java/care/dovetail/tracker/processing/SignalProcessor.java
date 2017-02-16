@@ -37,6 +37,8 @@ public class SignalProcessor {
     private static final int MIN_GRAPH_HEIGHT = 2000;
     private static final float MAX_HEIGHT_CHANGE = 0.25f;
 
+    private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
+
     private final int numSteps;
     private final float blinkToGazeMultiplier;
     private final float verticalToHorizontalMultiplier;
@@ -93,16 +95,15 @@ public class SignalProcessor {
         return halfGraphHeight;
     }
 
-    public int getStandardDeviation() {
-        return standardDeviation;
+    public int getSignalQuality() {
+        // (halfGraphHeight/3) is 5% signal quality loss
+        int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
+        return 100 - Math.min(100,
+                100 * Math.abs(standardDeviation - (halfGraphHeight / 3)) / maxStdDev);
     }
 
     public int getNumBlinks() {
         return numBlinks;
-    }
-
-    public boolean isGoodSignal() {
-        return standardDeviation < (halfGraphHeight * 5);
     }
 
     public synchronized void update(int channel1, int channel2) {
@@ -207,12 +208,14 @@ public class SignalProcessor {
             verticalBase = Utils.calculateMedian(verticalBaseline);
             horizontalBase = Utils.calculateMedian(horizontalBaseline);
 
-            recentBlinks.add(blink);
-            if (recentBlinks.size() > MAX_RECENT_BLINKS) {
-                recentBlinks.remove(0);
+            if (getSignalQuality() >= MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION) {
+                recentBlinks.add(blink);
+                if (recentBlinks.size() > MAX_RECENT_BLINKS) {
+                    recentBlinks.remove(0);
+                }
             }
 
-            if (recentBlinks.size() >= MIN_RECENT_BLINKS && isGoodSignal()) {
+            if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
                 int newHalfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
                         * blinkToGazeMultiplier);
                 // If the increase or decrease in new graph height is more than 25% then increase or
