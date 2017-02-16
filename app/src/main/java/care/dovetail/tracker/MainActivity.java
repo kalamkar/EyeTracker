@@ -248,9 +248,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftNumber).setVisibility(
-                        show ? View.VISIBLE : View.INVISIBLE);
+                        show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightNumber).setVisibility(
-                        show ? View.VISIBLE : View.INVISIBLE);
+                        show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(

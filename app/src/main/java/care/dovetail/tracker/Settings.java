@@ -10,6 +10,7 @@ public class Settings {
     private static final String TAG = "Settings";
 
     private static final String DAY_DREAM = "DAY_DREAM";
+    private static final String SHOW_NUMBERS = "show_numbers";
     private static final String SHOW_CHART = "show_chart";
     private static final String SHOW_BLINKS = "show_blinks";
     private static final String WHACK_A_MOLE = "whack_a_mole";
@@ -34,9 +35,19 @@ public class Settings {
                 context.getPackageName(), 0).edit().putBoolean(DAY_DREAM, dayDream).apply();
     }
 
+    public boolean shouldShowNumbers() {
+        return context.getSharedPreferences(
+                context.getPackageName(), 0).getBoolean(SHOW_NUMBERS, true);
+    }
+
+    public void setShowNumbers(boolean showNumbers) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putBoolean(SHOW_NUMBERS, showNumbers).apply();
+    }
+
     public boolean shouldShowChart() {
         return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_CHART, true);
+                context.getPackageName(), 0).getBoolean(SHOW_CHART, false);
     }
 
     public void setShowChart(boolean showChart) {
@@ -46,7 +57,7 @@ public class Settings {
 
     public boolean shouldShowBlinks() {
         return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_BLINKS, true);
+                context.getPackageName(), 0).getBoolean(SHOW_BLINKS, false);
     }
 
     public void setShowBlinks(boolean showBlinks) {
