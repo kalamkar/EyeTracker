@@ -22,6 +22,7 @@ import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.SignalProcessor;
+import care.dovetail.tracker.processing.SignalProcessor1;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.SettingsActivity;
@@ -133,16 +134,16 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             rightChart.clear();
 
             if (settings.shouldShowChart()) {
-                leftChart.updateChannel1(signals.channel1(), signals.range1());
-                leftChart.updateChannel2(signals.channel2(), signals.range2());
-                rightChart.updateChannel1(signals.channel1(), signals.range1());
-                rightChart.updateChannel2(signals.channel2(), signals.range2());
+                leftChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
+                leftChart.updateChannel2(signals.vertical(), signals.verticalRange());
+                rightChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
+                rightChart.updateChannel2(signals.vertical(), signals.verticalRange());
 
-                leftChart.updateFeature1(signals.feature1(), signals.range2());
-                rightChart.updateFeature1(signals.feature1(), signals.range2());
+                leftChart.updateFeature1(signals.feature1(), signals.verticalRange());
+                rightChart.updateFeature1(signals.feature1(), signals.verticalRange());
 
-                leftChart.updateFeature2(signals.feature2(), signals.range2());
-                rightChart.updateFeature2(signals.feature2(), signals.range2());
+                leftChart.updateFeature2(signals.feature2(), signals.verticalRange());
+                rightChart.updateFeature2(signals.feature2(), signals.verticalRange());
             }
 
             if (settings.shouldShowBlinks()) {
@@ -161,8 +162,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     }
                     leftChart.updateUI();
                     rightChart.updateUI();
-                    String numbers = String.format("%d\n%d,%d", signals.getHalfGraphHeight(),
-                            signals.getNumBlinks(), signals.getSignalQuality());
+                    String numbers = signals.getDebugNumbers();
                     ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
                     ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
                 }
@@ -177,7 +177,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 @Override
                 public void run() {
                     boolean isGoodSignal = signals.getSignalQuality() > MIN_SIGNAL_QUALITY;
-                    Pair<Integer, Integer> sector = null;
+                    Pair<Integer, Integer> sector;
                     if (settings.shouldWhackAMole()) {
                         if (moleChangeCount == 0) {
                             moleSector = Pair.create(Utils.random(0, settings.getNumSteps()),
@@ -220,8 +220,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         signals.update(channel1, channel2);
         if (writer != null) {
             Pair<Integer, Integer> estimate = signals.getSector();
-            int filtered1 = signals.channel1()[Config.GRAPH_LENGTH-1];
-            int filtered2 = signals.channel2()[Config.GRAPH_LENGTH-1];
+            int filtered1 = signals.horizontal()[Config.GRAPH_LENGTH-1];
+            int filtered2 = signals.vertical()[Config.GRAPH_LENGTH-1];
             writer.write(channel1, channel2, filtered1, filtered2, estimate.first, estimate.second,
                     moleSector == null ? -1 : moleSector.first,
                     moleSector == null ? -1 : moleSector.second);
@@ -267,7 +267,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        signals = new SignalProcessor(this, settings.getNumSteps(), settings.getBlinkToGaze(),
+        signals = new SignalProcessor1(this, settings.getNumSteps(), settings.getBlinkToGaze(),
                 settings.getVtoH());
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.

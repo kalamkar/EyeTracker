@@ -23,9 +23,7 @@ public class SettingsActivity extends Activity {
     private ToggleButton dayDream;
     private ToggleButton showNumbers;
     private ToggleButton showChart;
-    private ToggleButton showBlinks;
     private ToggleButton whackAMole;
-    private ToggleButton showAccel;
     private SeekBar numSteps;
     private TextView numStepsValue;
     private SeekBar blinkToGaze;
@@ -43,9 +41,7 @@ public class SettingsActivity extends Activity {
         dayDream = (ToggleButton) findViewById(R.id.dayDream);
         showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
         showChart = (ToggleButton) findViewById(R.id.showChart);
-        showBlinks = (ToggleButton) findViewById(R.id.showBlinks);
         whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
-        showAccel = (ToggleButton) findViewById(R.id.showAccel);
         numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
         blinkToGaze = (SeekBar) findViewById(R.id.blink_to_gaze);
@@ -56,9 +52,7 @@ public class SettingsActivity extends Activity {
         dayDream.setChecked(settings.isDayDream());
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
-        showBlinks.setChecked(settings.shouldShowBlinks());
         whackAMole.setChecked(settings.shouldWhackAMole());
-        showAccel.setChecked(settings.shouldShowAccel());
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
         blinkToGaze.setProgress((int) (settings.getBlinkToGaze() * 10));
@@ -87,24 +81,10 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        showBlinks.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                settings.setShowBlinks(isChecked);
-            }
-        });
-
         whackAMole.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 settings.setWhackAMole(isChecked);
-            }
-        });
-
-        showAccel.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                settings.setShowAccel(isChecked);
             }
         });
 

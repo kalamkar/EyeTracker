@@ -12,9 +12,7 @@ public class Settings {
     private static final String DAY_DREAM = "DAY_DREAM";
     private static final String SHOW_NUMBERS = "show_numbers";
     private static final String SHOW_CHART = "show_chart";
-    private static final String SHOW_BLINKS = "show_blinks";
     private static final String WHACK_A_MOLE = "whack_a_mole";
-    private static final String SHOW_ACCEL = "show_accel";
     private static final String BLINK_TO_GAZE = "blink_to_gaze";
     private static final String V_TO_H = "v_to_h";
     private static final String NUM_STEPS = "num_steps";
@@ -56,13 +54,7 @@ public class Settings {
     }
 
     public boolean shouldShowBlinks() {
-        return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_BLINKS, false);
-    }
-
-    public void setShowBlinks(boolean showBlinks) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putBoolean(SHOW_BLINKS, showBlinks).apply();
+        return false;
     }
 
     public boolean shouldWhackAMole() {
@@ -76,13 +68,7 @@ public class Settings {
     }
 
     public boolean shouldShowAccel() {
-        return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_ACCEL, false);
-    }
-
-    public void setShowAccel(boolean showAccel) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putBoolean(SHOW_ACCEL, showAccel).apply();
+        return false;
     }
 
     public int getNumSteps() {
