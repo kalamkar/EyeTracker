@@ -193,10 +193,12 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         int numSteps = settings.getNumSteps();
                         sector = Pair.create(numSteps / 2, numSteps / 2);
                     }
-                    findViewById(R.id.leftWarning).setVisibility(
-                            isGoodSignal ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.rightWarning).setVisibility(
-                            isGoodSignal ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.leftProgress).setVisibility(
+                            isGoodSignal || !patchClient.isConnected()
+                                    ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.rightProgress).setVisibility(
+                            isGoodSignal || !patchClient.isConnected()
+                                    ?  View.INVISIBLE : View.VISIBLE);
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                     leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
@@ -251,10 +253,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightNumber).setVisibility(
                         show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftWarning).setVisibility(
+                        show ?  View.INVISIBLE : View.VISIBLE);
+                findViewById(R.id.rightWarning).setVisibility(
+                        show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.leftProgress).setVisibility(
-                        show ?  View.INVISIBLE : View.VISIBLE);
+                        show ?  View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(
-                        show ?  View.INVISIBLE : View.VISIBLE);
+                        show ?  View.VISIBLE : View.INVISIBLE);
+
             }
         });
     }
