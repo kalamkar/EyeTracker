@@ -25,8 +25,6 @@ public class GridView extends View {
 
     public GridView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        paint.setColor(Color.WHITE);
-        paint.setAlpha((int) Math.round(255.0 * 0.7));
     }
 
     public void setNumSteps(int numSteps) {
@@ -39,9 +37,8 @@ public class GridView extends View {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
         float left = cellWidth * horizontalSector;
         float top = cellHeight * verticalSector;
-        canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
-//        canvas.drawCircle(left + Math.round(cellWidth / 2), top + Math.round(cellHeight / 2),
-//                Math.round(Math.min(cellHeight, cellWidth) / 2), paint);
+        drawRect(left, top);
+        // drawCircle(left, top);
         invalidate();
     }
 
@@ -63,5 +60,24 @@ public class GridView extends View {
         canvas = new Canvas();
         canvas.setBitmap(bitmap);
         canvas.drawColor(Color.TRANSPARENT);
+    }
+
+    private void drawRect(float left, float top) {
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setAlpha((int) Math.round(255.0 * 0.7));
+        canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
+    }
+
+    private void drawCircle(float left, float top) {
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(5.0f);
+        paint.setAlpha((int) Math.round(255.0 * 0.7));
+        float centerX = left + Math.round(cellWidth / 2);
+        float centerY = top + Math.round(cellHeight / 2);
+        float radius = Math.round(Math.min(canvas.getHeight(), canvas.getWidth()) / 10);
+        canvas.drawCircle(centerX, centerY, radius, paint);
     }
 }
