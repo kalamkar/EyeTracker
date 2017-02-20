@@ -25,6 +25,7 @@ import care.dovetail.tracker.processing.SignalProcessor;
 import care.dovetail.tracker.processing.SignalProcessor1;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
+import care.dovetail.tracker.ui.GuideView;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
@@ -34,6 +35,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private static final int GRAPH_UPDATE_MILLIS = 100;
     private static final int GAZE_UPDATE_MILLIS = 100;
     private static final int MIN_SIGNAL_QUALITY = 50;
+
+    private static final int GESTURE_UPDATE_MILLIS = 5000;
 
     private final Settings settings = new Settings(this);
 
@@ -45,6 +48,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Timer chartUpdateTimer;
     private Timer sectorUpdateTimer;
+    private Timer gestureUpdateTimer;
 
     private Ringtone ringtone;
 
@@ -118,6 +122,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         showDualView(false);
         chartUpdateTimer.cancel();
         sectorUpdateTimer.cancel();
+        gestureUpdateTimer.cancel();
         if (patchClient != null) {
             patchClient.connect();
         }
@@ -208,6 +213,19 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         }
     }
 
+    private class GestureUpdater extends TimerTask {
+        @Override
+        public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ((GuideView) findViewById(R.id.leftGuide)).nextGesture();
+                    ((GuideView) findViewById(R.id.rightGuide)).nextGesture();
+                }
+            });
+        }
+    }
+
     @Override
     public void onFeature(Feature feature) {
         if (Feature.Type.BLINK == feature.type && signals.getSignalQuality() > MIN_SIGNAL_QUALITY) {
@@ -249,6 +267,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.leftGuide).setVisibility(
+                        show && settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
+                findViewById(R.id.rightGuide).setVisibility(
+                        show && settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftNumber).setVisibility(
                         show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightNumber).setVisibility(
@@ -279,6 +301,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         sectorUpdateTimer = new Timer();
         sectorUpdateTimer.schedule(new SectorUpdater(), 0, GAZE_UPDATE_MILLIS);
+
+        if (settings.shouldShowGestures()) {
+            gestureUpdateTimer = new Timer();
+            gestureUpdateTimer.schedule(new GestureUpdater(), 0, GESTURE_UPDATE_MILLIS);
+        }
     }
 
     public void stopBluetooth() {
@@ -291,6 +318,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         }
         if (sectorUpdateTimer != null) {
             sectorUpdateTimer.cancel();
+        }
+        if (gestureUpdateTimer != null) {
+            gestureUpdateTimer.cancel();
         }
         moleChangeCount = 0;
         moleSector = null;

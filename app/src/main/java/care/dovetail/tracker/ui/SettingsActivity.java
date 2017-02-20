@@ -21,6 +21,7 @@ public class SettingsActivity extends Activity {
     private final Settings settings = new Settings(this);
 
     private ToggleButton dayDream;
+    private ToggleButton showGestures;
     private ToggleButton showNumbers;
     private ToggleButton showChart;
     private ToggleButton whackAMole;
@@ -39,6 +40,7 @@ public class SettingsActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(getPackageName(), 0);
 
         dayDream = (ToggleButton) findViewById(R.id.dayDream);
+        showGestures = (ToggleButton) findViewById(R.id.showGestures);
         showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
         showChart = (ToggleButton) findViewById(R.id.showChart);
         whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
@@ -50,6 +52,7 @@ public class SettingsActivity extends Activity {
         vToHValue = (TextView)  findViewById(R.id.v_to_h_value);
 
         dayDream.setChecked(settings.isDayDream());
+        showGestures.setChecked(settings.shouldShowGestures());
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
         whackAMole.setChecked(settings.shouldWhackAMole());
@@ -64,6 +67,13 @@ public class SettingsActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 settings.setDayDream(isChecked);
+            }
+        });
+
+        showGestures.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                settings.setShowGestures(isChecked);
             }
         });
 

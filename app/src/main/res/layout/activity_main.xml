@@ -34,6 +34,11 @@
 
             <include layout="@layout/grid" />
 
+            <care.dovetail.tracker.ui.GuideView
+                android:id="@+id/leftGuide"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
             <fragment
                 android:name="care.dovetail.tracker.ui.ChartFragment"
                 android:id="@+id/leftChart"
@@ -85,6 +90,11 @@
                 android:layout_height="match_parent"/>
 
             <include layout="@layout/grid" />
+
+            <care.dovetail.tracker.ui.GuideView
+                android:id="@+id/rightGuide"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
             <fragment
                 android:name="care.dovetail.tracker.ui.ChartFragment"

@@ -10,6 +10,7 @@ public class Settings {
     private static final String TAG = "Settings";
 
     private static final String DAY_DREAM = "DAY_DREAM";
+    private static final String SHOW_GESTURES = "show_gestures";
     private static final String SHOW_NUMBERS = "show_numbers";
     private static final String SHOW_CHART = "show_chart";
     private static final String WHACK_A_MOLE = "whack_a_mole";
@@ -31,6 +32,16 @@ public class Settings {
     public void setDayDream(boolean dayDream) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putBoolean(DAY_DREAM, dayDream).apply();
+    }
+
+    public boolean shouldShowGestures() {
+        return context.getSharedPreferences(
+                context.getPackageName(), 0).getBoolean(SHOW_GESTURES, true);
+    }
+
+    public void setShowGestures(boolean showNumbers) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putBoolean(SHOW_GESTURES, showNumbers).apply();
     }
 
     public boolean shouldShowNumbers() {
