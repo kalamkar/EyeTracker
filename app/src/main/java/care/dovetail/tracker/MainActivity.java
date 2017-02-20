@@ -36,7 +36,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private static final int GAZE_UPDATE_MILLIS = 100;
     private static final int MIN_SIGNAL_QUALITY = 50;
 
-    private static final int GESTURE_UPDATE_MILLIS = 5000;
+    private static final int GESTURE_UPDATE_MILLIS = 8000;
 
     private final Settings settings = new Settings(this);
 
