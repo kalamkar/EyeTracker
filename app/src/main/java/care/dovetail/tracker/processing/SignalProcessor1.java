@@ -33,8 +33,8 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int MAX_GRAPH_HEIGHT = 3000;
-    private static final int MIN_GRAPH_HEIGHT = 2000;
+    private static final int MAX_GRAPH_HEIGHT = 2200;
+    private static final int MIN_GRAPH_HEIGHT = 1800;
     private static final float MAX_HEIGHT_CHANGE = 0.25f;
 
     private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
@@ -139,9 +139,9 @@ public class SignalProcessor1 implements SignalProcessor {
             }
         }
 
-        int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
+        int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, 0,
                 (int) (halfGraphHeight * verticalToHorizontalMultiplier));
-        int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
+        int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, 0,
                 halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
     }
