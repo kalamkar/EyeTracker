@@ -122,7 +122,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         showDualView(false);
         chartUpdateTimer.cancel();
         sectorUpdateTimer.cancel();
-        gestureUpdateTimer.cancel();
+        if (gestureUpdateTimer != null) {
+            gestureUpdateTimer.cancel();
+        }
         if (patchClient != null) {
             patchClient.connect();
         }
@@ -181,6 +183,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    if (patchClient == null) {
+                        return;
+                    }
                     boolean isGoodSignal = signals.getSignalQuality() > MIN_SIGNAL_QUALITY;
                     Pair<Integer, Integer> sector;
                     if (settings.shouldWhackAMole()) {

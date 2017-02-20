@@ -13,7 +13,7 @@ import care.dovetail.tracker.Config;
 
 public class AccelerationProcessor implements SensorEventListener {
 
-    private static final int SHAKING_THRESHOLD = 5000;
+    private static final int SHAKING_THRESHOLD = 10000;
 
     private static final int SAMPLING_PERIOD_MICROS = (1000 / 200) * 1000;
 
