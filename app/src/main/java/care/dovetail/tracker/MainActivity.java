@@ -125,7 +125,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (gestureUpdateTimer != null) {
             gestureUpdateTimer.cancel();
         }
-        patchClient.connect();
     }
 
     private class ChartUpdater extends TimerTask {
