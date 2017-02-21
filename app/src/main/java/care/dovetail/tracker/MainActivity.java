@@ -40,7 +40,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private final Settings settings = new Settings(this);
 
-    private ShimmerClient patchClient;
+    private final ShimmerClient patchClient = new ShimmerClient(this, this);
     private SignalProcessor signals;
     private AccelerationProcessor accelerometer;
 
@@ -125,9 +125,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (gestureUpdateTimer != null) {
             gestureUpdateTimer.cancel();
         }
-        if (patchClient != null) {
-            patchClient.connect();
-        }
+        patchClient.connect();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -183,9 +181,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (patchClient == null) {
-                        return;
-                    }
                     boolean isGoodSignal = signals.getSignalQuality() > MIN_SIGNAL_QUALITY;
                     Pair<Integer, Integer> sector;
                     if (settings.shouldWhackAMole()) {
@@ -298,7 +293,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 settings.getVtoH());
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
-        patchClient = new ShimmerClient(this, this);
         patchClient.connect();
 
         chartUpdateTimer = new Timer();
@@ -314,10 +308,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void stopBluetooth() {
-        if (patchClient != null) {
-            patchClient.close();
-            patchClient = null;
-        }
+        patchClient.close();
         if (chartUpdateTimer != null) {
             chartUpdateTimer.cancel();
         }

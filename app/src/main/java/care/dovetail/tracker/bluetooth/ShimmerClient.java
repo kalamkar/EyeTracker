@@ -1,12 +1,10 @@
 package care.dovetail.tracker.bluetooth;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -14,10 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.util.Set;
 import java.util.UUID;
-
-import care.dovetail.tracker.Config;
 
 public class ShimmerClient {
     private static final String TAG = "ShimmerClient";
@@ -25,9 +20,12 @@ public class ShimmerClient {
     private static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
 
+    private final Context context;
     private final BluetoothDeviceListener listener;
 
-    private final BluetoothAdapter adapter;
+    private BluetoothAdapter adapter;
+    private String remoteAddress;
+    private ConnectionTask connectionTask;
     private ShimmerConnection connection;
 
     public interface BluetoothDeviceListener {
@@ -38,26 +36,37 @@ public class ShimmerClient {
         void onNewValues(int channel1, int channel2);
     }
 
+    private static class Packet {
+        private int timestamp;
+        private int status;
+        private int channel1;
+        private int channel2;
+
+        @Override
+        public String toString() {
+            return String.format("Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",
+                    timestamp, status, channel1, channel2);
+        }
+    }
+
     public ShimmerClient(Context context, BluetoothDeviceListener listener) {
         this.listener = listener;
-
-        BluetoothManager bluetoothManager =
-                (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        adapter = bluetoothManager.getAdapter();
+        this.context = context;
     }
 
     public void connect() {
-        if (adapter == null || !adapter.isEnabled()) {
-            Log.e(TAG, "Bluetooth adapter is null or disabled.");
-            return;
+        if (adapter == null) {
+            BluetoothManager bluetoothManager =
+                    (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+            adapter = bluetoothManager.getAdapter();
         }
 
         close();
-        Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
-        for (BluetoothDevice device : pairedDevices) {
+        for (BluetoothDevice device : adapter.getBondedDevices()) {
             String name = device.getName();
             if (name != null && name.startsWith(BT_DEVICE_NAME_PREFIX)) {
-                new ConnectionTask(device.getAddress(), this).execute();
+                remoteAddress = device.getAddress();
+                reconnect();
                 break;
             }
         }
@@ -68,21 +77,21 @@ public class ShimmerClient {
     }
 
     public void close() {
+        remoteAddress = null;
+        if (connectionTask != null) {
+            connectionTask.cancel(true);
+        }
         if (connection != null) {
-            Log.i(TAG, String.format("Closing connection to %s", connection.getRemoteName()));
+            Log.i(TAG, String.format("Closing connection to %s", connection.remoteName));
             connection.close();
             connection = null;
         }
     }
 
-    public static void maybeEnableBluetooth(Activity activity) {
-        BluetoothManager bluetoothManager =
-                (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetooth = bluetoothManager.getAdapter();
-
-        if (bluetooth == null || !bluetooth.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
+    private void reconnect() {
+        if (remoteAddress != null) {
+            connectionTask = new ConnectionTask(remoteAddress, this);
+            connectionTask.execute();
         }
     }
 
@@ -107,7 +116,7 @@ public class ShimmerClient {
                     return null;
                 }
                 socket.connect();
-                return new ShimmerConnection(socket, client.get());
+                return new ShimmerConnection(socket, client.get().listener);
             } catch (Exception e) {
                 // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
             }
@@ -119,27 +128,33 @@ public class ShimmerClient {
             if (client.get() == null) {
                 return;
             }
-
-            if (connection != null && connection.sendInquiry()) {
+            if (connection == null) {
+                client.get().reconnect();
+            } else if (connection.sendInquiry()) {
                     connection.start();
                     client.get().connection = connection;
-                    client.get().listener.onConnect(connection.getRemoteName());
+
             } else {
-                client.get().connect();
+                // sendInquiry failed, close the connection before reconnect.
+                client.get().close();
+                client.get().reconnect();
             }
         }
     }
 
     private static class ShimmerConnection extends Thread {
         private final BluetoothSocket socket;
+        private final String remoteName;
         private InputStream inStream;
         private OutputStream outStream;
 
-        private final WeakReference<ShimmerClient> client;
+        private final WeakReference<BluetoothDeviceListener> listener;
 
-        private ShimmerConnection(BluetoothSocket socket, ShimmerClient client) {
+
+        private ShimmerConnection(BluetoothSocket socket, BluetoothDeviceListener listener) {
             this.socket = socket;
-            this.client = new WeakReference<>(client);
+            this.listener = new WeakReference<>(listener);
+            this.remoteName = socket.getRemoteDevice().getName();
             try {
                 inStream = socket.getInputStream();
                 outStream = socket.getOutputStream();
@@ -148,13 +163,10 @@ public class ShimmerClient {
             }
         }
 
-        public String getRemoteName() {
-            return socket.getRemoteDevice().getName();
-        }
-
         @Override
         public void run() {
-            while (inStream != null && outStream != null) {
+            listener.get().onConnect(remoteName);
+            while (inStream != null && outStream != null && listener.get() != null) {
                 int response;
                 try {
                     response = inStream.read();
@@ -172,7 +184,10 @@ public class ShimmerClient {
                         Log.e(TAG, "Exception while reading Data Packet.", e);
                         break;
                     }
-                    client.get().processData(buffer);
+                    Packet packet = parsePacket(buffer);
+                    if (listener.get() != null && packet != null) {
+                        listener.get().onNewValues(packet.channel1, packet.channel2);
+                    }
                 } else if (response == 0x02) {  // Inquiry response
                     byte[] buffer = new byte[128];
                     int numBytes;
@@ -200,8 +215,9 @@ public class ShimmerClient {
                     Log.w(TAG, String.format("Unknown response 0x%02x", response));
                 }
             }
-            if (client.get() != null) {
-                client.get().listener.onDisconnect(getRemoteName());
+            close();
+            if (listener.get() != null) {
+                listener.get().onDisconnect(remoteName);
             }
         }
 
@@ -227,8 +243,12 @@ public class ShimmerClient {
 
         private void close() {
             try {
-                inStream.close();
-                outStream.close();
+                if (inStream != null) {
+                    inStream.close();
+                }
+                if (outStream != null) {
+                    outStream.close();
+                }
                 socket.close();
             } catch (IOException e) {
                 Log.e(TAG, "Could not close socket.", e);
@@ -238,25 +258,21 @@ public class ShimmerClient {
         }
     }
 
-    private void processData(byte buffer[]) {
+    private static Packet parsePacket(byte buffer[]) {
         if (buffer == null || buffer.length != 10) {
             Log.w(TAG, "Invalid buffer for data packet.");
-            return;
+            return null;
         }
 
-        int timestamp = parseU24(buffer[0], buffer[1], buffer[2]);  // Timestamp 3 bytes        u24
-        int status = buffer[3];                                     // ExG_ADS1292R_1_STATUS    u8
-        int channel1 = parseI24R(buffer[4], buffer[5], buffer[6]);  // ExG_ADS1292R_1_CH1_24BIT i24r
-        int channel2 = parseI24R(buffer[7], buffer[8], buffer[9]);  // ExG_ADS1292R_1_CH2_24BIT i24r
+        Packet packet = new Packet();
+        packet.timestamp = parseU24(buffer[0], buffer[1], buffer[2]);  // Timestamp 3 bytes        u24
+        packet.status = buffer[3];                                     // ExG_ADS1292R_1_STATUS    u8
+        packet.channel1 = parseI24R(buffer[4], buffer[5], buffer[6]);  // ExG_ADS1292R_1_CH1_24BIT i24r
+        packet.channel2 = parseI24R(buffer[7], buffer[8], buffer[9]);  // ExG_ADS1292R_1_CH2_24BIT i24r
 
-        channel1 += Math.pow(2, 24) / 2;
-        channel2 += Math.pow(2, 24) / 2;
-
-//        Log.v(TAG, String.format(
-//                "Timestamp %d, Status 0x%2x, channel1 %d, channel2 %d",
-//                timestamp, status, channel1, channel2));
-
-        listener.onNewValues(channel1, channel2);
+        packet.channel1 += Math.pow(2, 24) / 2;
+        packet.channel2 += Math.pow(2, 24) / 2;
+        return packet;
     }
 
     private static int parseU24(byte byte1, byte byte2, byte byte3) {
@@ -266,9 +282,9 @@ public class ShimmerClient {
         return xmsb + msb + lsb;
     }
 
-    private static int parseU16(byte byte1, byte byte2) {
-        return (byte1 & 0xFF) + ((byte2 & 0xFF) << 8);
-    }
+//    private static int parseU16(byte byte1, byte byte2) {
+//        return (byte1 & 0xFF) + ((byte2 & 0xFF) << 8);
+//    }
 
     private static int parseI24R(byte byte1, byte byte2, byte byte3) {
         int xmsb = (byte1 & 0xFF) << 16;
