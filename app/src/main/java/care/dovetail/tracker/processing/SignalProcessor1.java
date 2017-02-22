@@ -26,7 +26,7 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
     private static final int LENGTH_FOR_MEDIAN =  500;
 
-    private static final int MAX_RECENT_BLINKS = 10;
+    private static final int MAX_RECENT_BLINKS = 20;
     private static final int MIN_RECENT_BLINKS = 5;
 
     private static final int SMALL_BLINK_HEIGHT = 4000;
@@ -61,8 +61,8 @@ public class SignalProcessor1 implements SignalProcessor {
     private int verticalBase;
     private int blinkBaseline;
 
-    private final int horizontalBaseline[] = new int[Config.GRAPH_LENGTH];
-    private final int verticalBaseline[] = new int[Config.GRAPH_LENGTH];
+    private final int horizontalBaseline[] = new int[MAX_RECENT_BLINKS];
+    private final int verticalBaseline[] = new int[MAX_RECENT_BLINKS];
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
@@ -87,7 +87,8 @@ public class SignalProcessor1 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d,%d", halfGraphHeight, numBlinks, getSignalQuality());
+        return String.format("%d,%d\n%d,%d", horizontalBase, verticalBase, numBlinks,
+                getSignalQuality());
     }
 
     @Override
