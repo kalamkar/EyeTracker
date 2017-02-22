@@ -18,6 +18,7 @@
     <string-array name="algo">
         <item>Old</item>
         <item>New</item>
+        <item>Median Diff</item>
     </string-array>
 
 </resources>
