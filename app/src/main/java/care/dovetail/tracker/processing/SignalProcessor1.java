@@ -139,9 +139,9 @@ public class SignalProcessor1 implements SignalProcessor {
             }
         }
 
-        int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, 0,
+        int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
                 (int) (halfGraphHeight * verticalToHorizontalMultiplier));
-        int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, 0,
+        int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
                 halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
     }

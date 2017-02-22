@@ -22,7 +22,7 @@ import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.SignalProcessor;
-import care.dovetail.tracker.processing.SignalProcessor1;
+import care.dovetail.tracker.processing.SignalProcessor2;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.GuideView;
@@ -288,7 +288,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        signals = new SignalProcessor1(this, settings.getNumSteps(), settings.getBlinkToGaze(),
+        signals = new SignalProcessor2(this, settings.getNumSteps(), settings.getBlinkToGaze(),
                 settings.getVtoH());
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.

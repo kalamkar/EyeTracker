@@ -67,6 +67,18 @@ public class Utils {
         return (int) Math.sqrt(total / values.length);
     }
 
+    public static int calculateChanges(int values[]) {
+        int lastValue = values[0];
+        int changes = 0;
+        for (int value : values) {
+            if (value != lastValue) {
+                changes++;
+            }
+            lastValue = value;
+        }
+        return changes;
+    }
+
     public static int random(int min, int max) {
         return (int) (Math.random() * (max - min) + min);
     }

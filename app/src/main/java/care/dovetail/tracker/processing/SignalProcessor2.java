@@ -3,9 +3,6 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -24,20 +21,15 @@ public class SignalProcessor2 implements SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
     private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
-    private static final int LENGTH_FOR_MEDIAN =  500;
-
-    private static final int MAX_RECENT_BLINKS = 10;
-    private static final int MIN_RECENT_BLINKS = 5;
 
     private static final int SMALL_BLINK_HEIGHT = 4000;
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int MAX_GRAPH_HEIGHT = 400;
-    private static final int MIN_GRAPH_HEIGHT = 150;
-    private static final float MAX_HEIGHT_CHANGE = 0.25f;
+    private static final int HALF_GRAPH_HEIGHT = 180;
+    private static final int MIN_STEP = 72;
 
-    private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
+    private static final int MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE = 100;
 
     private final int numSteps;
     private final float blinkToGazeMultiplier;
@@ -47,9 +39,10 @@ public class SignalProcessor2 implements SignalProcessor {
     private int hLastValue;
     private int vLastValue;
 
-    private int halfGraphHeight = 200;
+    private int halfGraphHeight = HALF_GRAPH_HEIGHT;
     private int blinkWindowIndex = 0;
     private int numBlinks = 0;
+    private int signalQuality = 0;
 
     private int hStandardDeviation = (halfGraphHeight * 5) + 1;
     private int vStandardDeviation = (halfGraphHeight * 5) + 1;
@@ -64,9 +57,6 @@ public class SignalProcessor2 implements SignalProcessor {
     private int verticalBase;
     private int blinkBaseline;
 
-    private final int horizontalBaseline[] = new int[Config.GRAPH_LENGTH];
-    private final int verticalBaseline[] = new int[Config.GRAPH_LENGTH];
-
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.lowpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
             HIGH_FREQUENCY / SAMPLING_FREQ, 0));
@@ -79,9 +69,7 @@ public class SignalProcessor2 implements SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / SAMPLING_FREQ, 10.0 / SAMPLING_FREQ));
 
-    private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
-
-    private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(0, 0);
+    private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(2, 2);
 
     public SignalProcessor2(FeatureObserver observer, int numSteps, float blinkToGazeMultiplier,
                             float verticalToHorizontalMultiplier) {
@@ -93,29 +81,50 @@ public class SignalProcessor2 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d,%d", halfGraphHeight, numBlinks, getSignalQuality());
+        int quality = getSignalQuality();
+        return String.format("%d,%d\n%d,%d", getHorizontalBase(), getVerticalBase(),
+                numBlinks, getSignalQuality());
     }
+
+//    @Override
+//    public int getSignalQuality() {
+//        // (halfGraphHeight/3) is 5% signal quality loss
+//        int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
+//        int horizLoss = 100 * Math.abs(hStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
+//        int vertLoss = 100 * Math.abs(vStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
+//        return 100 - Math.min(100, Math.max(horizLoss, vertLoss));
+//    }
 
     @Override
     public int getSignalQuality() {
-        // (halfGraphHeight/3) is 5% signal quality loss
-        int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
-        int horizLoss = 100 * Math.abs(hStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
-        int vertLoss = 100 * Math.abs(vStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
-        return 100 - Math.min(100, Math.max(horizLoss, vertLoss));
+        return signalQuality;
+    }
+
+    private int getHorizontalBase() {
+        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
+    }
+
+    private int getVerticalBase() {
+        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? verticalBase : 0;
     }
 
     @Override
     public synchronized void update(int hValue, int vValue) {
-        int hFiltered = (int) hFilter.step(hValue);
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
-        horizontal[horizontal.length - 1] = hFiltered - hLastValue;
-        hLastValue = hFiltered;
+        int hFiltered = (int) hFilter.step(hValue - hLastValue);
+        boolean hChange = Math.abs(horizontal[horizontal.length - 2] - hFiltered) > MIN_STEP;
+        horizontal[horizontal.length - 1] = hChange ? hFiltered : horizontal[horizontal.length - 2];
+        hLastValue = hValue;
 
-        int vFiltered = (int) vFilter.step(vValue);
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
-        vertical[vertical.length - 1] = vFiltered - vLastValue;
-        vLastValue = vFiltered;
+        int vFiltered = (int) vFilter.step(vValue - vLastValue);
+        boolean vChange = Math.abs(vertical[vertical.length - 2] - vFiltered) > MIN_STEP;
+        vertical[vertical.length - 1] = vChange ? vFiltered : vertical[vertical.length - 2];
+        vLastValue = vValue;
+
+        int maxChanges =
+                Math.max(Utils.calculateChanges(horizontal), Utils.calculateChanges(vertical));
+        signalQuality = 100 - (maxChanges * 100 / horizontal.length);
 
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
@@ -129,12 +138,6 @@ public class SignalProcessor2 implements SignalProcessor {
         hStandardDeviation = Utils.calculateStdDeviation(horizontal);
         vStandardDeviation = Utils.calculateStdDeviation(vertical);
 
-        if (recentBlinks.size() < MIN_RECENT_BLINKS) {
-            horizontalBase = Utils.calculateMedian(
-                    horizontal, horizontal.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-            verticalBase = Utils.calculateMedian(
-                    vertical, vertical.length - LENGTH_FOR_MEDIAN, LENGTH_FOR_MEDIAN);
-        }
         blinkBaseline = Utils.calculateMedian(
                 blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
@@ -146,11 +149,11 @@ public class SignalProcessor2 implements SignalProcessor {
             }
         }
 
-        int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
+        int hLevel = getLevel(horizontal[horizontal.length - 1], numSteps, getHorizontalBase(),
                 (int) (halfGraphHeight * verticalToHorizontalMultiplier));
-        int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
+        int vLevel = getLevel(vertical[vertical.length - 1], numSteps, getVerticalBase(),
                 halfGraphHeight);
-        sector = Pair.create(horizLevel, vertLevel);
+        sector = Pair.create(hLevel, vLevel);
     }
 
     @Override
@@ -181,13 +184,13 @@ public class SignalProcessor2 implements SignalProcessor {
     @Override
     public Pair<Integer, Integer> horizontalRange() {
         return Pair.create(
-                horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
+                getHorizontalBase() - halfGraphHeight * 2, getHorizontalBase() + halfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
          return Pair.create(
-                 verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
+                 getVerticalBase() - halfGraphHeight * 2, getVerticalBase() + halfGraphHeight * 2);
     }
 
     @Override
@@ -201,7 +204,7 @@ public class SignalProcessor2 implements SignalProcessor {
     }
 
     private void onFeature(Feature feature) {
-        if (feature.type == Feature.Type.SMALL_BLINK || feature.type == Feature.Type.BLINK) {
+        if (feature.type == Feature.Type.BLINK || feature.type == Feature.Type.SMALL_BLINK) {
             numBlinks++;
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
@@ -212,45 +215,12 @@ public class SignalProcessor2 implements SignalProcessor {
             Pair<Integer, Integer> hMinMax = Utils.calculateMinMax(
                     horizontal, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
 
-            System.arraycopy(verticalBaseline, 1, verticalBaseline, 0, verticalBaseline.length - 1);
-            verticalBaseline[verticalBaseline.length - 1] = vMinMax.first;
-
-            System.arraycopy(horizontalBaseline, 1, horizontalBaseline, 0,
-                    horizontalBaseline.length - 1);
-            horizontalBaseline[horizontalBaseline.length - 1] = hMinMax.first;
-
-            verticalBase = Utils.calculateMedian(verticalBaseline);
-            horizontalBase = Utils.calculateMedian(horizontalBaseline);
-
-            if (getSignalQuality() >= MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION) {
-                recentBlinks.add(blink);
-                if (recentBlinks.size() > MAX_RECENT_BLINKS) {
-                    recentBlinks.remove(0);
-                }
-            }
-
-            if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
-                int newHalfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
-                        * blinkToGazeMultiplier);
-                // If the increase or decrease in new graph height is more than 25% then increase or
-                // decrease only by 25%
-                if (Math.abs(newHalfGraphHeight - halfGraphHeight) / halfGraphHeight
-                        < MAX_HEIGHT_CHANGE) {
-                    halfGraphHeight = newHalfGraphHeight;
-                } else {
-                    halfGraphHeight = newHalfGraphHeight > halfGraphHeight
-                            ? (int) (halfGraphHeight * (1 + MAX_HEIGHT_CHANGE))
-                            : (int) (halfGraphHeight * (1 - MAX_HEIGHT_CHANGE));
-                }
-                // Limit half graph height between MIN_GRAPH_HEIGHT and MAX_GRAPH_HEIGHT
-                halfGraphHeight =
-                        Math.max(MIN_GRAPH_HEIGHT, Math.min(halfGraphHeight, MAX_GRAPH_HEIGHT));
-            }
+            verticalBase = (vMinMax.second - vMinMax.first) / 3 + vMinMax.first;
+            horizontalBase = (hMinMax.first + hMinMax.second) / 2;
 
             feature1[blink.startIndex] = blink.values[0];
             feature2[blink.endIndex] = blink.values[1];
         }
-
         observer.onFeature(feature);
     }
 
