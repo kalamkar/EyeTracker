@@ -40,8 +40,8 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
 
     private final int numSteps;
-    private final float blinkToGazeMultiplier = 0.8f;
-    private final float verticalToHorizontalMultiplier = 0.7f;
+    private final static float BLINK_TO_GAZE_MULTIPLIER = 0.8f;
+    private final static float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.6f;
     private final FeatureObserver observer;
 
     private int halfGraphHeight = 2000;
@@ -137,7 +137,7 @@ public class SignalProcessor1 implements SignalProcessor {
         }
 
         int horizLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
-                (int) (halfGraphHeight * verticalToHorizontalMultiplier));
+                (int) (halfGraphHeight * VERTICAL_TO_HORIZONTAL_MULTIPLIER));
         int vertLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
                 halfGraphHeight);
         sector = Pair.create(horizLevel, vertLevel);
@@ -221,7 +221,7 @@ public class SignalProcessor1 implements SignalProcessor {
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
                 int newHalfGraphHeight = (int) (((float) Utils.calculateMedianHeight(recentBlinks))
-                        * blinkToGazeMultiplier);
+                        * BLINK_TO_GAZE_MULTIPLIER);
                 // If the increase or decrease in new graph height is more than 25% then increase or
                 // decrease only by 25%
                 if (Math.abs(newHalfGraphHeight - halfGraphHeight) / halfGraphHeight

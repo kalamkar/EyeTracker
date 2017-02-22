@@ -26,13 +26,14 @@ public class SignalProcessor2 implements SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
+    private final static float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.6f;
+    
     private static final int HALF_GRAPH_HEIGHT = 150;
     private static final int MIN_STEP = 72;
 
     private static final int MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE = 100;
 
     private final int numSteps;
-    private final float verticalToHorizontalMultiplier = 0.7f;
     private final FeatureObserver observer;
 
     private int hLastValue;
@@ -146,7 +147,7 @@ public class SignalProcessor2 implements SignalProcessor {
         }
 
         int hLevel = getLevel(horizontal[horizontal.length - 1], numSteps, getHorizontalBase(),
-                (int) (halfGraphHeight * verticalToHorizontalMultiplier));
+                (int) (halfGraphHeight * VERTICAL_TO_HORIZONTAL_MULTIPLIER));
         int vLevel = getLevel(vertical[vertical.length - 1], numSteps, getVerticalBase(),
                 halfGraphHeight);
         sector = Pair.create(hLevel, vLevel);
