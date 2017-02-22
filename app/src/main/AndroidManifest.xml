@@ -31,7 +31,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="care.dovetail.tracker.ui.SettingsActivity"/>
+            android:name="care.dovetail.tracker.ui.SettingsActivity"
+            android:screenOrientation="userLandscape"/>
     </application>
 
 </manifest>
