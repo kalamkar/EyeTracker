@@ -26,7 +26,7 @@ public class SignalProcessor2 implements SignalProcessor {
     private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
-    private static final int HALF_GRAPH_HEIGHT = 180;
+    private static final int HALF_GRAPH_HEIGHT = 150;
     private static final int MIN_STEP = 72;
 
     private static final int MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE = 100;
@@ -101,11 +101,11 @@ public class SignalProcessor2 implements SignalProcessor {
     }
 
     private int getHorizontalBase() {
-        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
+        return signalQuality < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
     }
 
     private int getVerticalBase() {
-        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? verticalBase : 0;
+        return signalQuality < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? verticalBase : 0;
     }
 
     @Override
