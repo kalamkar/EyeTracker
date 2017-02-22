@@ -32,8 +32,7 @@ public class SignalProcessor2 implements SignalProcessor {
     private static final int MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE = 100;
 
     private final int numSteps;
-    private final float blinkToGazeMultiplier;
-    private final float verticalToHorizontalMultiplier;
+    private final float verticalToHorizontalMultiplier = 0.7f;
     private final FeatureObserver observer;
 
     private int hLastValue;
@@ -71,11 +70,8 @@ public class SignalProcessor2 implements SignalProcessor {
 
     private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(2, 2);
 
-    public SignalProcessor2(FeatureObserver observer, int numSteps, float blinkToGazeMultiplier,
-                            float verticalToHorizontalMultiplier) {
+    public SignalProcessor2(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
-        this.blinkToGazeMultiplier = blinkToGazeMultiplier;
-        this.verticalToHorizontalMultiplier = verticalToHorizontalMultiplier;
         this.observer = observer;
     }
 

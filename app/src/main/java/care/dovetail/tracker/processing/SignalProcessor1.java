@@ -40,8 +40,8 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
 
     private final int numSteps;
-    private final float blinkToGazeMultiplier;
-    private final float verticalToHorizontalMultiplier;
+    private final float blinkToGazeMultiplier = 0.8f;
+    private final float verticalToHorizontalMultiplier = 0.7f;
     private final FeatureObserver observer;
 
     private int halfGraphHeight = 2000;
@@ -80,11 +80,8 @@ public class SignalProcessor1 implements SignalProcessor {
 
     private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(0, 0);
 
-    public SignalProcessor1(FeatureObserver observer, int numSteps, float blinkToGazeMultiplier,
-                            float verticalToHorizontalMultiplier) {
+    public SignalProcessor1(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
-        this.blinkToGazeMultiplier = blinkToGazeMultiplier;
-        this.verticalToHorizontalMultiplier = verticalToHorizontalMultiplier;
         this.observer = observer;
     }
 

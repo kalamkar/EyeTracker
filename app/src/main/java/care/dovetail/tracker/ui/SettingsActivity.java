@@ -27,10 +27,6 @@ public class SettingsActivity extends Activity {
     private ToggleButton whackAMole;
     private SeekBar numSteps;
     private TextView numStepsValue;
-    private SeekBar blinkToGaze;
-    private TextView blinkToGazeValue;
-    private SeekBar verticalToHorizontal;
-    private TextView vToHValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,10 +42,6 @@ public class SettingsActivity extends Activity {
         whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
         numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
-        blinkToGaze = (SeekBar) findViewById(R.id.blink_to_gaze);
-        blinkToGazeValue = (TextView)  findViewById(R.id.blink_to_gaze_value);
-        verticalToHorizontal = (SeekBar) findViewById(R.id.v_to_h);
-        vToHValue = (TextView)  findViewById(R.id.v_to_h_value);
 
         dayDream.setChecked(settings.isDayDream());
         showGestures.setChecked(settings.shouldShowGestures());
@@ -58,10 +50,6 @@ public class SettingsActivity extends Activity {
         whackAMole.setChecked(settings.shouldWhackAMole());
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
-        blinkToGaze.setProgress((int) (settings.getBlinkToGaze() * 10));
-        blinkToGazeValue.setText(Float.toString(settings.getBlinkToGaze()));
-        verticalToHorizontal.setProgress((int) (settings.getVtoH() * 10));
-        vToHValue.setText(Float.toString(settings.getVtoH()));
 
         dayDream.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -107,28 +95,6 @@ public class SettingsActivity extends Activity {
 
             @Override  public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        blinkToGaze.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                blinkToGazeValue.setText(Float.toString((float) progress / 10));
-                settings.setBlinkToGaze((float) progress / 10);
-            }
-
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        verticalToHorizontal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                vToHValue.setText(Float.toString((float) progress / 10));
-                settings.setvToH((float) progress / 10);
-            }
-
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 }

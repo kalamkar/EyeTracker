@@ -288,8 +288,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        signals = new SignalProcessor2(this, settings.getNumSteps(), settings.getBlinkToGaze(),
-                settings.getVtoH());
+        signals = new SignalProcessor2(this, settings.getNumSteps());
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient.connect();

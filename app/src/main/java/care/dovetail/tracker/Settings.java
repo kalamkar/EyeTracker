@@ -90,23 +90,4 @@ public class Settings {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(NUM_STEPS, numSteps).apply();
     }
-
-    public float getBlinkToGaze() {
-        return context.getSharedPreferences(
-                context.getPackageName(), 0).getFloat(BLINK_TO_GAZE, 0.6f);
-    }
-
-    public void setBlinkToGaze(float blinkToGaze) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putFloat(BLINK_TO_GAZE, blinkToGaze).apply();
-    }
-
-    public float getVtoH() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getFloat(V_TO_H, 0.7f);
-    }
-
-    public void setvToH(float vToH) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putFloat(V_TO_H, vToH).apply();
-    }
 }
