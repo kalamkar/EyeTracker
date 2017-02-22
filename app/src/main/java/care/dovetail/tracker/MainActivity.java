@@ -35,7 +35,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
     private static final int GAZE_UPDATE_MILLIS = 100;
-    private static final int MIN_SIGNAL_QUALITY = 50;
 
     private static final int GESTURE_UPDATE_MILLIS = 8000;
 
@@ -177,7 +176,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    boolean isGoodSignal = signals.getSignalQuality() > MIN_SIGNAL_QUALITY;
+                    boolean isGoodSignal = signals.getSignalQuality() > settings.getMinQuality();
                     Pair<Integer, Integer> sector;
                     if (settings.shouldWhackAMole()) {
                         if (moleChangeCount == 0) {
@@ -224,7 +223,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        if (Feature.Type.BLINK == feature.type && signals.getSignalQuality() > MIN_SIGNAL_QUALITY) {
+        if (Feature.Type.BLINK == feature.type
+                && signals.getSignalQuality() > settings.getMinQuality()) {
             ringtone.play();
         }
     }
