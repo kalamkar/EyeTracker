@@ -1,17 +1,16 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="@dimen/activity_horizontal_margin"
+    android:orientation="vertical"
     tools:context="care.dovetail.tracker.MainActivity" >
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/toggles"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
         android:gravity="center">
 
         <ToggleButton
@@ -50,30 +49,80 @@
             android:textOn="@string/whack_a_mole"/>
     </LinearLayout>
 
-    <TextView
-        android:text="@string/grid_size"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/num_steps_label"
-        android:layout_gravity="center_vertical"
-        android:layout_below="@+id/toggles"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="@dimen/activity_vertical_margin"/>
+        android:gravity="center"
+        android:layout_marginTop="@dimen/activity_vertical_margin">
 
-    <SeekBar
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/num_steps_label"
-        android:id="@+id/num_steps"
-        android:max="15"
-        android:layout_toStartOf="@+id/num_steps_value"/>
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/algo"
+            android:entries="@array/algo"/>
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/num_steps_value"
-        android:text="0"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/num_steps_label"
-        android:layout_alignParentEnd="true" />
-</RelativeLayout>
+        android:layout_marginTop="@dimen/activity_vertical_margin">
+        <TextView
+            android:text="@string/grid_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/num_steps_label"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"/>
+
+        <SeekBar
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/num_steps_label"
+            android:id="@+id/num_steps"
+            android:max="15"
+            android:layout_toStartOf="@+id/num_steps_value"/>
+
+        <TextView
+            android:id="@+id/num_steps_value"
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/num_steps_label"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_vertical_margin">
+        <TextView
+            android:text="@string/min_quality"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/min_quality_label"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="@dimen/activity_vertical_margin"/>
+
+        <SeekBar
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/min_quality_label"
+            android:id="@+id/min_quality"
+            android:max="100"
+            android:layout_toStartOf="@+id/min_quality_value"/>
+
+        <TextView
+            android:id="@+id/min_quality_value"
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/min_quality_label"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+</LinearLayout>

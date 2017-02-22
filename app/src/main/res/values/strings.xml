@@ -13,5 +13,11 @@
     <string name="whack_a_mole">Whack-A-Mole</string>
     <string name="accelerometer">Accel</string>
     <string name="grid_size">Grid size</string>
+    <string name="min_quality">Minimum Quality</string>
+
+    <string-array name="algo">
+        <item>Old</item>
+        <item>New</item>
+    </string-array>
 
 </resources>

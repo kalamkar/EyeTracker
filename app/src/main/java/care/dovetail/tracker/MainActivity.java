@@ -22,6 +22,7 @@ import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.SignalProcessor;
+import care.dovetail.tracker.processing.SignalProcessor1;
 import care.dovetail.tracker.processing.SignalProcessor2;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
@@ -120,11 +121,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         writer.close();
         writer = null;
         showDualView(false);
-        chartUpdateTimer.cancel();
-        sectorUpdateTimer.cancel();
-        if (gestureUpdateTimer != null) {
-            gestureUpdateTimer.cancel();
-        }
+        stopBluetooth();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -288,7 +285,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
-        signals = new SignalProcessor2(this, settings.getNumSteps());
+        switch (settings.getAlgorithm()) {
+            case 0:
+                signals = new SignalProcessor1(this, settings.getNumSteps());
+                break;
+            case 1:
+                signals = new SignalProcessor2(this, settings.getNumSteps());
+                break;
+        }
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient.connect();
