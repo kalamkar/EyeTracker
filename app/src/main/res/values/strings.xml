@@ -16,9 +16,9 @@
     <string name="min_quality">Minimum Quality</string>
 
     <string-array name="algo">
-        <item>Old</item>
-        <item>New</item>
-        <item>Median Diff</item>
+        <item>Bandpass</item>
+        <item>Filtered Diff</item>
+        <item>Median, No Drift</item>
     </string-array>
 
 </resources>

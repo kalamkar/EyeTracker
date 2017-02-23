@@ -16,8 +16,6 @@ import care.dovetail.tracker.Utils;
 public class SignalProcessor1 implements SignalProcessor {
     private static final String TAG = "SignalProcessor1";
 
-    private static final double SAMPLING_FREQ  = 200.0;
-
     private static final double LOW_FREQUENCY = 0.5;
     private static final double HIGH_FREQUENCY = 3.0;
     private static final int FILTER_ORDER = 2;
@@ -66,15 +64,15 @@ public class SignalProcessor1 implements SignalProcessor {
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-            LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
+            LOW_FREQUENCY / Config.SAMPLING_FREQ, HIGH_FREQUENCY / Config.SAMPLING_FREQ));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, FILTER_ORDER, 0,
-            LOW_FREQUENCY / SAMPLING_FREQ, HIGH_FREQUENCY / SAMPLING_FREQ));
+            LOW_FREQUENCY / Config.SAMPLING_FREQ, HIGH_FREQUENCY / Config.SAMPLING_FREQ));
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
-            4.0 / SAMPLING_FREQ, 10.0 / SAMPLING_FREQ));
+            4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
 
     private final List<Feature> recentBlinks = new ArrayList<>(MAX_RECENT_BLINKS);
 
@@ -131,7 +129,8 @@ public class SignalProcessor1 implements SignalProcessor {
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
-            Feature blink = maybeGetBlink(blinks);
+            Feature blink = Utils.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
+                    MAX_BLINK_HEIGHT);
             if (blink != null) {
                 onFeature(blink);
             }
@@ -259,45 +258,5 @@ public class SignalProcessor1 implements SignalProcessor {
         int level = (int) Math.floor(currentValue / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
-    }
-
-    private static Feature maybeGetBlink(int values[]) {
-        int last = values.length - 1;
-        int first = Math.max(0, last - (BLINK_WINDOW * 2) + 1);
-
-        int maxIndex = first;
-        int minIndex = first;
-        for (int i = first; i <= last; i++) {
-            if (values[maxIndex] < values[i]) {
-                maxIndex = i;
-            }
-            if (values[minIndex] > values[i]) {
-                minIndex = i;
-            }
-        }
-
-        if (maxIndex == last || minIndex == last || maxIndex == 0 || minIndex == 0) {
-            // Ignore edges for blink to detect strict local minima and maxima.
-            return null;
-        }
-
-        boolean localMaxima = (values[maxIndex - 1] < values[maxIndex])
-                && (values[maxIndex] > values[maxIndex + 1]);
-        boolean localMinima = (values[minIndex - 1] > values[minIndex])
-                && (values[minIndex] < values[minIndex + 1]);
-
-        int height = values[maxIndex] - values[minIndex];
-        if (localMaxima && localMinima && maxIndex < minIndex) {
-            if (height > SMALL_BLINK_HEIGHT && height < MIN_BLINK_HEIGHT) {
-                return new Feature(Feature.Type.SMALL_BLINK, Math.min(minIndex, maxIndex),
-                        Math.max(minIndex, maxIndex),
-                        new int[]{values[maxIndex], values[minIndex]});
-            } else if (height > MIN_BLINK_HEIGHT && height < MAX_BLINK_HEIGHT) {
-                return new Feature(Feature.Type.BLINK, Math.min(minIndex, maxIndex),
-                        Math.max(minIndex, maxIndex),
-                        new int[]{values[maxIndex], values[minIndex]});
-            }
-        }
-        return null;
     }
 }
