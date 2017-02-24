@@ -2,8 +2,6 @@ package care.dovetail.tracker;
 
 import java.util.Arrays;
 
-import care.dovetail.tracker.processing.Feature;
-
 /**
  * Created by abhi on 9/22/16.
  */
@@ -124,44 +122,4 @@ public class Stats {
         return (int) (Math.random() * (max - min) + min);
     }
 
-    public static Feature maybeGetBlink(int values[], int smallBlinkHeight, int minBlinkHeight,
-                                        int maxBlinkHeight) {
-        int last = values.length - 1;
-        int first = Math.max(0, last - (Config.BLINK_WINDOW * 2) + 1);
-
-        int maxIndex = first;
-        int minIndex = first;
-        for (int i = first; i <= last; i++) {
-            if (values[maxIndex] < values[i]) {
-                maxIndex = i;
-            }
-            if (values[minIndex] > values[i]) {
-                minIndex = i;
-            }
-        }
-
-        if (maxIndex == last || minIndex == last || maxIndex == 0 || minIndex == 0) {
-            // Ignore edges for blink to detect strict local minima and maxima.
-            return null;
-        }
-
-        boolean localMaxima = (values[maxIndex - 1] < values[maxIndex])
-                && (values[maxIndex] > values[maxIndex + 1]);
-        boolean localMinima = (values[minIndex - 1] > values[minIndex])
-                && (values[minIndex] < values[minIndex + 1]);
-
-        int height = values[maxIndex] - values[minIndex];
-        if (localMaxima && localMinima && maxIndex < minIndex) {
-            if (height > smallBlinkHeight && height < minBlinkHeight) {
-                return new Feature(Feature.Type.SMALL_BLINK, Math.min(minIndex, maxIndex),
-                        Math.max(minIndex, maxIndex),
-                        new int[]{values[maxIndex], values[minIndex]});
-            } else if (height > minBlinkHeight && height < maxBlinkHeight) {
-                return new Feature(Feature.Type.BLINK, Math.min(minIndex, maxIndex),
-                        Math.max(minIndex, maxIndex),
-                        new int[]{values[maxIndex], values[minIndex]});
-            }
-        }
-        return null;
-    }
 }

@@ -127,7 +127,7 @@ public class SignalProcessor1 implements SignalProcessor {
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
-            Feature blink = Stats.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
+            Feature blink = Feature.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
                     MAX_BLINK_HEIGHT);
             if (blink != null) {
                 onFeature(blink);
