@@ -181,9 +181,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     Pair<Integer, Integer> sector;
                     if (settings.shouldWhackAMole()) {
                         if (moleChangeCount == 0) {
-                            moleSector = Pair.create(Utils.random(0, settings.getNumSteps()),
-                                    Utils.random(0, settings.getNumSteps()));
-                            moleChangeCount = Utils.random(10, 50); // 1 to 5 seconds
+                            moleSector = Pair.create(Stats.random(0, settings.getNumSteps()),
+                                    Stats.random(0, settings.getNumSteps()));
+                            moleChangeCount = Stats.random(10, 50); // 1 to 5 seconds
                         } else {
                             moleChangeCount--;
                         }

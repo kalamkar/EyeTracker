@@ -1,9 +1,6 @@
 package care.dovetail.tracker;
 
-import android.util.Pair;
-
 import java.util.Arrays;
-import java.util.List;
 
 import care.dovetail.tracker.processing.Feature;
 
@@ -11,37 +8,98 @@ import care.dovetail.tracker.processing.Feature;
  * Created by abhi on 9/22/16.
  */
 
-public class Utils {
-    private final static String TAG = "Utils";
+public class Stats {
+    private final static String TAG = "Stats";
 
-    public static Pair<Integer, Integer> calculateMinMax(int values[]) {
-        return calculateMinMax(values, 0, values.length);
+    private final int values[];
+
+    public final int min;
+    public final int minIndex;
+
+    public final int max;
+    public final int maxIndex;
+
+    public final long sum;
+    public final int average;
+    public final int median;
+
+    public final int stdDev;
+
+    public final float slope;
+
+    public final int changes;
+
+    public Stats(int source[]) {
+        this(source, 0, source != null ? source.length : 0);
     }
 
-    public static Pair<Integer, Integer> calculateMinMax(int values[], int start, int length) {
+    public Stats(int source[], int start, int length) {
+        if (source != null) {
+            values = new int[Math.max(0, Math.min(length, source.length - start))];
+            System.arraycopy(source, start, values, 0, values.length);
+        } else {
+            values = new int[0];
+        }
+
+        Stats basicStats = Stats.getBasicStats(values);
+        this.min = basicStats.min;
+        this.max = basicStats.max;
+        this.minIndex = start + basicStats.minIndex;
+        this.maxIndex = start + basicStats.maxIndex;
+        this.sum = basicStats.sum;
+        this.average = basicStats.average;
+        this.changes = basicStats.changes;
+
+        this.median = calculateMedian(values);
+        this.stdDev = calculateStdDeviation(values, average);
+        this.slope = calculateSlope(values);
+    }
+
+    private Stats(int min, int minIndex, int max, int maxIndex, long sum, int average, int changes) {
+        values = new int[0];
+        this.min = min;
+        this.minIndex = minIndex;
+        this.max = maxIndex;
+        this.maxIndex = maxIndex;
+        this.sum = sum;
+        this.average = average;
+        this.changes = changes;
+
+        this.stdDev = 0;
+        this.median = 0;
+        this.slope = 0;
+    }
+
+    private static Stats getBasicStats(int values[]) {
         int min = Integer.MAX_VALUE;
+        int minIndex = 0;
         int max = Integer.MIN_VALUE;
-        for (int i = start; i < start + length && i < values.length; i++) {
-            min = Math.min(min, values[i]);
-            max = Math.max(max, values[i]);
+        int maxIndex = 0;
+        long sum = 0;
+        int changes = 0;
+        for (int i = 0; i < values.length; i++) {
+            sum += values[i];
+            if (values[i] < min) {
+                min = values[i];
+                minIndex = i;
+            }
+            if (values[i] > max) {
+                max = values[i];
+                maxIndex = i;
+            }
+            changes += i == 0 || values[i] == values[i - 1] ? 0 : 1;
         }
-        return Pair.create(min, max);
+        return new Stats(min, minIndex, max, maxIndex, sum, (int) (sum / values.length), changes);
     }
 
-    public static int calculateMedianHeight(List<Feature> features) {
-        if (features.size() == 0) {
-            return 0;
-        }
-        int copyOfValues[] = new int[features.size()];
-        for (int i = 0; i < copyOfValues.length; i++) {
-            Feature feature = features.get(i);
-            copyOfValues[i] = feature.values[0] - feature.values[1];
-        }
-        Arrays.sort(copyOfValues);
-        return copyOfValues[copyOfValues.length / 2];
+    private static float calculateSlope(int values[]) {
+        int medianWindow = Math.min(1, values.length / 20); // 5% size for median window
+        int start = calculateMedian(values, 0, medianWindow);
+        int end = calculateMedian(values, values.length - medianWindow, medianWindow);
+        return (start - end) / values.length;
     }
 
-    public static int calculateMedian(int values[]) {
+    private static int calculateMedian(int values[]) {
         int copyOfValues[] = values.clone();
         Arrays.sort(copyOfValues);
         return copyOfValues[copyOfValues.length / 2];
@@ -54,29 +112,12 @@ public class Utils {
         return copyOfValues[copyOfValues.length / 2];
     }
 
-    public static int calculateStdDeviation(int values[]) {
+    private static int calculateStdDeviation(int values[], int mean) {
         double total = 0;
-        for (int value : values) {
-            total += value;
-        }
-        int mean = (int) (total / values.length);
-        total = 0;
         for (int value : values) {
             total += Math.pow(Math.abs(value - mean), 2);
         }
         return (int) Math.sqrt(total / values.length);
-    }
-
-    public static int calculateChanges(int values[]) {
-        int lastValue = values[0];
-        int changes = 0;
-        for (int value : values) {
-            if (value != lastValue) {
-                changes++;
-            }
-            lastValue = value;
-        }
-        return changes;
     }
 
     public static int random(int min, int max) {

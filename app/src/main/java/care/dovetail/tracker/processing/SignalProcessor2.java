@@ -8,7 +8,7 @@ import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.Utils;
+import care.dovetail.tracker.Stats;
 
 public class SignalProcessor2 implements SignalProcessor {
     private static final String TAG = "SignalProcessor2";
@@ -40,16 +40,15 @@ public class SignalProcessor2 implements SignalProcessor {
     private int halfGraphHeight = HALF_GRAPH_HEIGHT;
     private int blinkWindowIndex = 0;
     private int numBlinks = 0;
-    private int signalQuality = 0;
-
-    private int hStandardDeviation = (halfGraphHeight * 5) + 1;
-    private int vStandardDeviation = (halfGraphHeight * 5) + 1;
 
     private final int horizontal[] = new int[Config.GRAPH_LENGTH];
     private final int vertical[] = new int[Config.GRAPH_LENGTH];
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
     private final int feature1[] = new int[Config.GRAPH_LENGTH];
     private final int feature2[] = new int[Config.GRAPH_LENGTH];
+
+    private Stats hStats = new Stats(null);
+    private Stats vStats = new Stats(null);
 
     private int horizontalBase;
     private int verticalBase;
@@ -92,15 +91,15 @@ public class SignalProcessor2 implements SignalProcessor {
 
     @Override
     public int getSignalQuality() {
-        return signalQuality;
+        return 100 - (Math.max(hStats.changes, vStats.changes) * 100 / horizontal.length);
     }
 
     private int getHorizontalBase() {
-        return signalQuality < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
+        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
     }
 
     private int getVerticalBase() {
-        return signalQuality < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? verticalBase : 0;
+        return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? verticalBase : 0;
     }
 
     @Override
@@ -117,9 +116,8 @@ public class SignalProcessor2 implements SignalProcessor {
         vertical[vertical.length - 1] = vChange ? vFiltered : vertical[vertical.length - 2];
         vLastValue = vValue;
 
-        int maxChanges =
-                Math.max(Utils.calculateChanges(horizontal), Utils.calculateChanges(vertical));
-        signalQuality = 100 - (maxChanges * 100 / horizontal.length);
+        hStats = new Stats(horizontal);
+        vStats = new Stats(vertical);
 
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
@@ -130,15 +128,12 @@ public class SignalProcessor2 implements SignalProcessor {
         System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
         feature2[feature2.length - 1] = 0;
 
-        hStandardDeviation = Utils.calculateStdDeviation(horizontal);
-        vStandardDeviation = Utils.calculateStdDeviation(vertical);
-
-        blinkBaseline = Utils.calculateMedian(
+        blinkBaseline = Stats.calculateMedian(
                 blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
-            Feature blink = Utils.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
+            Feature blink = Stats.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
                     MAX_BLINK_HEIGHT);
             if (blink != null) {
                 onFeature(blink);
@@ -204,15 +199,16 @@ public class SignalProcessor2 implements SignalProcessor {
             numBlinks++;
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
-            Pair<Integer, Integer> vMinMax = Utils.calculateMinMax(
-                    vertical, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
+            Stats blinkStatsVertical =
+                    new Stats(vertical, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
             Feature blink = new Feature(feature.type, feature.startIndex, feature.endIndex,
-                    new int[]{vMinMax.second, vMinMax.first});
-            Pair<Integer, Integer> hMinMax = Utils.calculateMinMax(
-                    horizontal, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
+                    new int[]{blinkStatsVertical.min, blinkStatsVertical.max});
+            Stats blinkStatsHorizontal =
+                    new Stats(horizontal, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
 
-            verticalBase = (vMinMax.second - vMinMax.first) / 3 + vMinMax.first;
-            horizontalBase = (hMinMax.first + hMinMax.second) / 2;
+            verticalBase =
+                    (blinkStatsVertical.max - blinkStatsVertical.min) / 3 + blinkStatsVertical.min;
+            horizontalBase = (blinkStatsHorizontal.min + blinkStatsHorizontal.max) / 2;
 
             feature1[blink.startIndex] = blink.values[0];
             feature2[blink.endIndex] = blink.values[1];

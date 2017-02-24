@@ -4,7 +4,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.Utils;
+import care.dovetail.tracker.Stats;
 
 public class SignalProcessor3 implements SignalProcessor {
     private static final String TAG = "SignalProcessor3";
@@ -22,8 +22,8 @@ public class SignalProcessor3 implements SignalProcessor {
     private int blinkWindowIndex = 0;
     private int numBlinks = 0;
 
-    private int hStandardDeviation = (halfGraphHeight * 5) + 1;
-    private int vStandardDeviation = (halfGraphHeight * 5) + 1;
+    private Stats hStats = new Stats(null);
+    private Stats vStats = new Stats(null);
 
     private int hSlope;
     private int vSlope;
@@ -59,8 +59,8 @@ public class SignalProcessor3 implements SignalProcessor {
     public int getSignalQuality() {
         // (halfGraphHeight/3) is 5% signal quality loss
         int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
-        int horizLoss = 100 * Math.abs(hStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
-        int vertLoss = 100 * Math.abs(vStandardDeviation - (halfGraphHeight / 3)) / maxStdDev;
+        int horizLoss = 100 * Math.abs(hStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
+        int vertLoss = 100 * Math.abs(vStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
         return 100 - Math.min(100, Math.max(horizLoss, vertLoss));
     }
 
@@ -74,11 +74,11 @@ public class SignalProcessor3 implements SignalProcessor {
 
         System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
         hMedian[hMedian.length - 1] =
-                Utils.calculateMedian(horizontal, horizontal.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+                Stats.calculateMedian(horizontal, horizontal.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
 
         System.arraycopy(vMedian, 1, vMedian, 0, vMedian.length - 1);
         vMedian[vMedian.length - 1] =
-                Utils.calculateMedian(vertical, vertical.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+                Stats.calculateMedian(vertical, vertical.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
 
 //        System.arraycopy(hMedianDiff, 1, hMedianDiff, 0, hMedianDiff.length - 1);
 //        hMedianDiff[hMedianDiff.length - 1] =
@@ -94,11 +94,11 @@ public class SignalProcessor3 implements SignalProcessor {
         removeDrift(hMedian, hClean, hSlope);
         removeDrift(vMedian, vClean, vSlope);
 
-        horizontalBase = Utils.calculateMedian(hClean, hClean.length - 100, 100);
-        verticalBase = Utils.calculateMedian(vClean, vClean.length - 100, 100);
+        hStats = new Stats(hClean, hClean.length - 100, 100);
+        vStats = new Stats(vClean, vClean.length - 100, 100);
 
-        hStandardDeviation = Utils.calculateStdDeviation(hClean);
-        vStandardDeviation = Utils.calculateStdDeviation(vClean);
+        horizontalBase = hStats.median;
+        verticalBase = vStats.median;
 
         sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
     }
@@ -179,8 +179,8 @@ public class SignalProcessor3 implements SignalProcessor {
     }
 
     private static int getSlope(int values[]) {
-        int start = Utils.calculateMedian(values, 0, Config.BLINK_WINDOW);
-        int end = Utils.calculateMedian(
+        int start = Stats.calculateMedian(values, 0, Config.BLINK_WINDOW);
+        int end = Stats.calculateMedian(
                 values, values.length - Config.BLINK_WINDOW, Config.BLINK_WINDOW);
         return (start - end) / values.length;
     }
