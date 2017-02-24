@@ -9,8 +9,6 @@ import java.util.Arrays;
 public class Stats {
     private final static String TAG = "Stats";
 
-    private final int values[];
-
     public final int min;
     public final int minIndex;
 
@@ -32,14 +30,13 @@ public class Stats {
     }
 
     public Stats(int source[], int start, int length) {
+        int values[] = null;
         if (source != null) {
             values = new int[Math.max(0, Math.min(length, source.length - start))];
             System.arraycopy(source, start, values, 0, values.length);
-        } else {
-            values = new int[0];
         }
 
-        Stats basicStats = Stats.getBasicStats(values);
+        Stats basicStats = Stats.getBasicStats(values == null ? new int[0] : values);
         this.min = basicStats.min;
         this.max = basicStats.max;
         this.minIndex = start + basicStats.minIndex;
@@ -48,13 +45,12 @@ public class Stats {
         this.average = basicStats.average;
         this.changes = basicStats.changes;
 
-        this.median = calculateMedian(values);
-        this.stdDev = calculateStdDeviation(values, average);
-        this.slope = calculateSlope(values);
+        this.median = values == null ? 0 : calculateMedian(values);
+        this.stdDev = values == null ? 0 : calculateStdDeviation(values, average);
+        this.slope = values == null ? 0 : calculateSlope(values);
     }
 
     private Stats(int min, int minIndex, int max, int maxIndex, long sum, int average, int changes) {
-        values = new int[0];
         this.min = min;
         this.minIndex = minIndex;
         this.max = maxIndex;
@@ -87,7 +83,8 @@ public class Stats {
             }
             changes += i == 0 || values[i] == values[i - 1] ? 0 : 1;
         }
-        return new Stats(min, minIndex, max, maxIndex, sum, (int) (sum / values.length), changes);
+        int average = values.length == 0 ? 0 : (int) (sum / values.length);
+        return new Stats(min, minIndex, max, maxIndex, sum, average, changes);
     }
 
     private static float calculateSlope(int values[]) {
