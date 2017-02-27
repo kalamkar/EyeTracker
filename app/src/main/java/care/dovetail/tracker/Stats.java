@@ -53,7 +53,7 @@ public class Stats {
     private Stats(int min, int minIndex, int max, int maxIndex, long sum, int average, int changes) {
         this.min = min;
         this.minIndex = minIndex;
-        this.max = maxIndex;
+        this.max = max;
         this.maxIndex = maxIndex;
         this.sum = sum;
         this.average = average;
