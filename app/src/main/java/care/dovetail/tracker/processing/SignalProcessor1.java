@@ -35,7 +35,7 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int MIN_GRAPH_HEIGHT = 1800;
     private static final float MAX_HEIGHT_CHANGE = 0.25f;
 
-    private static final int MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION = 95;
+    private static final int MIN_SIGNAL_QUALITY = 95;
 
     private final int numSteps;
     private final static float BLINK_TO_GAZE_MULTIPLIER = 0.8f;
@@ -95,14 +95,19 @@ public class SignalProcessor1 implements SignalProcessor {
 
     @Override
     public synchronized void update(int hValue, int vValue) {
+        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
+        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
+        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
+        if (getSignalQuality() < MIN_SIGNAL_QUALITY) {
+            sector = Pair.create(numSteps / 2, numSteps / 2);
+            return;
+        }
+
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = (int) hFilter.step(hValue);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = (int) vFilter.step(vValue);
-
-        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
-        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
 
         System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
         feature1[feature1.length - 1] = 0;
@@ -112,7 +117,6 @@ public class SignalProcessor1 implements SignalProcessor {
 
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
-        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
 
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
             horizontalBase = hStats.median;
@@ -184,9 +188,7 @@ public class SignalProcessor1 implements SignalProcessor {
     }
 
     private void onFeature(Feature feature) {
-        if (getSignalQuality() >= MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION
-                && (feature.type == Feature.Type.SMALL_BLINK
-                    || feature.type == Feature.Type.BLINK)) {
+        if (feature.type == Feature.Type.SMALL_BLINK || feature.type == Feature.Type.BLINK) {
             numBlinks++;
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
