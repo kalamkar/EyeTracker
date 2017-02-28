@@ -76,8 +76,7 @@ public class SignalProcessor2 implements SignalProcessor {
     @Override
     public String getDebugNumbers() {
         int quality = getSignalQuality();
-        return String.format("%d,%d\n%d,%d", getHorizontalBase(), getVerticalBase(),
-                numBlinks, getSignalQuality());
+        return String.format("%d\n%d", numBlinks, getSignalQuality());
     }
 
 //    @Override

@@ -22,11 +22,10 @@ public class SignalProcessor1 implements SignalProcessor {
     private static final int FILTER_ORDER = 2;
 
     private static final int BLINK_WINDOW = 20;
-    private static final int LENGTH_FOR_BLINK_MEDIAN = BLINK_WINDOW * 3;
-    private static final int LENGTH_FOR_QUALITY =  100;
+    private static final int LENGTH_FOR_QUALITY =  200;
 
-    private static final int MAX_RECENT_BLINKS = 20;
-    private static final int MIN_RECENT_BLINKS = 5;
+    private static final int MAX_RECENT_BLINKS = 10;
+    private static final int MIN_RECENT_BLINKS = 3;
 
     private static final int SMALL_BLINK_HEIGHT = 4000;
     private static final int MIN_BLINK_HEIGHT = 10000;
@@ -55,13 +54,10 @@ public class SignalProcessor1 implements SignalProcessor {
 
     private Stats hStats = new Stats(null);
     private Stats vStats = new Stats(null);
-
-    private Stats hRecentStats = new Stats(null);
-    private Stats vRecentStats = new Stats(null);
+    private Stats blinkStats = new Stats(null);
 
     private int horizontalBase;
     private int verticalBase;
-    private int blinkBaseline;
 
     private final int horizontalBaseline[] = new int[MAX_RECENT_BLINKS];
     private final int verticalBaseline[] = new int[MAX_RECENT_BLINKS];
@@ -94,11 +90,7 @@ public class SignalProcessor1 implements SignalProcessor {
 
     @Override
     public int getSignalQuality() {
-        // (halfGraphHeight/3) is 5% signal quality loss
-        int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
-        int horizLoss = 100 * Math.abs(hRecentStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
-        int vertLoss = 100 * Math.abs(vRecentStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
-        return 100 - Math.min(100, Math.max(horizLoss, vertLoss));
+        return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
     }
 
     @Override
@@ -120,18 +112,12 @@ public class SignalProcessor1 implements SignalProcessor {
 
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
-
-        hRecentStats =
-                new Stats(horizontal, horizontal.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
-        vRecentStats =
-                new Stats(vertical, vertical.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
+        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
 
         if (recentBlinks.size() < MIN_RECENT_BLINKS) {
             horizontalBase = hStats.median;
             verticalBase = vStats.median;
         }
-        blinkBaseline = Stats.calculateMedian(
-                blinks, blinks.length - LENGTH_FOR_BLINK_MEDIAN, LENGTH_FOR_BLINK_MEDIAN);
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
@@ -188,7 +174,8 @@ public class SignalProcessor1 implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> blinkRange() {
-        return Pair.create(blinkBaseline - MAX_BLINK_HEIGHT, blinkBaseline + MAX_BLINK_HEIGHT);
+        return Pair.create(blinkStats.median - MAX_BLINK_HEIGHT,
+                blinkStats.median + MAX_BLINK_HEIGHT);
     }
 
     @Override
@@ -197,7 +184,9 @@ public class SignalProcessor1 implements SignalProcessor {
     }
 
     private void onFeature(Feature feature) {
-        if (feature.type == Feature.Type.SMALL_BLINK || feature.type == Feature.Type.BLINK) {
+        if (getSignalQuality() >= MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION
+                && (feature.type == Feature.Type.SMALL_BLINK
+                    || feature.type == Feature.Type.BLINK)) {
             numBlinks++;
             // Use vertical channel values for blink height for gaze calculations. They are more
             // relevant than the blink channel which are much higher.
@@ -209,20 +198,20 @@ public class SignalProcessor1 implements SignalProcessor {
                     new Stats(horizontal, feature.startIndex - BLINK_WINDOW / 2, BLINK_WINDOW * 2);
 
             System.arraycopy(verticalBaseline, 1, verticalBaseline, 0, verticalBaseline.length - 1);
-            verticalBaseline[verticalBaseline.length - 1] = blinkStatsVertical.min;
+            verticalBaseline[verticalBaseline.length - 1] =
+                    (blinkStatsVertical.min + blinkStatsVertical.max) / 2;
 
             System.arraycopy(horizontalBaseline, 1, horizontalBaseline, 0,
                     horizontalBaseline.length - 1);
-            horizontalBaseline[horizontalBaseline.length - 1] = blinkStatsHorizontal.min;
+            horizontalBaseline[horizontalBaseline.length - 1] =
+                    (blinkStatsHorizontal.min + blinkStatsHorizontal.max) / 2;
 
-            verticalBase = new Stats(verticalBaseline).median;
-            horizontalBase = new Stats(horizontalBaseline).median;
+            verticalBase = Stats.calculateMedian(verticalBaseline, 0, verticalBaseline.length);
+            horizontalBase = Stats.calculateMedian(horizontalBaseline, 0, horizontalBaseline.length);
 
-            if (getSignalQuality() >= MIN_SIGNAL_QUALITY_FOR_BLINK_CALIBRATION) {
-                recentBlinks.add(blink);
-                if (recentBlinks.size() > MAX_RECENT_BLINKS) {
-                    recentBlinks.remove(0);
-                }
+            recentBlinks.add(blink);
+            if (recentBlinks.size() > MAX_RECENT_BLINKS) {
+                recentBlinks.remove(0);
             }
 
             if (recentBlinks.size() >= MIN_RECENT_BLINKS) {
