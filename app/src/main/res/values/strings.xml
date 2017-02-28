@@ -19,6 +19,7 @@
         <item>Bandpass</item>
         <item>Filtered Diff</item>
         <item>Median, No Drift</item>
+        <item>Prakash</item>
     </string-array>
 
 </resources>

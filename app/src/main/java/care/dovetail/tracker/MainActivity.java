@@ -25,6 +25,7 @@ import care.dovetail.tracker.processing.SignalProcessor;
 import care.dovetail.tracker.processing.SignalProcessor1;
 import care.dovetail.tracker.processing.SignalProcessor2;
 import care.dovetail.tracker.processing.SignalProcessor3;
+import care.dovetail.tracker.processing.SignalProcessor4;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.GuideView;
@@ -295,6 +296,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
             case 2:
                 signals = new SignalProcessor3(this, settings.getNumSteps());
+                break;
+            case 3:
+                signals = new SignalProcessor4(this, settings.getNumSteps());
                 break;
         }
 
