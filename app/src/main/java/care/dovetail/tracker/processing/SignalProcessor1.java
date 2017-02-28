@@ -85,12 +85,15 @@ public class SignalProcessor1 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", numBlinks, getSignalQuality());
+        int range = Math.max(hStats.max - hStats.min, vStats.max - vStats.min);
+        int rangeMultiple =  range / (halfGraphHeight * 5);  // max range multiple = 1200
+        int percentRangeMultiple = Math.min(100, 100 * rangeMultiple / 1200);
+        return String.format("%d\n%d", numBlinks, 100 - percentRangeMultiple);
     }
 
     @Override
     public int getSignalQuality() {
-        return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
+         return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
     }
 
     @Override
@@ -100,6 +103,8 @@ public class SignalProcessor1 implements SignalProcessor {
         blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
         if (getSignalQuality() < MIN_SIGNAL_QUALITY) {
             sector = Pair.create(numSteps / 2, numSteps / 2);
+            recentBlinks.clear();
+            numBlinks = 0;
             return;
         }
 
