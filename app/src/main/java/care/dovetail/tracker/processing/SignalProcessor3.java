@@ -3,11 +3,18 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
+import biz.source_code.dsp.filter.FilterCharacteristicsType;
+import biz.source_code.dsp.filter.FilterPassType;
+import biz.source_code.dsp.filter.IirFilter;
+import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
 public class SignalProcessor3 implements SignalProcessor {
     private static final String TAG = "SignalProcessor3";
+
+    private static final int MAX_BLINK_HEIGHT = 30000;
+    private static final int LENGTH_FOR_QUALITY =  200;
 
     private static final int MEDIAN_WINDOW = 50;
 
@@ -24,12 +31,14 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private Stats hStats = new Stats(null);
     private Stats vStats = new Stats(null);
+    private Stats blinkStats = new Stats(null);
 
-    private int hSlope;
-    private int vSlope;
+    private Stats hMedianStats = new Stats(null);
+    private Stats vMedianStats = new Stats(null);
 
     private final int horizontal[] = new int[Config.GRAPH_LENGTH];
     private final int vertical[] = new int[Config.GRAPH_LENGTH];
+    private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
     private final int hMedian[] = new int[Config.GRAPH_LENGTH];
     private final int vMedian[] = new int[Config.GRAPH_LENGTH];
@@ -45,6 +54,10 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(2, 2);
 
+    private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
+            4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
+
     public SignalProcessor3(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
         this.observer = observer;
@@ -52,16 +65,12 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", hSlope, vSlope);
+        return String.format("%d\n%d", (int) hMedianStats.slope, (int) vMedianStats.slope);
     }
 
     @Override
     public int getSignalQuality() {
-        // (halfGraphHeight/3) is 5% signal quality loss
-        int maxStdDev = 100 * (halfGraphHeight / 3) / 5;
-        int horizLoss = 100 * Math.abs(hStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
-        int vertLoss = 100 * Math.abs(vStats.stdDev - (halfGraphHeight / 3)) / maxStdDev;
-        return 100 - Math.min(100, Math.max(horizLoss, vertLoss));
+        return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
     }
 
     @Override
@@ -71,6 +80,10 @@ public class SignalProcessor3 implements SignalProcessor {
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
+
+        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
+        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
+        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
 
         System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
         hMedian[hMedian.length - 1] =
@@ -88,14 +101,14 @@ public class SignalProcessor3 implements SignalProcessor {
 //        vMedianDiff[vMedianDiff.length - 1] =
 //                vMedian[vMedian.length - 1] - vMedian[vMedian.length - 2];
 
-        hSlope = getSlope(hMedian);
-        vSlope = getSlope(vMedian);
+        hMedianStats = new Stats(hMedian);
+        vMedianStats = new Stats(vMedian);
 
-        removeDrift(hMedian, hClean, hSlope);
-        removeDrift(vMedian, vClean, vSlope);
+        removeDrift(hMedian, hClean, (int) hMedianStats.slope);
+        removeDrift(vMedian, vClean, (int) vMedianStats.slope);
 
-        hStats = new Stats(hClean, hClean.length - 100, 100);
-        vStats = new Stats(vClean, vClean.length - 100, 100);
+        hStats = new Stats(hClean); //, hClean.length - 100, 100);
+        vStats = new Stats(vClean); // , vClean.length - 100, 100);
 
         horizontalBase = hStats.median;
         verticalBase = vStats.median;
@@ -105,31 +118,34 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public int[] horizontal() {
-        // return hMedian;
+//         return hMedian;
         return hClean;
     }
 
     @Override
     public int[] vertical() {
-        // return vMedian;
+//         return vMedian;
         return vClean;
     }
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        // return Utils.calculateMinMax(hMedian);
-        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
+//        return Pair.create(hMedianStats.min, hMedianStats.max);
+        return  hStats.max - hStats.min > halfGraphHeight * 4 ? Pair.create(hStats.min, hStats.max)
+                : Pair.create(horizontalBase - halfGraphHeight * 2,
+                horizontalBase + halfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        // return Utils.calculateMinMax(vMedian);
-        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
+//        return Pair.create(vMedianStats.min, vMedianStats.max);
+        return Pair.create(vStats.min, vStats.max);
+//        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
     }
 
     @Override
     public int[] blinks() {
-        return new int[0];
+        return hMedian;
     }
 
     @Override
@@ -144,7 +160,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> blinkRange() {
-        return Pair.create(0, 0);
+        return Pair.create(hMedianStats.min, hMedianStats.max);
     }
 
     @Override
@@ -176,13 +192,6 @@ public class SignalProcessor3 implements SignalProcessor {
         int level = (int) Math.floor(currentValue / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
-    }
-
-    private static int getSlope(int values[]) {
-        int start = Stats.calculateMedian(values, 0, Config.BLINK_WINDOW);
-        int end = Stats.calculateMedian(
-                values, values.length - Config.BLINK_WINDOW, Config.BLINK_WINDOW);
-        return (start - end) / values.length;
     }
 
     private static void removeDrift(int source[], int destination[], int slope) {
