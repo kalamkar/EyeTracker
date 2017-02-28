@@ -20,7 +20,7 @@ public class Stats {
     public final int median;
 
     public final int stdDev;
-
+    public final int zeroCrossings;
     public final float slope;
 
     public final int changes;
@@ -47,6 +47,7 @@ public class Stats {
 
         this.median = values == null ? 0 : calculateMedian(values);
         this.stdDev = values == null ? 0 : calculateStdDeviation(values, average);
+        this.zeroCrossings = values == null ? 0 : calculateZeroCrossings(values, median);
         this.slope = values == null ? 0 : calculateSlope(values);
     }
 
@@ -62,6 +63,7 @@ public class Stats {
         this.stdDev = 0;
         this.median = 0;
         this.slope = 0;
+        this.zeroCrossings = 0;
     }
 
     private static Stats getBasicStats(int values[]) {
@@ -113,6 +115,19 @@ public class Stats {
             total += Math.pow(Math.abs(value - mean), 2);
         }
         return (int) Math.sqrt(total / values.length);
+    }
+
+    private static int calculateZeroCrossings(int values[], int median) {
+        int zeroCrossings = 0;
+        boolean lastOneHigh = true;
+        for (int value : values) {
+            boolean thisOneHigh = value > median;
+            if (thisOneHigh != lastOneHigh) {
+                zeroCrossings++;
+            }
+            lastOneHigh = thisOneHigh;
+        }
+        return zeroCrossings;
     }
 
     public static int random(int min, int max) {
