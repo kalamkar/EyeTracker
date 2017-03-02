@@ -26,7 +26,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private final static float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.6f;
 
-    private static final int HALF_GRAPH_HEIGHT = 2000;
+    private static final int HALF_GRAPH_HEIGHT = 4000;
 
     private final int numSteps;
     private final FeatureObserver observer;
@@ -39,18 +39,12 @@ public class SignalProcessor3 implements SignalProcessor {
     private Stats vStats = new Stats(null);
     private Stats blinkStats = new Stats(null);
 
-    private Stats hMedianStats = new Stats(null);
-    private Stats vMedianStats = new Stats(null);
-
     private final int horizontal[] = new int[Config.GRAPH_LENGTH];
     private final int vertical[] = new int[Config.GRAPH_LENGTH];
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
     private final int hMedian[] = new int[Config.GRAPH_LENGTH];
     private final int vMedian[] = new int[Config.GRAPH_LENGTH];
-
-//    private final int hMedianDiff[] = new int[Config.GRAPH_LENGTH];
-//    private final int vMedianDiff[] = new int[Config.GRAPH_LENGTH];
 
     private final int hClean[] = new int[Config.GRAPH_LENGTH];
     private final int vClean[] = new int[Config.GRAPH_LENGTH];
@@ -96,22 +90,19 @@ public class SignalProcessor3 implements SignalProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
 
+        removeDrift(horizontal, hClean); //, (int) hMedianStats.slope);
+        removeDrift(vertical, vClean); //, (int) vMedianStats.slope);
+
         System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
         hMedian[hMedian.length - 1] =
-                Stats.calculateMedian(horizontal, horizontal.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+                Stats.calculateMedian(hClean, hClean.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
 
         System.arraycopy(vMedian, 1, vMedian, 0, vMedian.length - 1);
         vMedian[vMedian.length - 1] =
-                Stats.calculateMedian(vertical, vertical.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+                Stats.calculateMedian(vClean, vClean.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
 
-        hMedianStats = new Stats(hMedian);
-        vMedianStats = new Stats(vMedian);
-
-        removeDrift(hMedian, hClean); //, (int) hMedianStats.slope);
-        removeDrift(vMedian, vClean); //, (int) vMedianStats.slope);
-
-        hStats = new Stats(hClean); //, hClean.length - 100, 100);
-        vStats = new Stats(vClean); // , vClean.length - 100, 100);
+        hStats = new Stats(hMedian); //, hClean.length - 100, 100);
+        vStats = new Stats(vMedian); // , vClean.length - 100, 100);
 
         horizontalBase = hStats.median;
         verticalBase = vStats.median;
@@ -134,20 +125,20 @@ public class SignalProcessor3 implements SignalProcessor {
     @Override
     public Pair<Integer, Integer> horizontalRange() {
 //        return Pair.create(hMedianStats.min, hMedianStats.max);
-        return  Pair.create(hStats.min, hStats.max);
-//        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
+//        return  Pair.create(hStats.min, hStats.max);
+        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
 //        return Pair.create(vMedianStats.min, vMedianStats.max);
-        return Pair.create(vStats.min, vStats.max);
-//        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
+//        return Pair.create(vStats.min, vStats.max);
+        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
     }
 
     @Override
     public int[] blinks() {
-        return hMedian;
+        return blinks;
     }
 
     @Override
@@ -162,7 +153,8 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> blinkRange() {
-        return Pair.create(hMedianStats.min, hMedianStats.max);
+        return Pair.create(blinkStats.median - MAX_BLINK_HEIGHT,
+                blinkStats.median + MAX_BLINK_HEIGHT);
     }
 
     @Override
@@ -203,16 +195,17 @@ public class SignalProcessor3 implements SignalProcessor {
     }
 
     private static void removeDrift(int source[], int destination[]) {
-        PolynomialFunction fuction = getCurve(source);
+        PolynomialFunction function = getCurve(source);
         for (int i = 0; i < source.length && i < destination.length; i++) {
-            destination[i] = source[i] - (int) fuction.value(i);
+            destination[i] = source[i] - (int) function.value(i);
         }
     }
 
     private static PolynomialFunction getCurve(int[] values) {
         WeightedObservedPoints points = new WeightedObservedPoints();
         for (int i = 0; i < values.length; i++) {
-            if (i % 10 == 0) {
+            // Down sample to speed up curve fitting
+            if (i % 30 == 0) {
                 points.add(i, values[i]);
             }
         }
