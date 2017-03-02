@@ -97,6 +97,11 @@ public class SignalProcessor1 implements SignalProcessor {
     }
 
     @Override
+    public boolean isBadContact() {
+        return false;
+    }
+
+    @Override
     public synchronized void update(int hValue, int vValue) {
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);

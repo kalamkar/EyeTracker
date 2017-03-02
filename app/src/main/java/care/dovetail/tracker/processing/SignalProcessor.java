@@ -36,6 +36,12 @@ public interface SignalProcessor {
     int getSignalQuality();
 
     /**
+     * Check if the the electrode contact is not present or bad
+     * @return true if the electrode contact is not present or bad
+     */
+    boolean isBadContact();
+
+    /**
      * Time series of processed values from horizontal channel to be displayed as chart.
      * @return Array of ints
      */

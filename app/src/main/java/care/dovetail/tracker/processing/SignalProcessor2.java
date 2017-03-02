@@ -93,6 +93,11 @@ public class SignalProcessor2 implements SignalProcessor {
         return 100 - (Math.max(hStats.changes, vStats.changes) * 100 / horizontal.length);
     }
 
+    @Override
+    public boolean isBadContact() {
+        return false;
+    }
+
     private int getHorizontalBase() {
         return getSignalQuality() < MAX_SIGNAL_QUALITY_FOR_BLINK_BASELINE ? horizontalBase : 0;
     }

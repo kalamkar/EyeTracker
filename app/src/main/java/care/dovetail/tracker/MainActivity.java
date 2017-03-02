@@ -175,6 +175,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
+            if (signals.isBadContact() && patchClient.isConnected()) {
+                stopBluetooth();
+                startBluetooth();
+                return;
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

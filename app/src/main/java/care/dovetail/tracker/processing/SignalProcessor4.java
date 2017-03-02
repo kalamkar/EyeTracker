@@ -74,6 +74,11 @@ public class SignalProcessor4 implements SignalProcessor {
     }
 
     @Override
+    public boolean isBadContact() {
+        return false;
+    }
+
+    @Override
     public synchronized void update(int hValue, int vValue) {
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;

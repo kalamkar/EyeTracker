@@ -22,37 +22,43 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static final int MIN_SIGNAL_QUALITY = 95;
 
-    private static final int MEDIAN_WINDOW = 50;
+    private static final int FUNCTION_CALCULATE_INTERVAL = 1;
 
-    private final static float VERTICAL_TO_HORIZONTAL_MULTIPLIER = 0.6f;
-
-    private static final int HALF_GRAPH_HEIGHT = 4000;
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
 
     private final int numSteps;
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = HALF_GRAPH_HEIGHT;
-    private int blinkWindowIndex = 0;
-    private int numBlinks = 0;
+    private int vHalfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
+    private int hHalfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
 
-    private Stats hStats = new Stats(null);
-    private Stats vStats = new Stats(null);
+    private int updateCount = 0;
+
     private Stats blinkStats = new Stats(null);
 
     private final int horizontal[] = new int[Config.GRAPH_LENGTH];
     private final int vertical[] = new int[Config.GRAPH_LENGTH];
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
-    private final int hMedian[] = new int[Config.GRAPH_LENGTH];
-    private final int vMedian[] = new int[Config.GRAPH_LENGTH];
-
     private final int hClean[] = new int[Config.GRAPH_LENGTH];
     private final int vClean[] = new int[Config.GRAPH_LENGTH];
+
+    private PolynomialFunction hFunction = null;
+    private PolynomialFunction vFunction = null;
+    private int functionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
+
+    private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.lowpass, FilterCharacteristicsType.bessel, 2 /* order */, 0,
+            4.0 / Config.SAMPLING_FREQ, 0));
+
+    private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.lowpass, FilterCharacteristicsType.bessel, 2 /* order */, 0,
+            4.0 / Config.SAMPLING_FREQ, 0));
 
     private int horizontalBase;
     private int verticalBase;
 
-    private Pair<Integer, Integer> sector = new Pair<Integer, Integer>(2, 2);
+    private Pair<Integer, Integer> sector = new Pair<>(2, 2);
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
@@ -65,75 +71,87 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", numBlinks, getSignalQuality());
+        return String.format("%d\n%d", vHalfGraphHeight, getSignalQuality());
     }
 
     @Override
     public int getSignalQuality() {
+        if (blinkStats.stdDev == 0) {
+            // Bad connection with sensor
+            return 0;
+        }
         return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
     }
 
     @Override
+    public boolean isBadContact() {
+        return blinkStats.stdDev == 0 && updateCount >= blinks.length;
+    }
+
+    @Override
     public synchronized void update(int hValue, int vValue) {
+        updateCount += updateCount < blinks.length ? 1 : 0;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
         blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
         if (getSignalQuality() < MIN_SIGNAL_QUALITY) {
             sector = Pair.create(numSteps / 2, numSteps / 2);
-            numBlinks = 0;
             return;
         }
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
-        horizontal[horizontal.length - 1] = hValue;
+        horizontal[horizontal.length - 1] = (int) hFilter.step(hValue);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
-        vertical[vertical.length - 1] = vValue;
+        vertical[vertical.length - 1] = (int) vFilter.step(vValue);
 
-        removeDrift(horizontal, hClean); //, (int) hMedianStats.slope);
-        removeDrift(vertical, vClean); //, (int) vMedianStats.slope);
+        if (++functionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
+            functionIntervalCount = 0;
+            hFunction = getCurve(horizontal);
+            vFunction = getCurve(vertical);
+        }
 
-        System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
-        hMedian[hMedian.length - 1] =
-                Stats.calculateMedian(hClean, hClean.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+        System.arraycopy(hClean, 1, hClean, 0, hClean.length - 1);
+        hClean[hClean.length - 1] = horizontal[horizontal.length - 1]
+                - (int) hFunction.value(hClean.length + functionIntervalCount);
 
-        System.arraycopy(vMedian, 1, vMedian, 0, vMedian.length - 1);
-        vMedian[vMedian.length - 1] =
-                Stats.calculateMedian(vClean, vClean.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
+        System.arraycopy(vClean, 1, vClean, 0, vClean.length - 1);
+        vClean[vClean.length - 1] = vertical[vertical.length - 1]
+                - (int) vFunction.value(vClean.length + functionIntervalCount);
 
-        hStats = new Stats(hMedian); //, hClean.length - 100, 100);
-        vStats = new Stats(vMedian); // , vClean.length - 100, 100);
+        if (getSignalQuality() > MIN_SIGNAL_QUALITY) {
+            Stats hStats = new Stats(hClean);
+            hHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
+                    Math.max(HALF_GRAPH_HEIGHT.first, (hStats.max - hStats.min) / 2));
 
-        horizontalBase = hStats.median;
-        verticalBase = vStats.median;
-
-        sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
+            Stats vStats = new Stats(vClean);
+            vHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
+                    Math.max(HALF_GRAPH_HEIGHT.first, (vStats.max - vStats.min) / 2));
+        }
+        horizontalBase = 0; // hStats.median; // (int) hFunction.value(horizontal.length);
+        verticalBase = 0; // vStats.median; // (int) vFunction.value(vertical.length);
+        sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase,
+                hHalfGraphHeight, vHalfGraphHeight);
     }
 
     @Override
     public int[] horizontal() {
-//         return hMedian;
         return hClean;
     }
 
     @Override
     public int[] vertical() {
-//         return vMedian;
         return vClean;
     }
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-//        return Pair.create(hMedianStats.min, hMedianStats.max);
-//        return  Pair.create(hStats.min, hStats.max);
-        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
+        return Pair.create(horizontalBase - hHalfGraphHeight * 2, horizontalBase + hHalfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-//        return Pair.create(vMedianStats.min, vMedianStats.max);
-//        return Pair.create(vStats.min, vStats.max);
-        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
+        return Pair.create(verticalBase - vHalfGraphHeight * 2, verticalBase + vHalfGraphHeight * 2);
     }
 
     @Override
@@ -164,11 +182,11 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,
                                                     int horizontalBase, int verticalBase,
-                                                    int halfGraphHeight) {
+                                                    int hHalfGraphHeight, int vHalfGraphHeight) {
         int hLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
-                (int) (halfGraphHeight * VERTICAL_TO_HORIZONTAL_MULTIPLIER));
+                hHalfGraphHeight);
         int vLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
-                halfGraphHeight);
+                vHalfGraphHeight);
         return Pair.create(hLevel, vLevel);
     }
 
@@ -186,19 +204,6 @@ public class SignalProcessor3 implements SignalProcessor {
         int level = (int) Math.floor(currentValue / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
-    }
-
-    private static void removeDrift(int source[], int destination[], int slope) {
-        for (int i = 0; i < source.length && i < destination.length; i++) {
-            destination[i] = source[i] + (slope * i);
-        }
-    }
-
-    private static void removeDrift(int source[], int destination[]) {
-        PolynomialFunction function = getCurve(source);
-        for (int i = 0; i < source.length && i < destination.length; i++) {
-            destination[i] = source[i] - (int) function.value(i);
-        }
     }
 
     private static PolynomialFunction getCurve(int[] values) {
