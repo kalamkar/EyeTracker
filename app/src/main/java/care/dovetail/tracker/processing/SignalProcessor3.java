@@ -20,11 +20,11 @@ public class SignalProcessor3 implements SignalProcessor {
     private static final int MAX_BLINK_HEIGHT = 30000;
     private static final int LENGTH_FOR_QUALITY =  200;
 
-    private static final int MIN_SIGNAL_QUALITY = 95;
+    private static final int MIN_BLINK_SIGNAL_QUALITY = 95;
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 1;
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 3000);
 
     private final int numSteps;
     private final FeatureObserver observer;
@@ -34,6 +34,8 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private int updateCount = 0;
 
+    private Stats hStats = new Stats(null);
+    private Stats vStats = new Stats(null);
     private Stats blinkStats = new Stats(null);
 
     private final int horizontal[] = new int[Config.GRAPH_LENGTH];
@@ -76,11 +78,21 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public int getSignalQuality() {
-        if (blinkStats.stdDev == 0) {
-            // Bad connection with sensor
+        int blinkQuality = getBlinkSignalQuality();
+        return blinkQuality < MIN_BLINK_SIGNAL_QUALITY ? blinkQuality : getHVSignalQuality();
+    }
+
+    private int getBlinkSignalQuality() {
+        if (isBadContact()) {
             return 0;
         }
         return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
+    }
+
+    private int getHVSignalQuality() {
+        int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
+        int graphHeight = Math.max(hHalfGraphHeight, vHalfGraphHeight);
+        return 100 - Math.min(100, 100 * stdDev / (graphHeight * 200));
     }
 
     @Override
@@ -94,7 +106,7 @@ public class SignalProcessor3 implements SignalProcessor {
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
         blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
-        if (getSignalQuality() < MIN_SIGNAL_QUALITY) {
+        if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
             sector = Pair.create(numSteps / 2, numSteps / 2);
             return;
         }
@@ -119,12 +131,13 @@ public class SignalProcessor3 implements SignalProcessor {
         vClean[vClean.length - 1] = vertical[vertical.length - 1]
                 - (int) vFunction.value(vClean.length + functionIntervalCount);
 
-        if (getSignalQuality() > MIN_SIGNAL_QUALITY) {
-            Stats hStats = new Stats(hClean);
+        hStats = new Stats(hClean);
+        vStats = new Stats(vClean);
+
+        if (getSignalQuality() > MIN_BLINK_SIGNAL_QUALITY) {
             hHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
                     Math.max(HALF_GRAPH_HEIGHT.first, (hStats.max - hStats.min) / 2));
 
-            Stats vStats = new Stats(vClean);
             vHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
                     Math.max(HALF_GRAPH_HEIGHT.first, (vStats.max - vStats.min) / 2));
         }
