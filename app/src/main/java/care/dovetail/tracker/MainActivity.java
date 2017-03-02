@@ -122,7 +122,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         writer.close();
         writer = null;
         showDualView(false);
-        stopBluetooth();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -251,7 +250,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onShakingChange(final boolean isShaking) {
-        if (isShaking) {
+        if (isShaking && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
         }
