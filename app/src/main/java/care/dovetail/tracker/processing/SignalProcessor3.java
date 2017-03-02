@@ -3,6 +3,10 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -15,6 +19,8 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static final int MAX_BLINK_HEIGHT = 30000;
     private static final int LENGTH_FOR_QUALITY =  200;
+
+    private static final int MIN_SIGNAL_QUALITY = 95;
 
     private static final int MEDIAN_WINDOW = 50;
 
@@ -65,7 +71,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", (int) hMedianStats.slope, (int) vMedianStats.slope);
+        return String.format("%d\n%d", numBlinks, getSignalQuality());
     }
 
     @Override
@@ -75,15 +81,20 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public synchronized void update(int hValue, int vValue) {
+        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
+        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
+        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
+        if (getSignalQuality() < MIN_SIGNAL_QUALITY) {
+            sector = Pair.create(numSteps / 2, numSteps / 2);
+            numBlinks = 0;
+            return;
+        }
+
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
-
-        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
-        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
-        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
 
         System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
         hMedian[hMedian.length - 1] =
@@ -93,19 +104,11 @@ public class SignalProcessor3 implements SignalProcessor {
         vMedian[vMedian.length - 1] =
                 Stats.calculateMedian(vertical, vertical.length - MEDIAN_WINDOW, MEDIAN_WINDOW);
 
-//        System.arraycopy(hMedianDiff, 1, hMedianDiff, 0, hMedianDiff.length - 1);
-//        hMedianDiff[hMedianDiff.length - 1] =
-//                hMedian[hMedian.length - 1] - hMedian[hMedian.length - 2];
-//
-//        System.arraycopy(vMedianDiff, 1, vMedianDiff, 0, vMedianDiff.length - 1);
-//        vMedianDiff[vMedianDiff.length - 1] =
-//                vMedian[vMedian.length - 1] - vMedian[vMedian.length - 2];
-
         hMedianStats = new Stats(hMedian);
         vMedianStats = new Stats(vMedian);
 
-        removeDrift(hMedian, hClean, (int) hMedianStats.slope);
-        removeDrift(vMedian, vClean, (int) vMedianStats.slope);
+        removeDrift(hMedian, hClean); //, (int) hMedianStats.slope);
+        removeDrift(vMedian, vClean); //, (int) vMedianStats.slope);
 
         hStats = new Stats(hClean); //, hClean.length - 100, 100);
         vStats = new Stats(vClean); // , vClean.length - 100, 100);
@@ -131,9 +134,8 @@ public class SignalProcessor3 implements SignalProcessor {
     @Override
     public Pair<Integer, Integer> horizontalRange() {
 //        return Pair.create(hMedianStats.min, hMedianStats.max);
-        return  hStats.max - hStats.min > halfGraphHeight * 4 ? Pair.create(hStats.min, hStats.max)
-                : Pair.create(horizontalBase - halfGraphHeight * 2,
-                horizontalBase + halfGraphHeight * 2);
+        return  Pair.create(hStats.min, hStats.max);
+//        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
     }
 
     @Override
@@ -198,5 +200,27 @@ public class SignalProcessor3 implements SignalProcessor {
         for (int i = 0; i < source.length && i < destination.length; i++) {
             destination[i] = source[i] + (slope * i);
         }
+    }
+
+    private static void removeDrift(int source[], int destination[]) {
+        PolynomialFunction fuction = getCurve(source);
+        for (int i = 0; i < source.length && i < destination.length; i++) {
+            destination[i] = source[i] - (int) fuction.value(i);
+        }
+    }
+
+    private static PolynomialFunction getCurve(int[] values) {
+        WeightedObservedPoints points = new WeightedObservedPoints();
+        for (int i = 0; i < values.length; i++) {
+            if (i % 10 == 0) {
+                points.add(i, values[i]);
+            }
+        }
+
+        // Instantiate a third-degree polynomial fitter.
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
+
+        // Retrieve fitted parameters (coefficients of the polynomial function).
+        return new PolynomialFunction(fitter.fit(points.toList()));
     }
 }
