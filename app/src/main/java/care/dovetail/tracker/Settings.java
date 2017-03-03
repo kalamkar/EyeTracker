@@ -92,7 +92,7 @@ public class Settings {
     }
 
     public int getMinQuality() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getInt(MIN_QUALITY, 50);
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(MIN_QUALITY, 95);
     }
 
     public void setMinQuality(int minQuality) {
