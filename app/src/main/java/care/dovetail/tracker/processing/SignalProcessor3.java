@@ -22,7 +22,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static final int MIN_BLINK_SIGNAL_QUALITY = 95;
 
-    private static final int FUNCTION_CALCULATE_INTERVAL = 1;
+    private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
     private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 3000);
 
@@ -50,11 +50,11 @@ public class SignalProcessor3 implements SignalProcessor {
     private int functionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.bessel, 2 /* order */, 0,
+            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 0));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.bessel, 2 /* order */, 0,
+            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 0));
 
     private int horizontalBase;
@@ -73,7 +73,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", vHalfGraphHeight, getSignalQuality());
+        return String.format("%d\n%d", vHalfGraphHeight, hHalfGraphHeight);
     }
 
     @Override
@@ -141,8 +141,8 @@ public class SignalProcessor3 implements SignalProcessor {
             vHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
                     Math.max(HALF_GRAPH_HEIGHT.first, (vStats.max - vStats.min) / 2));
         }
-        horizontalBase = 0; // hStats.median; // (int) hFunction.value(horizontal.length);
-        verticalBase = 0; // vStats.median; // (int) vFunction.value(vertical.length);
+        horizontalBase = 0;
+        verticalBase = 0;
         sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase,
                 hHalfGraphHeight, vHalfGraphHeight);
     }
