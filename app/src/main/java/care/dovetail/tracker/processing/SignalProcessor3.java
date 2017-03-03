@@ -17,6 +17,8 @@ import care.dovetail.tracker.Stats;
 public class SignalProcessor3 implements SignalProcessor {
     private static final String TAG = "SignalProcessor3";
 
+    private static final double CURVEFIT_SAMPLE_FREQUENCY = 6.6666667;
+
     private static final int MAX_BLINK_HEIGHT = 30000;
     private static final int LENGTH_FOR_QUALITY =  200;
 
@@ -24,13 +26,12 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 3000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 6000);
 
     private final int numSteps;
     private final FeatureObserver observer;
 
-    private int vHalfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
-    private int hHalfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
+    private int halfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
 
     private int updateCount = 0;
 
@@ -73,7 +74,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", vHalfGraphHeight, hHalfGraphHeight);
+        return String.format("%d\n%d", halfGraphHeight, getSignalQuality());
     }
 
     @Override
@@ -91,8 +92,7 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private int getHVSignalQuality() {
         int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
-        int graphHeight = Math.max(hHalfGraphHeight, vHalfGraphHeight);
-        return 100 - Math.min(100, 100 * stdDev / (graphHeight * 200));
+        return 100 - Math.min(100, 100 * stdDev / (halfGraphHeight * 200));
     }
 
     @Override
@@ -135,16 +135,14 @@ public class SignalProcessor3 implements SignalProcessor {
         vStats = new Stats(vClean);
 
         if (getSignalQuality() > MIN_BLINK_SIGNAL_QUALITY) {
-            hHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
-                    Math.max(HALF_GRAPH_HEIGHT.first, (hStats.max - hStats.min) / 2));
-
-            vHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
-                    Math.max(HALF_GRAPH_HEIGHT.first, (vStats.max - vStats.min) / 2));
+            int horiz = (hStats.max - hStats.min) / 2;
+            int vert = (vStats.max - vStats.min) / 2;
+            halfGraphHeight = (int) (Math.min(HALF_GRAPH_HEIGHT.second,
+                    Math.max(HALF_GRAPH_HEIGHT.first, Math.max(horiz, vert))) * 0.7f);
         }
         horizontalBase = 0;
         verticalBase = 0;
-        sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase,
-                hHalfGraphHeight, vHalfGraphHeight);
+        sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
     }
 
     @Override
@@ -159,12 +157,12 @@ public class SignalProcessor3 implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(horizontalBase - hHalfGraphHeight * 2, horizontalBase + hHalfGraphHeight * 2);
+        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(verticalBase - vHalfGraphHeight * 2, verticalBase + vHalfGraphHeight * 2);
+        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
     }
 
     @Override
@@ -195,11 +193,11 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,
                                                     int horizontalBase, int verticalBase,
-                                                    int hHalfGraphHeight, int vHalfGraphHeight) {
+                                                    int halfGraphHeight) {
         int hLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
-                hHalfGraphHeight);
+                halfGraphHeight);
         int vLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
-                vHalfGraphHeight);
+                halfGraphHeight);
         return Pair.create(hLevel, vLevel);
     }
 
@@ -221,9 +219,10 @@ public class SignalProcessor3 implements SignalProcessor {
 
     private static PolynomialFunction getCurve(int[] values) {
         WeightedObservedPoints points = new WeightedObservedPoints();
+        int downSampleFactor = (int) Math.round(Config.SAMPLING_FREQ / CURVEFIT_SAMPLE_FREQUENCY);
         for (int i = 0; i < values.length; i++) {
             // Down sample to speed up curve fitting
-            if (i % 30 == 0) {
+            if (i % downSampleFactor == 0) {
                 points.add(i, values[i]);
             }
         }
