@@ -20,11 +20,9 @@ import java.util.TimerTask;
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
+import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.SignalProcessor;
-import care.dovetail.tracker.processing.SignalProcessor1;
-import care.dovetail.tracker.processing.SignalProcessor2;
-import care.dovetail.tracker.processing.SignalProcessor3;
 import care.dovetail.tracker.processing.SignalProcessor4;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
@@ -293,17 +291,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public void startBluetooth() {
         switch (settings.getAlgorithm()) {
             case 0:
-                signals = new SignalProcessor1(this, settings.getNumSteps());
+                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
                 break;
             case 1:
-                signals = new SignalProcessor2(this, settings.getNumSteps());
-                break;
-            case 2:
-                signals = new SignalProcessor3(this, settings.getNumSteps());
-                break;
-            case 3:
                 signals = new SignalProcessor4(this, settings.getNumSteps());
                 break;
+            default:
+                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
         }
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.

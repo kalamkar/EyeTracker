@@ -14,7 +14,7 @@ import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
-public class SignalProcessor3 implements SignalProcessor {
+public class CurveFitSignalProcessor implements SignalProcessor {
     private static final String TAG = "SignalProcessor3";
 
     private static final double CURVEFIT_SAMPLE_FREQUENCY = 6.6666667;
@@ -67,7 +67,7 @@ public class SignalProcessor3 implements SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
 
-    public SignalProcessor3(FeatureObserver observer, int numSteps) {
+    public CurveFitSignalProcessor(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
         this.observer = observer;
     }
