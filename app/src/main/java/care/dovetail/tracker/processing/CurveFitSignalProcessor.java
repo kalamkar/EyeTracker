@@ -17,7 +17,9 @@ import care.dovetail.tracker.Stats;
 public class CurveFitSignalProcessor implements SignalProcessor {
     private static final String TAG = "SignalProcessor3";
 
-    private static final double CURVEFIT_SAMPLE_FREQUENCY = 6.6666667;
+    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 6.6666667;
+    private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
+            = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
     private static final int MAX_BLINK_HEIGHT = 30000;
     private static final int LENGTH_FOR_QUALITY =  200;
@@ -60,8 +62,6 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     private int horizontalBase;
     private int verticalBase;
-
-    private Pair<Integer, Integer> sector = new Pair<>(2, 2);
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
@@ -107,20 +107,19 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
         blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
         if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
-            sector = Pair.create(numSteps / 2, numSteps / 2);
             return;
         }
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
-        horizontal[horizontal.length - 1] = (int) hFilter.step(hValue);
+        horizontal[horizontal.length - 1] = /* hValue; // */ (int) hFilter.step(hValue);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
-        vertical[vertical.length - 1] = (int) vFilter.step(vValue);
+        vertical[vertical.length - 1] = /* vValue; // */ (int) vFilter.step(vValue);
 
         if (++functionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
             functionIntervalCount = 0;
-            hFunction = getCurve(horizontal);
-            vFunction = getCurve(vertical);
+            hFunction = getCurve(horizontal, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
+            vFunction = getCurve(vertical, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
         }
 
         System.arraycopy(hClean, 1, hClean, 0, hClean.length - 1);
@@ -142,7 +141,6 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         }
         horizontalBase = 0;
         verticalBase = 0;
-        sector = getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
     }
 
     @Override
@@ -188,16 +186,22 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> getSector() {
-        return sector;
+        if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
+            return Pair.create(numSteps / 2, numSteps / 2);
+        }
+        return getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
     }
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,
                                                     int horizontalBase, int verticalBase,
                                                     int halfGraphHeight) {
-        int hLevel = getLevel(horizontal[horizontal.length - 1], numSteps, horizontalBase,
-                halfGraphHeight);
-        int vLevel = getLevel(vertical[vertical.length - 1], numSteps, verticalBase,
-                halfGraphHeight);
+        int hValue = horizontal[horizontal.length - 1];
+//        int hValue = Stats.calculateMedian(horizontal, horizontal.length - 10, 10);
+        int vValue = vertical[vertical.length - 1];
+//        int vValue = Stats.calculateMedian(vertical, vertical.length - 10, 10);
+
+        int hLevel = getLevel(hValue, numSteps, horizontalBase, halfGraphHeight);
+        int vLevel = getLevel(vValue, numSteps, verticalBase, halfGraphHeight);
         return Pair.create(hLevel, vLevel);
     }
 
@@ -217,9 +221,8 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
 
-    private static PolynomialFunction getCurve(int[] values) {
+    private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {
         WeightedObservedPoints points = new WeightedObservedPoints();
-        int downSampleFactor = (int) Math.round(Config.SAMPLING_FREQ / CURVEFIT_SAMPLE_FREQUENCY);
         for (int i = 0; i < values.length; i++) {
             // Down sample to speed up curve fitting
             if (i % downSampleFactor == 0) {
