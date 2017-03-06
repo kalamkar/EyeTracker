@@ -101,7 +101,7 @@ public class Settings {
     }
 
     public int getAlgorithm() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getInt(ALGORITHM, 2);
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(ALGORITHM, 0);
     }
 
     public void setAlgorithm(int algorithm) {

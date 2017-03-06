@@ -86,6 +86,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
         }
+
+        findViewById(R.id.leftGuide).setVisibility(
+                settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.rightGuide).setVisibility(
+                settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.leftNumber).setVisibility(
+                settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.rightNumber).setVisibility(
+                settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
     }
 
     @Override
@@ -267,37 +276,23 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftGuide).setVisibility(
-                        show && settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightGuide).setVisibility(
-                        show && settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftNumber).setVisibility(
-                        show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(
-                        show && settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftWarning).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightWarning).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
-                findViewById(R.id.leftProgress).setVisibility(
-                        show ?  View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightProgress).setVisibility(
-                        show ?  View.VISIBLE : View.INVISIBLE);
-
             }
         });
     }
 
     public void startBluetooth() {
         switch (settings.getAlgorithm()) {
+            default:
             case 0:
                 signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
                 break;
             case 1:
                 signals = new SignalProcessor4(this, settings.getNumSteps());
                 break;
-            default:
-                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
         }
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
