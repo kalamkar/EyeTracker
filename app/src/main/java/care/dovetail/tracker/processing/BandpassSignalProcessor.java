@@ -16,8 +16,8 @@ import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
-public class CurveFitSignalProcessor implements SignalProcessor {
-    private static final String TAG = "CurveFitSignalProcessor";
+public class BandpassSignalProcessor implements SignalProcessor {
+    private static final String TAG = "BandpassSignalProcessor";
 
     private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 6.6666667;
     private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
@@ -57,26 +57,19 @@ public class CurveFitSignalProcessor implements SignalProcessor {
     private final int vertical[] = new int[Config.GRAPH_LENGTH];
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
-    private final int hClean[] = new int[Config.GRAPH_LENGTH];
-    private final int vClean[] = new int[Config.GRAPH_LENGTH];
-
-    private PolynomialFunction hFunction = null;
-    private PolynomialFunction vFunction = null;
-    private int functionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
-
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / Config.SAMPLING_FREQ, 0));
+            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
+            0.5 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / Config.SAMPLING_FREQ, 0));
+            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
+            0.5 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
 
-    public CurveFitSignalProcessor(FeatureObserver observer, int numSteps) {
+    public BandpassSignalProcessor(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
         this.observer = observer;
     }
@@ -122,8 +115,6 @@ public class CurveFitSignalProcessor implements SignalProcessor {
             vHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
             Arrays.fill(horizontal, 0);
             Arrays.fill(vertical, 0);
-            Arrays.fill(hClean, 0);
-            Arrays.fill(vClean, 0);
             return;
         }
 
@@ -133,22 +124,8 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = /* vValue; // */ (int) vFilter.step(vValue);
 
-        if (++functionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
-            functionIntervalCount = 0;
-            hFunction = getCurve(horizontal, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
-            vFunction = getCurve(vertical, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
-        }
-
-        System.arraycopy(hClean, 1, hClean, 0, hClean.length - 1);
-        hClean[hClean.length - 1] = horizontal[horizontal.length - 1]
-                - (int) hFunction.value(hClean.length + functionIntervalCount);
-
-        System.arraycopy(vClean, 1, vClean, 0, vClean.length - 1);
-        vClean[vClean.length - 1] = vertical[vertical.length - 1]
-                - (int) vFunction.value(vClean.length + functionIntervalCount);
-
-        hStats = new Stats(hClean);
-        vStats = new Stats(vClean);
+        hStats = new Stats(horizontal);
+        vStats = new Stats(vertical);
 
         maxHHeightAge++;
         maxVHeightAge++;
@@ -173,12 +150,12 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public int[] horizontal() {
-        return hClean;
+        return horizontal;
     }
 
     @Override
     public int[] vertical() {
-        return vClean;
+        return vertical;
     }
 
     @Override
@@ -223,7 +200,7 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
             return Pair.create(numSteps / 2, numSteps / 2);
         }
-        return getSector(hClean, vClean, numSteps, hHalfGraphHeight, vHalfGraphHeight);
+        return getSector(horizontal, vertical, numSteps, hHalfGraphHeight, vHalfGraphHeight);
     }
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,

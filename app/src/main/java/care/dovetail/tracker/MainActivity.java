@@ -20,6 +20,7 @@ import java.util.TimerTask;
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
+import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.SignalProcessor;
@@ -292,6 +293,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
             case 1:
                 signals = new SignalProcessor4(this, settings.getNumSteps());
+                break;
+            case 2:
+                signals = new BandpassSignalProcessor(this, settings.getNumSteps());
                 break;
         }
 

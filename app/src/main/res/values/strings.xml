@@ -18,6 +18,7 @@
     <string-array name="algo">
         <item>Curve Fit</item>
         <item>Prakash</item>
+        <item>Bandpass</item>
     </string-array>
 
 </resources>
