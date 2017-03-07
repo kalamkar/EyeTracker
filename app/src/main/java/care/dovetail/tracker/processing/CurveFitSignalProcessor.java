@@ -7,6 +7,8 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
+import java.util.Arrays;
+
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -21,6 +23,9 @@ public class CurveFitSignalProcessor implements SignalProcessor {
     private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
             = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
+    private static final float HORIZONTAL_FOV_FACTOR = 0.7f;
+    private static final float VERTICAL_FOV_FACTOR = 0.7f;
+
     private static final int MAX_BLINK_HEIGHT = 30000;
     private static final int LENGTH_FOR_QUALITY =  200;
 
@@ -28,14 +33,21 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 6000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(3500, 7000);
 
     private final int numSteps;
     private final FeatureObserver observer;
 
-    private int halfGraphHeight = (HALF_GRAPH_HEIGHT.first + HALF_GRAPH_HEIGHT.second) / 2;
+    private int hHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+    private int vHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
 
-    private int updateCount = 0;
+    private int maxHHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+    private int maxVHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+
+    private int maxHHeightAge = 0;
+    private int maxVHeightAge = 0;
+
+    private int blinkUpdateCount = 0;
 
     private Stats hStats = new Stats(null);
     private Stats vStats = new Stats(null);
@@ -60,9 +72,6 @@ public class CurveFitSignalProcessor implements SignalProcessor {
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 0));
 
-    private int horizontalBase;
-    private int verticalBase;
-
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
@@ -74,7 +83,8 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", halfGraphHeight, getSignalQuality());
+        return String.format("%d,%d\n%d,%d", hHalfGraphHeight, (hStats.max - hStats.min) / 2,
+                vHalfGraphHeight, (vStats.max - vStats.min) / 2);
     }
 
     @Override
@@ -92,21 +102,29 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     private int getHVSignalQuality() {
         int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
-        return 100 - Math.min(100, 100 * stdDev / (halfGraphHeight * 200));
+        return 100 - Math.min(100, 100 * stdDev / (Math.max(hHalfGraphHeight, vHalfGraphHeight) * 200));
     }
 
     @Override
     public boolean isBadContact() {
-        return blinkStats.stdDev == 0 && updateCount >= blinks.length;
+        return blinkStats.stdDev == 0 && blinkUpdateCount >= blinks.length;
     }
 
     @Override
     public synchronized void update(int hValue, int vValue) {
-        updateCount += updateCount < blinks.length ? 1 : 0;
+        blinkUpdateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
         blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
         if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
+            maxHHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+            maxVHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+            hHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+            vHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
+            Arrays.fill(horizontal, 0);
+            Arrays.fill(vertical, 0);
+            Arrays.fill(hClean, 0);
+            Arrays.fill(vClean, 0);
             return;
         }
 
@@ -133,14 +151,25 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         hStats = new Stats(hClean);
         vStats = new Stats(vClean);
 
+        maxHHeightAge++;
+        maxVHeightAge++;
         if (getSignalQuality() > MIN_BLINK_SIGNAL_QUALITY) {
-            int horiz = (hStats.max - hStats.min) / 2;
-            int vert = (vStats.max - vStats.min) / 2;
-            halfGraphHeight = (int) (Math.min(HALF_GRAPH_HEIGHT.second,
-                    Math.max(HALF_GRAPH_HEIGHT.first, Math.max(horiz, vert))) * 0.7f);
+            int newHHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
+                    Math.max(HALF_GRAPH_HEIGHT.first, (hStats.max - hStats.min) / 2));
+            if (newHHalfGraphHeight > maxHHalfGraphHeight - maxHHeightAge) {
+                hHalfGraphHeight = newHHalfGraphHeight;
+                maxHHalfGraphHeight = newHHalfGraphHeight;
+                maxHHeightAge = 0;
+            }
+
+            int newVHalfGraphHeight = Math.min(HALF_GRAPH_HEIGHT.second,
+                    Math.max(HALF_GRAPH_HEIGHT.first, (vStats.max - vStats.min) / 2));
+            if (newVHalfGraphHeight > maxVHalfGraphHeight - maxVHeightAge) {
+                vHalfGraphHeight = newVHalfGraphHeight;
+                maxVHalfGraphHeight = newVHalfGraphHeight;
+                maxVHeightAge = 0;
+            }
         }
-        horizontalBase = 0;
-        verticalBase = 0;
     }
 
     @Override
@@ -155,12 +184,12 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(horizontalBase - halfGraphHeight * 2, horizontalBase + halfGraphHeight * 2);
+        return Pair.create(-hHalfGraphHeight * 2, hHalfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(verticalBase - halfGraphHeight * 2, verticalBase + halfGraphHeight * 2);
+        return Pair.create(-vHalfGraphHeight * 2, vHalfGraphHeight * 2);
     }
 
     @Override
@@ -189,19 +218,18 @@ public class CurveFitSignalProcessor implements SignalProcessor {
         if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
             return Pair.create(numSteps / 2, numSteps / 2);
         }
-        return getSector(hClean, vClean, numSteps, horizontalBase, verticalBase, halfGraphHeight);
+        return getSector(hClean, vClean, numSteps, hHalfGraphHeight, vHalfGraphHeight);
     }
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,
-                                                    int horizontalBase, int verticalBase,
-                                                    int halfGraphHeight) {
+                                                    int hHalfGraphHeight, int vHalfGraphHeight) {
         int hValue = horizontal[horizontal.length - 1];
 //        int hValue = Stats.calculateMedian(horizontal, horizontal.length - 10, 10);
         int vValue = vertical[vertical.length - 1];
 //        int vValue = Stats.calculateMedian(vertical, vertical.length - 10, 10);
 
-        int hLevel = getLevel(hValue, numSteps, horizontalBase, halfGraphHeight);
-        int vLevel = getLevel(vValue, numSteps, verticalBase, halfGraphHeight);
+        int hLevel = getLevel(hValue, numSteps, 0, (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
+        int vLevel = getLevel(vValue, numSteps, 0, (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
         return Pair.create(hLevel, vLevel);
     }
 
