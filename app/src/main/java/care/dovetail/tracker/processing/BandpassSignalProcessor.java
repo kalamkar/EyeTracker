@@ -3,10 +3,6 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
-
 import java.util.Arrays;
 
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
@@ -19,10 +15,6 @@ import care.dovetail.tracker.Stats;
 public class BandpassSignalProcessor implements SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 6.6666667;
-    private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
-            = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
-
     private static final float HORIZONTAL_FOV_FACTOR = 0.7f;
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
 
@@ -30,8 +22,6 @@ public class BandpassSignalProcessor implements SignalProcessor {
     private static final int LENGTH_FOR_QUALITY =  200;
 
     private static final int MIN_BLINK_SIGNAL_QUALITY = 95;
-
-    private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
     private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
 
@@ -229,21 +219,5 @@ public class BandpassSignalProcessor implements SignalProcessor {
         int level = (int) Math.floor(currentValue / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
-    }
-
-    private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {
-        WeightedObservedPoints points = new WeightedObservedPoints();
-        for (int i = 0; i < values.length; i++) {
-            // Down sample to speed up curve fitting
-            if (i % downSampleFactor == 0) {
-                points.add(i, values[i]);
-            }
-        }
-
-        // Instantiate a third-degree polynomial fitter.
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
-
-        // Retrieve fitted parameters (coefficients of the polynomial function).
-        return new PolynomialFunction(fitter.fit(points.toList()));
     }
 }
