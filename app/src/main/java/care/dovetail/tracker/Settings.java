@@ -36,7 +36,7 @@ public class Settings {
 
     public boolean shouldShowGestures() {
         return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_GESTURES, true);
+                context.getPackageName(), 0).getBoolean(SHOW_GESTURES, false);
     }
 
     public void setShowGestures(boolean showNumbers) {
