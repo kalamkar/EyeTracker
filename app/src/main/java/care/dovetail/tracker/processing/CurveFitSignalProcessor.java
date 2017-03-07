@@ -83,8 +83,7 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d,%d\n%d,%d", hHalfGraphHeight, (hStats.max - hStats.min) / 2,
-                vHalfGraphHeight, (vStats.max - vStats.min) / 2);
+        return String.format("%d\n%d", hHalfGraphHeight, vHalfGraphHeight);
     }
 
     @Override
@@ -184,11 +183,17 @@ public class CurveFitSignalProcessor implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
+        if (hHalfGraphHeight * 2 < (hStats.max - hStats.min) / 2) {
+            return Pair.create(hStats.min, hStats.max);
+        }
         return Pair.create(-hHalfGraphHeight * 2, hHalfGraphHeight * 2);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
+        if (vHalfGraphHeight * 2 < (vStats.max - vStats.min) / 2) {
+            return Pair.create(vStats.min, vStats.max);
+        }
         return Pair.create(-vHalfGraphHeight * 2, vHalfGraphHeight * 2);
     }
 
