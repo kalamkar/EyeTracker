@@ -296,13 +296,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         switch (settings.getAlgorithm()) {
             default:
             case 0:
-                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
+                signals = new BandpassSignalProcessor(this, settings.getNumSteps());
                 break;
             case 1:
-                signals = new SignalProcessor4(this, settings.getNumSteps());
+                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
                 break;
             case 2:
-                signals = new BandpassSignalProcessor(this, settings.getNumSteps());
+                signals = new SignalProcessor4(this, settings.getNumSteps());
                 break;
         }
 

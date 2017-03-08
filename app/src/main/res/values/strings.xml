@@ -16,9 +16,9 @@
     <string name="min_quality">Minimum Quality</string>
 
     <string-array name="algo">
+        <item>Bandpass</item>
         <item>Curve Fit</item>
         <item>Prakash</item>
-        <item>Bandpass</item>
     </string-array>
 
 </resources>
