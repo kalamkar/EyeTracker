@@ -56,6 +56,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Ringtone ringtone;
 
+    private boolean gazeFrozen = false;
+
     private Pair<Integer, Integer> moleSector = null;
     private int moleChangeCount = 0;
 
@@ -214,6 +216,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     } else {
                         signalQualityTimerCount++;
                     }
+
                     findViewById(R.id.leftProgress).setVisibility(
                             isGoodSignal || !patchClient.isConnected()
                                     ?  View.INVISIBLE : View.VISIBLE);
@@ -224,10 +227,13 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                             .setProgress(signalQualityTimerCount);
                     ((ProgressBar) findViewById(R.id.rightProgress))
                             .setProgress(signalQualityTimerCount);
-                    GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
-                    leftGrid.highlight(sector.first, sector.second);
-                    GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
-                    rightGrid.highlight(sector.first, sector.second);
+
+                    if (!gazeFrozen || !settings.shouldFreezeGaze()) {
+                        GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
+                        leftGrid.highlight(sector.first, sector.second);
+                        GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
+                        rightGrid.highlight(sector.first, sector.second);
+                    }
                 }
             });
         }
@@ -251,6 +257,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (Feature.Type.BLINK == feature.type
                 && signals.getSignalQuality() > settings.getMinQuality()) {
             ringtone.play();
+            gazeFrozen = !gazeFrozen;
         }
     }
 
