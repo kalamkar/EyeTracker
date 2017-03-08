@@ -35,10 +35,12 @@ public class GridView extends View {
 
     public void highlight(int horizontalSector, int verticalSector) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
-        float left = cellWidth * horizontalSector;
-        float top = cellHeight * verticalSector;
-        drawRect(left, top);
-        // drawCircle(left, top);
+        if (horizontalSector >= 0 && verticalSector >= 0) {
+            float left = cellWidth * horizontalSector;
+            float top = cellHeight * verticalSector;
+            drawRect(left, top);
+            // drawCircle(left, top);
+        }
         invalidate();
     }
 

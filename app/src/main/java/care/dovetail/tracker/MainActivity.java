@@ -12,6 +12,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.Timer;
@@ -51,6 +52,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private Timer sectorUpdateTimer;
     private Timer gestureUpdateTimer;
 
+    private int signalQualityTimerCount;
+
     private Ringtone ringtone;
 
     private Pair<Integer, Integer> moleSector = null;
@@ -87,6 +90,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
         }
+
+        int numSteps = settings.getNumSteps();
+        ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
+        ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
 
         findViewById(R.id.leftGuide).setVisibility(
                 settings.shouldShowGestures() ? View.VISIBLE : View.INVISIBLE);
@@ -191,7 +198,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 @Override
                 public void run() {
                     boolean isGoodSignal = signals.getSignalQuality() > settings.getMinQuality();
-                    Pair<Integer, Integer> sector;
+                    Pair<Integer, Integer> sector = Pair.create(-1, -1);
                     if (settings.shouldWhackAMole()) {
                         if (moleChangeCount == 0) {
                             moleSector = Pair.create(Stats.random(0, settings.getNumSteps()),
@@ -203,9 +210,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         sector = moleSector;
                     } else if (isGoodSignal) {
                         sector = signals.getSector();
+                        signalQualityTimerCount = 0;
                     } else {
-                        int numSteps = settings.getNumSteps();
-                        sector = Pair.create(numSteps / 2, numSteps / 2);
+                        signalQualityTimerCount++;
                     }
                     findViewById(R.id.leftProgress).setVisibility(
                             isGoodSignal || !patchClient.isConnected()
@@ -213,6 +220,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     findViewById(R.id.rightProgress).setVisibility(
                             isGoodSignal || !patchClient.isConnected()
                                     ?  View.INVISIBLE : View.VISIBLE);
+                    ((ProgressBar) findViewById(R.id.leftProgress))
+                            .setProgress(signalQualityTimerCount);
+                    ((ProgressBar) findViewById(R.id.rightProgress))
+                            .setProgress(signalQualityTimerCount);
                     GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                     leftGrid.highlight(sector.first, sector.second);
                     GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
@@ -271,10 +282,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
-                int numSteps = settings.getNumSteps();
-                ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
-                ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
-
                 findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftWarning).setVisibility(
@@ -301,6 +308,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient.connect();
+
+        signalQualityTimerCount = 0;
 
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(new ChartUpdater(), 0, GRAPH_UPDATE_MILLIS);
