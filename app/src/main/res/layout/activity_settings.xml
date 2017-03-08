@@ -89,7 +89,7 @@
             android:layout_alignParentStart="true"
             android:layout_below="@+id/num_steps_label"
             android:id="@+id/num_steps"
-            android:max="15"
+            android:max="25"
             android:layout_toStartOf="@+id/num_steps_value"/>
 
         <TextView
