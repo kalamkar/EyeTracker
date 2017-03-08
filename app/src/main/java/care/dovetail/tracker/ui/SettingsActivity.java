@@ -33,6 +33,7 @@ public class SettingsActivity extends Activity {
     private SeekBar minQuality;
     private TextView minQualityValue;
     private Spinner algorithm;
+    private Spinner cursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,7 @@ public class SettingsActivity extends Activity {
         minQuality = (SeekBar) findViewById(R.id.min_quality);
         minQualityValue = (TextView) findViewById(R.id.min_quality_value);
         algorithm = (Spinner) findViewById(R.id.algo);
+        cursor = (Spinner) findViewById(R.id.cursor);
 
         dayDream.setChecked(settings.isDayDream());
         showGestures.setChecked(settings.shouldShowGestures());
@@ -62,6 +64,7 @@ public class SettingsActivity extends Activity {
         minQuality.setProgress(settings.getMinQuality());
         minQualityValue.setText(Integer.toString(settings.getMinQuality()));
         algorithm.setSelection(settings.getAlgorithm());
+        cursor.setSelection(settings.getCursorStyle());
 
         dayDream.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -124,6 +127,16 @@ public class SettingsActivity extends Activity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 settings.setAlgorithm(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        cursor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                settings.setCursorStyle(position);
             }
 
             @Override

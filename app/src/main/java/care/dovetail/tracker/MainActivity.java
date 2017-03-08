@@ -58,8 +58,15 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private boolean gazeFrozen = false;
 
-    private Pair<Integer, Integer> moleSector = null;
+    private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
     private int moleChangeCount = 0;
+    private static final int MOLE_NUM_STEPS = 5;
+
+    private GridView leftGrid;
+    private GridView rightGrid;
+    private GridView leftMoleGrid;
+    private GridView rightMoleGrid;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,33 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         accelerometer = new AccelerationProcessor(
                 (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
 
+        leftGrid = (GridView) findViewById(R.id.leftGrid);
+        rightGrid = (GridView) findViewById(R.id.rightGrid);
+        leftMoleGrid = (GridView) findViewById(R.id.leftMoleGrid);
+        rightMoleGrid = (GridView) findViewById(R.id.rightMoleGrid);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        hideBars();
+        updateUIFromSettings();
+        startBluetooth();
+        showDualView(false);
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
+        accelerometer.start();
+    }
+
+    @Override
+    protected void onStop() {
+        stopBluetooth();
+        ringtone.stop();
+        accelerometer.stop();
+        super.onStop();
+    }
+
+    private void updateUIFromSettings() {
         if (settings.isDayDream()) {
             findViewById(R.id.left).setPadding(
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
@@ -105,25 +139,19 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
         findViewById(R.id.rightNumber).setVisibility(
                 settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        hideBars();
-        startBluetooth();
-        showDualView(false);
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
-        accelerometer.start();
-    }
+        if (settings.shouldWhackAMole()) {
+            leftGrid.setCursorStyle(GridView.CursorStyle.CIRCLE);
+            rightGrid.setCursorStyle(GridView.CursorStyle.CIRCLE);
+            leftMoleGrid.setCursorStyle(GridView.CursorStyle.RECTANGLE);
+            rightMoleGrid.setCursorStyle(GridView.CursorStyle.RECTANGLE);
 
-    @Override
-    protected void onStop() {
-        stopBluetooth();
-        ringtone.stop();
-        accelerometer.stop();
-        super.onStop();
+            leftMoleGrid.setNumSteps(MOLE_NUM_STEPS);
+            rightMoleGrid.setNumSteps(MOLE_NUM_STEPS);
+        } else {
+            leftGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
+            rightGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
+        }
     }
 
     @Override
@@ -201,16 +229,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 public void run() {
                     boolean isGoodSignal = signals.getSignalQuality() > settings.getMinQuality();
                     Pair<Integer, Integer> sector = Pair.create(-1, -1);
-                    if (settings.shouldWhackAMole()) {
-                        if (moleChangeCount == 0) {
-                            moleSector = Pair.create(Stats.random(0, settings.getNumSteps()),
-                                    Stats.random(0, settings.getNumSteps()));
-                            moleChangeCount = Stats.random(10, 50); // 1 to 5 seconds
-                        } else {
-                            moleChangeCount--;
-                        }
-                        sector = moleSector;
-                    } else if (isGoodSignal) {
+                    if (isGoodSignal) {
                         sector = signals.getSector();
                         signalQualityTimerCount = 0;
                     } else {
@@ -229,9 +248,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                             .setProgress(signalQualityTimerCount);
 
                     if (!gazeFrozen || !settings.shouldFreezeGaze()) {
-                        GridView leftGrid = (GridView) findViewById(R.id.leftGrid);
                         leftGrid.highlight(sector.first, sector.second);
-                        GridView rightGrid = (GridView) findViewById(R.id.rightGrid);
                         rightGrid.highlight(sector.first, sector.second);
                     }
                 }
@@ -258,6 +275,17 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 && signals.getSignalQuality() > settings.getMinQuality()) {
             ringtone.play();
             gazeFrozen = !gazeFrozen;
+            if (settings.shouldWhackAMole()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        moleSector = Pair.create(Stats.random(0, MOLE_NUM_STEPS),
+                                Stats.random(0, MOLE_NUM_STEPS));
+                        leftMoleGrid.highlight(moleSector.first, moleSector.second);
+                        rightMoleGrid.highlight(moleSector.first, moleSector.second);
+                    }
+                });
+            }
         }
     }
 
@@ -269,8 +297,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             int filtered1 = signals.horizontal()[Config.GRAPH_LENGTH-1];
             int filtered2 = signals.vertical()[Config.GRAPH_LENGTH-1];
             writer.write(channel1, channel2, filtered1, filtered2, estimate.first, estimate.second,
-                    moleSector == null ? -1 : moleSector.first,
-                    moleSector == null ? -1 : moleSector.second);
+                    moleSector.first, moleSector.second);
         }
     }
 
@@ -289,8 +316,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 if (MainActivity.this.isDestroyed()) {
                     return;
                 }
-                findViewById(R.id.leftGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.rightGrid).setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                leftGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                rightGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                leftMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+                rightMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 findViewById(R.id.leftWarning).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightWarning).setVisibility(
@@ -342,7 +371,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             gestureUpdateTimer.cancel();
         }
         moleChangeCount = 0;
-        moleSector = null;
+        moleSector = Pair.create(-1, -1);
     }
 
     private void hideBars() {

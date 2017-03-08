@@ -18,6 +18,7 @@ public class Settings {
     private static final String NUM_STEPS = "num_steps";
     private static final String MIN_QUALITY = "min_quality";
     private static final String ALGORITHM = "algorithm";
+    private static final String CURSOR_STYLE = "cursor_style";
 
     private final Context context;
 
@@ -118,5 +119,14 @@ public class Settings {
     public void setAlgorithm(int algorithm) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(ALGORITHM, algorithm).apply();
+    }
+
+    public int getCursorStyle() {
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(CURSOR_STYLE, 0);
+    }
+
+    public void setCursorStyle(int cursor) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putInt(CURSOR_STYLE, cursor).apply();
     }
 }

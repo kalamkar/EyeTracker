@@ -28,6 +28,11 @@
                 android:scaleType="centerCrop"/>
 
             <care.dovetail.tracker.ui.GridView
+                android:id="@+id/leftMoleGrid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <care.dovetail.tracker.ui.GridView
                 android:id="@+id/leftGrid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
@@ -84,6 +89,11 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/garden3"
                 android:scaleType="centerCrop"/>
+
+            <care.dovetail.tracker.ui.GridView
+                android:id="@+id/rightMoleGrid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
             <care.dovetail.tracker.ui.GridView
                 android:id="@+id/rightGrid"

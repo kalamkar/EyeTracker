@@ -19,9 +19,15 @@ public class GridView extends View {
     private Canvas canvas;
 
     private int numSteps = 5;
+    private CursorStyle style = CursorStyle.RECTANGLE;
 
     private int cellWidth = 0;
     private int cellHeight = 0;
+
+    public enum CursorStyle {
+        CIRCLE,
+        RECTANGLE
+    }
 
     public GridView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -33,13 +39,23 @@ public class GridView extends View {
         cellHeight = getHeight() / numSteps;
     }
 
+    public void setCursorStyle(CursorStyle style) {
+        this.style = style;
+    }
+
     public void highlight(int horizontalSector, int verticalSector) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
         if (horizontalSector >= 0 && verticalSector >= 0) {
             float left = cellWidth * horizontalSector;
             float top = cellHeight * verticalSector;
-            drawRect(left, top);
-            // drawCircle(left, top);
+            switch (style) {
+                case CIRCLE:
+                    drawCircle(left, top);
+                    break;
+                case RECTANGLE:
+                default:
+                    drawRect(left, top);
+            }
         }
         invalidate();
     }

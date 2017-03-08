@@ -61,6 +61,13 @@
             android:layout_height="wrap_content"
             android:id="@+id/algo"
             android:entries="@array/algo"/>
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:id="@+id/cursor"
+            android:entries="@array/cursor"/>
     </LinearLayout>
 
     <RelativeLayout

@@ -21,4 +21,9 @@
         <item>Prakash</item>
     </string-array>
 
+    <string-array name="cursor">
+        <item>Rectangle</item>
+        <item>Circle</item>
+    </string-array>
+
 </resources>
