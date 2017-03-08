@@ -3,8 +3,6 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
-import java.util.Arrays;
-
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -19,7 +17,6 @@ public class BandpassSignalProcessor implements SignalProcessor {
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
 
     private static final int MAX_BLINK_HEIGHT = 30000;
-    private static final int LENGTH_FOR_QUALITY =  200;
 
     private static final int MIN_BLINK_SIGNAL_QUALITY = 95;
 
@@ -71,18 +68,6 @@ public class BandpassSignalProcessor implements SignalProcessor {
 
     @Override
     public int getSignalQuality() {
-        int blinkQuality = getBlinkSignalQuality();
-        return blinkQuality < MIN_BLINK_SIGNAL_QUALITY ? blinkQuality : getHVSignalQuality();
-    }
-
-    private int getBlinkSignalQuality() {
-        if (isBadContact()) {
-            return 0;
-        }
-        return 100 - Math.min(100, 100 * blinkStats.stdDev / (MAX_BLINK_HEIGHT * 2));
-    }
-
-    private int getHVSignalQuality() {
         int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
         return 100 - Math.min(100, 100 * stdDev / (Math.max(hHalfGraphHeight, vHalfGraphHeight) * 200));
     }
@@ -97,16 +82,7 @@ public class BandpassSignalProcessor implements SignalProcessor {
         blinkUpdateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
-        blinkStats = new Stats(blinks, blinks.length - LENGTH_FOR_QUALITY, LENGTH_FOR_QUALITY);
-        if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
-            maxHHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
-            maxVHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
-            hHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
-            vHalfGraphHeight = HALF_GRAPH_HEIGHT.first;
-            Arrays.fill(horizontal, 0);
-            Arrays.fill(vertical, 0);
-            return;
-        }
+        blinkStats = new Stats(blinks);
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = /* hValue; // */ (int) hFilter.step(hValue);
@@ -187,18 +163,13 @@ public class BandpassSignalProcessor implements SignalProcessor {
 
     @Override
     public Pair<Integer, Integer> getSector() {
-        if (getBlinkSignalQuality() < MIN_BLINK_SIGNAL_QUALITY) {
-            return Pair.create(numSteps / 2, numSteps / 2);
-        }
         return getSector(horizontal, vertical, numSteps, hHalfGraphHeight, vHalfGraphHeight);
     }
 
     private static Pair<Integer, Integer> getSector(int horizontal[], int vertical[], int numSteps,
                                                     int hHalfGraphHeight, int vHalfGraphHeight) {
         int hValue = horizontal[horizontal.length - 1];
-//        int hValue = Stats.calculateMedian(horizontal, horizontal.length - 10, 10);
         int vValue = vertical[vertical.length - 1];
-//        int vValue = Stats.calculateMedian(vertical, vertical.length - 10, 10);
 
         int hLevel = getLevel(hValue, numSteps, 0, (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
         int vLevel = getLevel(vValue, numSteps, 0, (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
