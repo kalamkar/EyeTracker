@@ -15,13 +15,14 @@ import care.dovetail.tracker.Config;
 public class CurveFitSignalProcessor extends SignalProcessor {
     private static final String TAG = "CurveFitSignalProcessor";
 
-    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 6.6666667;
+    private static final int POLYNOMIAL_DEGREE = 2;
+    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 15;
     private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
             = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(3000, 6000);
 
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
@@ -107,7 +108,7 @@ public class CurveFitSignalProcessor extends SignalProcessor {
         }
 
         // Instantiate a third-degree polynomial fitter.
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(POLYNOMIAL_DEGREE);
 
         // Retrieve fitted parameters (coefficients of the polynomial function).
         return new PolynomialFunction(fitter.fit(points.toList()));
