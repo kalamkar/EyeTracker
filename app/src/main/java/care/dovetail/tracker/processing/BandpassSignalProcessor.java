@@ -12,6 +12,8 @@ public class BandpassSignalProcessor extends SignalProcessor {
     private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
     private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
+    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
+
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.25 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
@@ -26,8 +28,7 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d, %d\n%d, %d", hHalfGraphHeight, hStats.median,
-                vHalfGraphHeight, vStats.median);
+        return String.format("%d\n%d", hHalfGraphHeight, vHalfGraphHeight);
     }
 
     @Override
@@ -48,5 +49,10 @@ public class BandpassSignalProcessor extends SignalProcessor {
     @Override
     protected int maxGraphHeight() {
         return MAX_HALF_GRAPH_HEIGHT;
+    }
+
+    @Override
+    protected int waitMillisForStability() {
+        return WAIT_TIME_FOR_STABILITY_MILLIS;
     }
 }

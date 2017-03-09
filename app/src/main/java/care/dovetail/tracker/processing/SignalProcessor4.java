@@ -23,6 +23,8 @@ public class SignalProcessor4 extends SignalProcessor {
 
     private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
 
+    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
+
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
 
@@ -84,6 +86,11 @@ public class SignalProcessor4 extends SignalProcessor {
     @Override
     protected int maxGraphHeight() {
         return HALF_GRAPH_HEIGHT.second;
+    }
+
+    @Override
+    protected int waitMillisForStability() {
+        return WAIT_TIME_FOR_STABILITY_MILLIS;
     }
 
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {

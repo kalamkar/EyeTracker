@@ -23,6 +23,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
     private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
+    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
+
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
 
@@ -84,6 +86,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     @Override
     protected int maxGraphHeight() {
         return MAX_HALF_GRAPH_HEIGHT;
+    }
+
+    @Override
+    protected int waitMillisForStability() {
+        return WAIT_TIME_FOR_STABILITY_MILLIS;
     }
 
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {

@@ -3,6 +3,8 @@ package care.dovetail.tracker.processing;
 import android.util.Log;
 import android.util.Pair;
 
+import java.util.Arrays;
+
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -24,7 +26,6 @@ public abstract class SignalProcessor {
 
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
-    private static final int MIN_QUALITY_FOR_HEIGHT_UPDATE = 98;
 
     private static final float HORIZONTAL_FOV_FACTOR = 0.7f;
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
@@ -36,7 +37,7 @@ public abstract class SignalProcessor {
     protected final int numSteps;
     protected final FeatureObserver observer;
 
-    private int blinkUpdateCount = 0;
+    private long blinkUpdateCount = 0;
     private int blinkWindowIndex = 0;
     private Stats blinkStats = new Stats(null);
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
@@ -45,17 +46,20 @@ public abstract class SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
 
+    protected long goodSignalMillis;
+    protected boolean lastUpdateWasGood = false;
+
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
     protected int hHalfGraphHeight = minGraphHeight();
-    protected int vHalfGraphHeight = maxGraphHeight();
+    protected int vHalfGraphHeight = minGraphHeight();
 
     protected int maxHHalfGraphHeight = minGraphHeight();
     protected int maxVHalfGraphHeight = minGraphHeight();
 
-    protected int maxHHeightAge = 0;
-    protected int maxVHeightAge = 0;
+    protected long maxHHeightAge = 0;
+    protected long maxVHeightAge = 0;
 
     protected Stats hStats = new Stats(null);
     protected Stats vStats = new Stats(null);
@@ -88,16 +92,22 @@ public abstract class SignalProcessor {
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
+        hStats = new Stats(horizontal);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = processVertical(vValue);
-
-        hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
 
+        boolean isGoodSignal = isGoodSignal();
+        if (lastUpdateWasGood && !isGoodSignal) {
+            resetCalibration();
+        } else if (isGoodSignal) {
+            goodSignalMillis += 1000 / Config.SAMPLING_FREQ;
+        }
+        lastUpdateWasGood = isGoodSignal;
+
         maxHHeightAge++;
-        maxVHeightAge++;
-        if (getSignalQuality() > MIN_QUALITY_FOR_HEIGHT_UPDATE) {
+        if (isGoodSignal && goodSignalMillis > waitMillisForStability()) {
             int newHHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
             if (newHHalfGraphHeight > maxHHalfGraphHeight - (maxHHeightAge * 2)) {
@@ -105,7 +115,10 @@ public abstract class SignalProcessor {
                 maxHHalfGraphHeight = newHHalfGraphHeight;
                 maxHHeightAge = 0;
             }
+        }
 
+        maxVHeightAge++;
+        if (isGoodSignal && goodSignalMillis > waitMillisForStability()) {
             int newVHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
             if (newVHalfGraphHeight > maxVHalfGraphHeight - (maxVHeightAge * 2)) {
@@ -114,6 +127,21 @@ public abstract class SignalProcessor {
                 maxVHeightAge = 0;
             }
         }
+    }
+
+    private void resetCalibration() {
+        goodSignalMillis = 0;
+        hHalfGraphHeight = minGraphHeight();
+        vHalfGraphHeight = minGraphHeight();
+
+        maxHHalfGraphHeight = minGraphHeight();
+        maxVHalfGraphHeight = minGraphHeight();
+
+        maxHHeightAge = 0;
+        maxVHeightAge = 0;
+
+        Arrays.fill(horizontal, 0);
+        Arrays.fill(vertical, 0);
     }
 
     protected void onFeature(Feature feature) {
@@ -262,6 +290,12 @@ public abstract class SignalProcessor {
      * @return int value of maximum half graph height
      */
     abstract protected int maxGraphHeight();
+
+    /**
+     * Amount of time to wait for signal to be stable so that we can calibrate on the fly.
+     * @return int Wait time in milliseconds
+     */
+    abstract protected int waitMillisForStability();
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
         int min = median - halfGraphHeight + 1;
