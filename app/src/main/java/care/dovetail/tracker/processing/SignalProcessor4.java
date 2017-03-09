@@ -49,12 +49,6 @@ public class SignalProcessor4 extends SignalProcessor {
     }
 
     @Override
-    public int getSignalQuality() {
-        int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
-        return 100 - Math.min(100, 100 * stdDev / (Math.max(hHalfGraphHeight, vHalfGraphHeight) * 200));
-    }
-
-    @Override
     protected int processHorizontal(int value) {
         System.arraycopy(hFiltered, 1, hFiltered, 0, hFiltered.length - 1);
         hFiltered[hFiltered.length - 1] = /* hValue; // */ (int) hFilter.step(value);

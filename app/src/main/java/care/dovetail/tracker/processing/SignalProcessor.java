@@ -146,7 +146,11 @@ public abstract class SignalProcessor {
      * Get signal quality
      * @return int from 0 to 100 indicating signal quality (higher the better).
      */
-    public abstract int getSignalQuality();
+    public final int getSignalQuality() {
+        int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
+        int height = Math.max(hHalfGraphHeight, vHalfGraphHeight);
+        return 100 - Math.min(100, 100 * stdDev / (height * 200));
+    }
 
     /**
      * Check if the the electrode contact is not present or bad

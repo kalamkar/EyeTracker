@@ -11,7 +11,7 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 4000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 6000);
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
@@ -28,12 +28,6 @@ public class BandpassSignalProcessor extends SignalProcessor {
     @Override
     public String getDebugNumbers() {
         return String.format("%d\n%d", hHalfGraphHeight, vHalfGraphHeight);
-    }
-
-    @Override
-    public int getSignalQuality() {
-        int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
-        return 100 - Math.min(100, 100 * stdDev / (Math.max(hHalfGraphHeight, vHalfGraphHeight) * 200));
     }
 
     @Override
