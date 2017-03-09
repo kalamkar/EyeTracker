@@ -30,8 +30,6 @@ public class SettingsActivity extends Activity {
     private ToggleButton whackAMole;
     private SeekBar numSteps;
     private TextView numStepsValue;
-    private SeekBar minQuality;
-    private TextView minQualityValue;
     private Spinner algorithm;
     private Spinner cursor;
 
@@ -49,8 +47,6 @@ public class SettingsActivity extends Activity {
         whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
         numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
-        minQuality = (SeekBar) findViewById(R.id.min_quality);
-        minQualityValue = (TextView) findViewById(R.id.min_quality_value);
         algorithm = (Spinner) findViewById(R.id.algo);
         cursor = (Spinner) findViewById(R.id.cursor);
 
@@ -61,8 +57,6 @@ public class SettingsActivity extends Activity {
         whackAMole.setChecked(settings.shouldWhackAMole());
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
-        minQuality.setProgress(settings.getMinQuality());
-        minQualityValue.setText(Integer.toString(settings.getMinQuality()));
         algorithm.setSelection(settings.getAlgorithm());
         cursor.setSelection(settings.getCursorStyle());
 
@@ -106,17 +100,6 @@ public class SettingsActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 numStepsValue.setText(Integer.toString(progress));
                 settings.setNumSteps(progress);
-            }
-
-            @Override  public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        minQuality.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                minQualityValue.setText(Integer.toString(progress));
-                settings.setMinQuality(progress);
             }
 
             @Override  public void onStartTrackingTouch(SeekBar seekBar) {}

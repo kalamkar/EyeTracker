@@ -22,7 +22,9 @@ public abstract class SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
 
-    private static final int MIN_QUALITY_FOR_HEIGHT_UPDATE = 95;
+    private static final double QUALITY_UNIT = Math.sqrt(1000);
+    private static final int MAX_NOISE_DEVIATION = 5;
+    private static final int MIN_QUALITY_FOR_HEIGHT_UPDATE = 98;
 
     private static final float HORIZONTAL_FOV_FACTOR = 0.7f;
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
@@ -134,7 +136,14 @@ public abstract class SignalProcessor {
      * Get the cell or sector in the grid for current eye gaze.
      * @return Pair of horizontal (column) and vertical (row) value in that order.
      */
-    public abstract Pair<Integer, Integer> getSector();
+    public final Pair<Integer, Integer> getSector() {
+        int hValue = horizontal[horizontal.length - 1];
+        int vValue = vertical[vertical.length - 1];
+
+        int hLevel = getLevel(hValue, numSteps, 0, (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
+        int vLevel = getLevel(vValue, numSteps, 0, (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
+        return Pair.create(hLevel, vLevel);
+    }
 
     /**
      *
@@ -143,13 +152,21 @@ public abstract class SignalProcessor {
     public abstract String getDebugNumbers();
 
     /**
+     * Check if we are getting good signal i.e. low noise from rubbing, movements etc.
+     * @return true if the signal is good
+     */
+    public final boolean isGoodSignal() {
+        double deviation = Math.sqrt(Math.max(hStats.stdDev, vStats.stdDev));
+        return deviation != 0 && (deviation / QUALITY_UNIT) < MAX_NOISE_DEVIATION;
+    }
+
+    /**
      * Get signal quality
      * @return int from 0 to 100 indicating signal quality (higher the better).
      */
     public final int getSignalQuality() {
-        int stdDev = Math.max(hStats.stdDev, vStats.stdDev);
-        int height = Math.max(hHalfGraphHeight, vHalfGraphHeight);
-        return 100 - Math.min(100, 100 * stdDev / (height * 200));
+        double deviation = Math.sqrt(Math.max(hStats.stdDev, vStats.stdDev));
+        return 100 - Math.min(100, (int) (deviation / QUALITY_UNIT));
     }
 
     /**
@@ -245,17 +262,6 @@ public abstract class SignalProcessor {
      * @return int value of maximum half graph height
      */
     abstract protected int maxGraphHeight();
-
-    protected static Pair<Integer, Integer> getSector(int horizontal[], int vertical[],
-                                                      int numSteps, int hHalfGraphHeight,
-                                                      int vHalfGraphHeight) {
-        int hValue = horizontal[horizontal.length - 1];
-        int vValue = vertical[vertical.length - 1];
-
-        int hLevel = getLevel(hValue, numSteps, 0, (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
-        int vLevel = getLevel(vValue, numSteps, 0, (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
-        return Pair.create(hLevel, vLevel);
-    }
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
         int min = median - halfGraphHeight + 1;

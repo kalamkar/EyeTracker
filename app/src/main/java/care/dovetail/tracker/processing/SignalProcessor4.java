@@ -77,11 +77,6 @@ public class SignalProcessor4 extends SignalProcessor {
     }
 
     @Override
-    public Pair<Integer, Integer> getSector() {
-        return getSector(horizontal, vertical, numSteps, hHalfGraphHeight, vHalfGraphHeight);
-    }
-
-    @Override
     protected int minGraphHeight() {
         return HALF_GRAPH_HEIGHT.first;
     }

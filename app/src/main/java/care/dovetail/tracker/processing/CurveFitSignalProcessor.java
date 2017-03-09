@@ -1,7 +1,5 @@
 package care.dovetail.tracker.processing;
 
-import android.util.Pair;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -22,7 +20,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(3000, 6000);
+    private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
+    private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
@@ -78,18 +77,13 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     }
 
     @Override
-    public Pair<Integer, Integer> getSector() {
-        return getSector(horizontal, vertical, numSteps, hHalfGraphHeight, vHalfGraphHeight);
-    }
-
-    @Override
     protected int minGraphHeight() {
-        return HALF_GRAPH_HEIGHT.first;
+        return MIN_HALF_GRAPH_HEIGHT;
     }
 
     @Override
     protected int maxGraphHeight() {
-        return HALF_GRAPH_HEIGHT.second;
+        return MAX_HALF_GRAPH_HEIGHT;
     }
 
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {

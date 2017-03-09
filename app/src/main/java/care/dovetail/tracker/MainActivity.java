@@ -52,14 +52,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private Timer sectorUpdateTimer;
     private Timer gestureUpdateTimer;
 
-    private int signalQualityTimerCount;
-
     private Ringtone ringtone;
 
     private boolean gazeFrozen = false;
 
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
-    private int moleChangeCount = 0;
     private static final int MOLE_NUM_STEPS = 5;
 
     private GridView leftGrid;
@@ -227,13 +224,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    boolean isGoodSignal = signals.getSignalQuality() > settings.getMinQuality();
+                    int quality = signals.getSignalQuality();
+                    boolean isGoodSignal = signals.isGoodSignal();
                     Pair<Integer, Integer> sector = Pair.create(-1, -1);
                     if (isGoodSignal) {
                         sector = signals.getSector();
-                        signalQualityTimerCount = 0;
-                    } else {
-                        signalQualityTimerCount++;
                     }
 
                     findViewById(R.id.leftProgress).setVisibility(
@@ -242,10 +237,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     findViewById(R.id.rightProgress).setVisibility(
                             isGoodSignal || !patchClient.isConnected()
                                     ?  View.INVISIBLE : View.VISIBLE);
-                    ((ProgressBar) findViewById(R.id.leftProgress))
-                            .setProgress(signalQualityTimerCount);
-                    ((ProgressBar) findViewById(R.id.rightProgress))
-                            .setProgress(signalQualityTimerCount);
+                    ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
+                    ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
 
                     if (!gazeFrozen || !settings.shouldFreezeGaze()) {
                         leftGrid.highlight(sector.first, sector.second);
@@ -271,8 +264,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(Feature feature) {
-        if (Feature.Type.BLINK == feature.type
-                && signals.getSignalQuality() > settings.getMinQuality()) {
+        if (Feature.Type.BLINK == feature.type && signals.isGoodSignal()) {
             ringtone.play();
             gazeFrozen = !gazeFrozen;
             if (settings.shouldWhackAMole()) {
@@ -345,8 +337,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         // TODO(abhi): Create patchClient in onActivityResult if BT enable activity started.
         patchClient.connect();
 
-        signalQualityTimerCount = 0;
-
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(new ChartUpdater(), 0, GRAPH_UPDATE_MILLIS);
 
@@ -370,7 +360,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (gestureUpdateTimer != null) {
             gestureUpdateTimer.cancel();
         }
-        moleChangeCount = 0;
         moleSector = Pair.create(-1, -1);
     }
 

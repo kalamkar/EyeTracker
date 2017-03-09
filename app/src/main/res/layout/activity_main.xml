@@ -70,10 +70,10 @@
             <ProgressBar
                 android:id="@+id/leftProgress"
                 style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="wrap_content"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:max="300"/>
+                android:max="100"/>
 
         </FrameLayout>
 
@@ -133,10 +133,10 @@
             <ProgressBar
                 android:id="@+id/rightProgress"
                 style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="wrap_content"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:max="300"/>
+                android:max="100"/>
 
         </FrameLayout>
 

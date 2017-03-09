@@ -16,7 +16,6 @@ public class Settings {
     private static final String SHOW_CHART = "show_chart";
     private static final String WHACK_A_MOLE = "whack_a_mole";
     private static final String NUM_STEPS = "num_steps";
-    private static final String MIN_QUALITY = "min_quality";
     private static final String ALGORITHM = "algorithm";
     private static final String CURSOR_STYLE = "cursor_style";
 
@@ -101,15 +100,6 @@ public class Settings {
     public void setNumSteps(int numSteps) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(NUM_STEPS, numSteps).apply();
-    }
-
-    public int getMinQuality() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getInt(MIN_QUALITY, 95);
-    }
-
-    public void setMinQuality(int minQuality) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putInt(MIN_QUALITY, minQuality).apply();
     }
 
     public int getAlgorithm() {
