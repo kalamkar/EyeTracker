@@ -22,6 +22,14 @@ public class BandpassSignalProcessor extends SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.25 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
 
+    private final IirFilter hAggressiveFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
+            2.0 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
+
+    private final IirFilter vAggressiveFilter = new IirFilter(IirFilterDesignFisher.design(
+            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
+            2.0 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
+
     public BandpassSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);
     }
@@ -33,12 +41,16 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     protected int processHorizontal(int value) {
-        return (int) hFilter.step(value);
+        int normalValue = (int) hFilter.step(value);
+        int initialValue = (int) hAggressiveFilter.step(value);
+        return goodSignalMillis < waitMillisForStability() ? initialValue : normalValue;
     }
 
     @Override
     protected int processVertical(int value) {
-        return (int) vFilter.step(value);
+        int normalValue = (int) vFilter.step(value);
+        int initialValue = (int) vAggressiveFilter.step(value);
+        return goodSignalMillis < waitMillisForStability() ? initialValue : normalValue;
     }
 
     @Override
