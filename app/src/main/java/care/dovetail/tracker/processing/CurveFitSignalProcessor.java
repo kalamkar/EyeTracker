@@ -9,13 +9,12 @@ import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.Stats;
 
 public class CurveFitSignalProcessor extends SignalProcessor {
     private static final String TAG = "CurveFitSignalProcessor";
 
     private static final int POLYNOMIAL_DEGREE = 2;
-    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 15;
+    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 10;
     private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
             = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
@@ -24,10 +23,7 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
     private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
-    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
-
-    private final int hMedian[] = new int[50];
-    private final int vMedian[] = new int[50];
+    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 0;
 
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
@@ -51,16 +47,13 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", hHalfGraphHeight, vHalfGraphHeight);
+        return String.format("%d", hHalfGraphHeight, vHalfGraphHeight);
     }
 
     @Override
     protected int processHorizontal(int value) {
-        System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
-        hMedian[hMedian.length - 1] = value;
-
         System.arraycopy(hFiltered, 1, hFiltered, 0, hFiltered.length - 1);
-        hFiltered[hFiltered.length - 1] = new Stats(hMedian).median; // (int) hFilter.step(value);
+        hFiltered[hFiltered.length - 1] = (int) hFilter.step(value);
 
         if (++hFunctionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
             hFunctionIntervalCount = 0;
@@ -73,11 +66,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     protected int processVertical(int value) {
-        System.arraycopy(vMedian, 1, vMedian, 0, vMedian.length - 1);
-        vMedian[vMedian.length - 1] = value;
-
         System.arraycopy(vFiltered, 1, vFiltered, 0, vFiltered.length - 1);
-        vFiltered[vFiltered.length - 1] = new Stats(vMedian).median; // (int) vFilter.step(value);
+        vFiltered[vFiltered.length - 1] = (int) vFilter.step(value);
 
         if (++vFunctionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
             vFunctionIntervalCount = 0;
