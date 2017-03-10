@@ -108,7 +108,7 @@ public abstract class SignalProcessor {
         lastUpdateWasGood = isGoodSignal;
 
         maxHHeightAge++;
-        if (isGoodSignal && goodSignalMillis > waitMillisForStability()) {
+        if (isGoodSignal && isStableSignal()) {
             int newHHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
             if (newHHalfGraphHeight > maxHHalfGraphHeight - (maxHHeightAge * 2)) {
@@ -119,7 +119,7 @@ public abstract class SignalProcessor {
         }
 
         maxVHeightAge++;
-        if (isGoodSignal && goodSignalMillis > waitMillisForStability()) {
+        if (isGoodSignal && isStableSignal()) {
             int newVHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
             if (newVHalfGraphHeight > maxVHalfGraphHeight - (maxVHeightAge * 2)) {
@@ -307,10 +307,10 @@ public abstract class SignalProcessor {
     abstract protected int maxGraphHeight();
 
     /**
-     * Amount of time to wait for signal to be stable so that we can calibrate on the fly.
-     * @return int Wait time in milliseconds
+     * Is the signal stable so that we can calibrate on the fly.
+     * @return true if signal is stable
      */
-    abstract protected int waitMillisForStability();
+    abstract protected boolean isStableSignal();
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
         int min = median - halfGraphHeight + 1;

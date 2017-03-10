@@ -99,8 +99,8 @@ public class SignalProcessor4 extends SignalProcessor {
     }
 
     @Override
-    protected int waitMillisForStability() {
-        return WAIT_TIME_FOR_STABILITY_MILLIS;
+    protected boolean isStableSignal() {
+        return goodSignalMillis > WAIT_TIME_FOR_STABILITY_MILLIS;
     }
 
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {
