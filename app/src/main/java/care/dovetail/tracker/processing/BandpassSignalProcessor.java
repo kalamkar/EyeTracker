@@ -11,7 +11,6 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final Pair<Integer, Integer> INITIAL_HALF_GRAPH_HEIGHT = new Pair<>(3000, 6000);
     private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 8000);
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
@@ -24,14 +23,6 @@ public class BandpassSignalProcessor extends SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.25 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
 
-    private final IirFilter hAggressiveFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            2.0 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
-
-    private final IirFilter vAggressiveFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            2.0 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
-
     public BandpassSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);
     }
@@ -43,28 +34,32 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     protected int processHorizontal(int value) {
-        int normalValue = (int) hFilter.step(value);
-        int initialValue = (int) hAggressiveFilter.step(value);
-        return goodSignalMillis < waitMillisForStability() ? initialValue : normalValue;
+        return (int) hFilter.step(value);
     }
 
     @Override
     protected int processVertical(int value) {
-        int normalValue = (int) vFilter.step(value);
-        int initialValue = (int) vAggressiveFilter.step(value);
-        return goodSignalMillis < waitMillisForStability() ? initialValue : normalValue;
+        return (int) vFilter.step(value);
+    }
+
+    @Override
+    protected int horizontalBase() {
+        return goodSignalMillis < WAIT_TIME_FOR_STABILITY_MILLIS ? hStats.median : 0;
+    }
+
+    @Override
+    protected int verticalBase() {
+        return goodSignalMillis < WAIT_TIME_FOR_STABILITY_MILLIS ? vStats.median : 0;
     }
 
     @Override
     protected int minGraphHeight() {
-        return goodSignalMillis < waitMillisForStability()
-                ? INITIAL_HALF_GRAPH_HEIGHT.first : HALF_GRAPH_HEIGHT.first;
+        return HALF_GRAPH_HEIGHT.first;
     }
 
     @Override
     protected int maxGraphHeight() {
-        return goodSignalMillis < waitMillisForStability()
-                ? INITIAL_HALF_GRAPH_HEIGHT.second : HALF_GRAPH_HEIGHT.second;
+        return HALF_GRAPH_HEIGHT.second;
     }
 
     @Override

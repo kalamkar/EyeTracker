@@ -9,6 +9,7 @@ import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.Stats;
 
 public class CurveFitSignalProcessor extends SignalProcessor {
     private static final String TAG = "CurveFitSignalProcessor";
@@ -24,6 +25,9 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
+
+    private final int hMedian[] = new int[50];
+    private final int vMedian[] = new int[50];
 
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
@@ -52,8 +56,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     protected int processHorizontal(int value) {
+        System.arraycopy(hMedian, 1, hMedian, 0, hMedian.length - 1);
+        hMedian[hMedian.length - 1] = value;
+
         System.arraycopy(hFiltered, 1, hFiltered, 0, hFiltered.length - 1);
-        hFiltered[hFiltered.length - 1] = /* hValue; // */ (int) hFilter.step(value);
+        hFiltered[hFiltered.length - 1] = new Stats(hMedian).median; // (int) hFilter.step(value);
 
         if (++hFunctionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
             hFunctionIntervalCount = 0;
@@ -66,8 +73,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     protected int processVertical(int value) {
+        System.arraycopy(vMedian, 1, vMedian, 0, vMedian.length - 1);
+        vMedian[vMedian.length - 1] = value;
+
         System.arraycopy(vFiltered, 1, vFiltered, 0, vFiltered.length - 1);
-        vFiltered[vFiltered.length - 1] = /* vValue; // */ (int) vFilter.step(value);
+        vFiltered[vFiltered.length - 1] = new Stats(vMedian).median; // (int) vFilter.step(value);
 
         if (++vFunctionIntervalCount == FUNCTION_CALCULATE_INTERVAL) {
             vFunctionIntervalCount = 0;
@@ -76,6 +86,16 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
         return vFiltered[vFiltered.length - 1]
                 - (int) vFunction.value(vertical.length + vFunctionIntervalCount);
+    }
+
+    @Override
+    protected int horizontalBase() {
+        return 0;
+    }
+
+    @Override
+    protected int verticalBase() {
+        return 0;
     }
 
     @Override

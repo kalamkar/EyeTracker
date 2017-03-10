@@ -79,6 +79,16 @@ public class SignalProcessor4 extends SignalProcessor {
     }
 
     @Override
+    protected int horizontalBase() {
+        return 0;
+    }
+
+    @Override
+    protected int verticalBase() {
+        return 0;
+    }
+
+    @Override
     protected int minGraphHeight() {
         return HALF_GRAPH_HEIGHT.first;
     }

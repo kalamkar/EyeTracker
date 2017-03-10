@@ -79,7 +79,7 @@ public abstract class SignalProcessor {
         blinkUpdateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
-        blinkStats = new Stats(blinks);
+        blinkStats = new Stats(blinks, blinks.length - Config.SAMPLING_FREQ, Config.SAMPLING_FREQ);
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
@@ -92,17 +92,18 @@ public abstract class SignalProcessor {
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
-        hStats = new Stats(horizontal);
+        hStats = new Stats(horizontal, horizontal.length - Config.SAMPLING_FREQ,
+                Config.SAMPLING_FREQ);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = processVertical(vValue);
-        vStats = new Stats(vertical);
+        vStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ, Config.SAMPLING_FREQ);
 
         boolean isGoodSignal = isGoodSignal();
-        if (lastUpdateWasGood && !isGoodSignal) {
-            resetCalibration();
-        } else if (isGoodSignal) {
+        if (isGoodSignal) {
             goodSignalMillis += 1000 / Config.SAMPLING_FREQ;
+        } else if (!isGoodSignal && lastUpdateWasGood) {
+            resetCalibration();
         }
         lastUpdateWasGood = isGoodSignal;
 
@@ -168,8 +169,10 @@ public abstract class SignalProcessor {
         int hValue = horizontal[horizontal.length - 1];
         int vValue = vertical[vertical.length - 1];
 
-        int hLevel = getLevel(hValue, numSteps, 0, (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
-        int vLevel = getLevel(vValue, numSteps, 0, (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
+        int hLevel = getLevel(hValue, numSteps, horizontalBase(),
+                (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
+        int vLevel = getLevel(vValue, numSteps, verticalBase(),
+                (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
         return Pair.create(hLevel, vLevel);
     }
 
@@ -278,6 +281,18 @@ public abstract class SignalProcessor {
         return Pair.create(blinkStats.median - MAX_BLINK_HEIGHT,
                 blinkStats.median + MAX_BLINK_HEIGHT);
     }
+
+    /**
+     * Baseline (center gaze) value for horizontal channel, used for sector calculation.
+     * @return int value of baseline
+     */
+    abstract protected int horizontalBase();
+
+    /**
+     * Baseline (center gaze) value for vertical channel, used for sector calculation.
+     * @return int value of baseline
+     */
+    abstract protected int verticalBase();
 
     /**
      * Minimum limit for half graph height
