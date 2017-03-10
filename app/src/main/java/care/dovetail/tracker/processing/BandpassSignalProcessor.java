@@ -1,5 +1,7 @@
 package care.dovetail.tracker.processing;
 
+import android.util.Pair;
+
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -9,8 +11,8 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
-    private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
+    private static final Pair<Integer, Integer> INITIAL_HALF_GRAPH_HEIGHT = new Pair<>(3000, 6000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 8000);
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
 
@@ -55,12 +57,14 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     protected int minGraphHeight() {
-        return MIN_HALF_GRAPH_HEIGHT;
+        return goodSignalMillis < waitMillisForStability()
+                ? INITIAL_HALF_GRAPH_HEIGHT.first : HALF_GRAPH_HEIGHT.first;
     }
 
     @Override
     protected int maxGraphHeight() {
-        return MAX_HALF_GRAPH_HEIGHT;
+        return goodSignalMillis < waitMillisForStability()
+                ? INITIAL_HALF_GRAPH_HEIGHT.second : HALF_GRAPH_HEIGHT.second;
     }
 
     @Override
