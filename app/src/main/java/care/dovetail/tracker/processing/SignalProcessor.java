@@ -103,6 +103,7 @@ public abstract class SignalProcessor {
         if (isGoodSignal) {
             goodSignalMillis += 1000 / Config.SAMPLING_FREQ;
         } else if (!isGoodSignal && lastUpdateWasGood) {
+            resetSignal();
             resetCalibration();
         }
         lastUpdateWasGood = isGoodSignal;
@@ -130,8 +131,13 @@ public abstract class SignalProcessor {
         }
     }
 
-    private void resetCalibration() {
+    private void resetSignal() {
         goodSignalMillis = 0;
+        Arrays.fill(horizontal, 0);
+        Arrays.fill(vertical, 0);
+    }
+
+    private void resetCalibration() {
         hHalfGraphHeight = minGraphHeight();
         vHalfGraphHeight = minGraphHeight();
 
@@ -140,9 +146,6 @@ public abstract class SignalProcessor {
 
         maxHHeightAge = 0;
         maxVHeightAge = 0;
-
-        Arrays.fill(horizontal, 0);
-        Arrays.fill(vertical, 0);
     }
 
     protected void onFeature(Feature feature) {
