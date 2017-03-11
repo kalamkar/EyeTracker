@@ -64,6 +64,8 @@ public abstract class SignalProcessor {
     protected Stats hStats = new Stats(null);
     protected Stats vStats = new Stats(null);
 
+    protected Stats hQualityStats = new Stats(null);
+    protected Stats vQualityStats = new Stats(null);
 
     public SignalProcessor(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
@@ -92,12 +94,15 @@ public abstract class SignalProcessor {
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
-        hStats = new Stats(horizontal, horizontal.length - Config.SAMPLING_FREQ,
+        hStats = new Stats(horizontal);
+        hQualityStats = new Stats(horizontal, horizontal.length - Config.SAMPLING_FREQ,
                 Config.SAMPLING_FREQ);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = processVertical(vValue);
-        vStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ, Config.SAMPLING_FREQ);
+        vStats = new Stats(vertical);
+        vQualityStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ,
+                Config.SAMPLING_FREQ);
 
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
@@ -190,7 +195,7 @@ public abstract class SignalProcessor {
      * @return true if the signal is good
      */
     public final boolean isGoodSignal() {
-        double deviation = Math.sqrt(Math.max(hStats.stdDev, vStats.stdDev));
+        double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return deviation != 0 && (deviation / QUALITY_UNIT) < MAX_NOISE_DEVIATION;
     }
 
@@ -199,7 +204,7 @@ public abstract class SignalProcessor {
      * @return int from 0 to 100 indicating signal quality (higher the better).
      */
     public final int getSignalQuality() {
-        double deviation = Math.sqrt(Math.max(hStats.stdDev, vStats.stdDev));
+        double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return 100 - Math.min(100, (int) (deviation / QUALITY_UNIT));
     }
 
