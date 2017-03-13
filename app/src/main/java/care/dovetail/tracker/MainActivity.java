@@ -237,6 +237,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     findViewById(R.id.rightProgress).setVisibility(
                             isGoodSignal || !patchClient.isConnected()
                                     ?  View.INVISIBLE : View.VISIBLE);
+
+                    boolean isStableSignal =
+                            signals.isStableHorizontal() && signals.isStableVertical();
+                    findViewById(R.id.leftWarning).setVisibility(
+                            isStableSignal ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.rightWarning).setVisibility(
+                            isStableSignal ?  View.INVISIBLE : View.VISIBLE);
+
                     ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
                     ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
 
@@ -312,9 +320,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 leftMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
                 rightMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftWarning).setVisibility(
+                findViewById(R.id.leftBlue).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
-                findViewById(R.id.rightWarning).setVisibility(
+                findViewById(R.id.rightBlue).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
             }
         });

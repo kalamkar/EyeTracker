@@ -24,6 +24,8 @@ public abstract class SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
 
+    private static final int MAX_STABLE_SLOPE = 15;
+
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
 
@@ -136,7 +138,7 @@ public abstract class SignalProcessor {
 
     protected void maybeUpdateHorizontalHeight() {
         maxHHeightAge++;
-        if (isGoodSignal() && isStableSignal()
+        if (isGoodSignal() && isStableHorizontal()
                 && Math.floor(maxHHeightAge / horizontal.length) > 0) {
             int newHHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
@@ -148,7 +150,7 @@ public abstract class SignalProcessor {
 
     protected void maybeUpdateVerticalHeight() {
         maxVHeightAge++;
-        if (isGoodSignal() && isStableSignal()
+        if (isGoodSignal() && isStableVertical()
                 && Math.floor(maxVHeightAge / vertical.length) > 0) {
             int newVHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
@@ -222,12 +224,19 @@ public abstract class SignalProcessor {
     }
 
     /**
-     * Is the signal stable so that we can calibrate on the fly.
-     * @return true if signal is stable
+     * Is the horizontal signal stable so that we can calibrate on the fly.
+     * @return true if horizontal signal is stable
      */
-    public boolean isStableSignal() {
-        return !(hStats == null || vStats == null) &&
-                (Math.max(Math.abs(hStats.slope), Math.abs(vStats.slope)) < 25) ;
+    public boolean isStableHorizontal() {
+        return hStats != null && Math.abs(hStats.slope) < MAX_STABLE_SLOPE ;
+    }
+
+    /**
+     * Is the vertical signal stable so that we can calibrate on the fly.
+     * @return true if the vertical signal is stable
+     */
+    public boolean isStableVertical() {
+        return vStats != null && Math.abs(vStats.slope) < MAX_STABLE_SLOPE ;
     }
 
     /**
