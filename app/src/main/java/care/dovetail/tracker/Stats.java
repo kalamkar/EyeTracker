@@ -9,6 +9,8 @@ import java.util.Arrays;
 public class Stats {
     private final static String TAG = "Stats";
 
+    public final int count;
+
     public final int min;
     public final int minIndex;
 
@@ -37,6 +39,7 @@ public class Stats {
         }
 
         Stats basicStats = Stats.getBasicStats(values == null ? new int[0] : values);
+        this.count = basicStats.count;
         this.min = basicStats.min;
         this.max = basicStats.max;
         this.minIndex = start + basicStats.minIndex;
@@ -51,7 +54,9 @@ public class Stats {
         this.slope = values == null ? 0 : calculateSlope(values);
     }
 
-    private Stats(int min, int minIndex, int max, int maxIndex, long sum, int average, int changes) {
+    private Stats(int count, int min, int minIndex, int max, int maxIndex, long sum, int average,
+                  int changes) {
+        this.count = count;
         this.min = min;
         this.minIndex = minIndex;
         this.max = max;
@@ -86,7 +91,7 @@ public class Stats {
             changes += i == 0 || values[i] == values[i - 1] ? 0 : 1;
         }
         int average = values.length == 0 ? 0 : (int) (sum / values.length);
-        return new Stats(min, minIndex, max, maxIndex, sum, average, changes);
+        return new Stats(values.length, min, minIndex, max, maxIndex, sum, average, changes);
     }
 
     private static float calculateSlope(int values[]) {

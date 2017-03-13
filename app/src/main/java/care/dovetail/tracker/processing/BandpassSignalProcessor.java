@@ -11,8 +11,7 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 6000);
-    private static final Pair<Integer, Integer> INITIAL_HALF_GRAPH_HEIGHT = new Pair<>(5000, 10000);
+    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 12000);
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 10000;
 
@@ -45,26 +44,21 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     protected int horizontalBase() {
-        return isStableSignal() ? 0 : hStats.median;
+        return (hStats.min + hStats.max) / 2;
     }
 
     @Override
     protected int verticalBase() {
-        return isStableSignal() ? 0: vStats.median;
+        return (vStats.min + vStats.max) / 2;
     }
 
     @Override
     protected int minGraphHeight() {
-        return isStableSignal() ? HALF_GRAPH_HEIGHT.first : INITIAL_HALF_GRAPH_HEIGHT.first;
+        return HALF_GRAPH_HEIGHT.first;
     }
 
     @Override
     protected int maxGraphHeight() {
-        return isStableSignal() ? HALF_GRAPH_HEIGHT.second : INITIAL_HALF_GRAPH_HEIGHT.second;
-    }
-
-    @Override
-    protected boolean isStableSignal() {
-        return goodSignalMillis > WAIT_TIME_FOR_STABILITY_MILLIS;
+        return HALF_GRAPH_HEIGHT.second;
     }
 }

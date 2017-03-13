@@ -31,7 +31,7 @@ public abstract class SignalProcessor {
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
 
     private static final int SMALL_BLINK_HEIGHT = 5000;
-    private static final int MIN_BLINK_HEIGHT = 10000;
+    private static final int MIN_BLINK_HEIGHT = 8000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
     protected final int numSteps;
@@ -55,8 +55,8 @@ public abstract class SignalProcessor {
     protected int hHalfGraphHeight = minGraphHeight();
     protected int vHalfGraphHeight = minGraphHeight();
 
-    protected int maxHHalfGraphHeight = minGraphHeight();
-    protected int maxVHalfGraphHeight = minGraphHeight();
+//    protected int maxHHalfGraphHeight = minGraphHeight();
+//    protected int maxVHalfGraphHeight = minGraphHeight();
 
     protected long maxHHeightAge = 0;
     protected long maxVHeightAge = 0;
@@ -113,27 +113,8 @@ public abstract class SignalProcessor {
         }
         lastUpdateWasGood = isGoodSignal;
 
-        maxHHeightAge++;
-        if (isGoodSignal && isStableSignal()) {
-            int newHHalfGraphHeight = Math.min(maxGraphHeight(),
-                    Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
-            if (newHHalfGraphHeight > maxHHalfGraphHeight - (maxHHeightAge * 2)) {
-                hHalfGraphHeight = newHHalfGraphHeight;
-                maxHHalfGraphHeight = newHHalfGraphHeight;
-                maxHHeightAge = 0;
-            }
-        }
-
-        maxVHeightAge++;
-        if (isGoodSignal && isStableSignal()) {
-            int newVHalfGraphHeight = Math.min(maxGraphHeight(),
-                    Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
-            if (newVHalfGraphHeight > maxVHalfGraphHeight - (maxVHeightAge * 2)) {
-                vHalfGraphHeight = newVHalfGraphHeight;
-                maxVHalfGraphHeight = newVHalfGraphHeight;
-                maxVHeightAge = 0;
-            }
-        }
+        maybeUpdateHorizontalHeight();
+        maybeUpdateVerticalHeight();
     }
 
     private void resetSignal() {
@@ -146,11 +127,35 @@ public abstract class SignalProcessor {
         hHalfGraphHeight = minGraphHeight();
         vHalfGraphHeight = minGraphHeight();
 
-        maxHHalfGraphHeight = minGraphHeight();
-        maxVHalfGraphHeight = minGraphHeight();
+//        maxHHalfGraphHeight = minGraphHeight();
+//        maxVHalfGraphHeight = minGraphHeight();
 
         maxHHeightAge = 0;
         maxVHeightAge = 0;
+    }
+
+    protected void maybeUpdateHorizontalHeight() {
+        maxHHeightAge++;
+        if (isGoodSignal() && isStableSignal()
+                && Math.floor(maxHHeightAge / horizontal.length) > 0) {
+            int newHHalfGraphHeight = Math.min(maxGraphHeight(),
+                    Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
+            hHalfGraphHeight = newHHalfGraphHeight;
+//            maxHHalfGraphHeight = newHHalfGraphHeight;
+            maxHHeightAge = 0;
+        }
+    }
+
+    protected void maybeUpdateVerticalHeight() {
+        maxVHeightAge++;
+        if (isGoodSignal() && isStableSignal()
+                && Math.floor(maxVHeightAge / vertical.length) > 0) {
+            int newVHalfGraphHeight = Math.min(maxGraphHeight(),
+                    Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
+            vHalfGraphHeight = newVHalfGraphHeight;
+//            maxVHalfGraphHeight = newVHalfGraphHeight;
+            maxVHeightAge = 0;
+        }
     }
 
     protected void onFeature(Feature feature) {
@@ -214,6 +219,15 @@ public abstract class SignalProcessor {
      */
     public boolean isBadContact() {
         return blinkStats.stdDev == 0 && blinkUpdateCount >= blinks.length;
+    }
+
+    /**
+     * Is the signal stable so that we can calibrate on the fly.
+     * @return true if signal is stable
+     */
+    public boolean isStableSignal() {
+        return !(hStats == null || vStats == null) &&
+                (Math.max(Math.abs(hStats.slope), Math.abs(vStats.slope)) < 25) ;
     }
 
     /**
@@ -313,12 +327,6 @@ public abstract class SignalProcessor {
      * @return int value of maximum half graph height
      */
     abstract protected int maxGraphHeight();
-
-    /**
-     * Is the signal stable so that we can calibrate on the fly.
-     * @return true if signal is stable
-     */
-    abstract protected boolean isStableSignal();
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
         int min = median - halfGraphHeight + 1;

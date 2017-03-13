@@ -98,11 +98,6 @@ public class CurveFitSignalProcessor extends SignalProcessor {
         return MAX_HALF_GRAPH_HEIGHT;
     }
 
-    @Override
-    protected boolean isStableSignal() {
-        return goodSignalMillis > WAIT_TIME_FOR_STABILITY_MILLIS;
-    }
-
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {
         WeightedObservedPoints points = new WeightedObservedPoints();
         for (int i = 0; i < values.length; i++) {
