@@ -176,7 +176,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             leftChart.clear();
             rightChart.clear();
 
-            if (settings.shouldShowChart()) {
+            if (settings.shouldShowChart() || !signals.isGoodSignal()) {
                 leftChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 leftChart.updateChannel2(signals.vertical(), signals.verticalRange());
                 rightChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
