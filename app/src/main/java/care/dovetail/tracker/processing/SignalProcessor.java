@@ -24,7 +24,7 @@ public abstract class SignalProcessor {
 
     private static final int BLINK_WINDOW = 20;
 
-    private static final int MAX_STABLE_SLOPE = 15;
+    private static final int MAX_STABLE_SLOPE = 25;
 
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
