@@ -79,12 +79,12 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     protected int horizontalBase() {
-        return 0; // (hStats.min + hStats.max) / 2;
+        return /* 0; // */ (hStats.min + hStats.max) / 2;
     }
 
     @Override
     protected int verticalBase() {
-        return 0; // (vStats.min + vStats.max) / 2;
+        return /* 0; // */ (vStats.min + vStats.max) / 2;
     }
 
     @Override
