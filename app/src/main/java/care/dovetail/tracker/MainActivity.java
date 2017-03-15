@@ -221,12 +221,21 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         sector = signals.getSector();
                     }
 
+                    boolean showProgress = isGoodSignal || !patchClient.isConnected();
+
                     findViewById(R.id.leftProgress).setVisibility(
-                            isGoodSignal || !patchClient.isConnected()
-                                    ?  View.INVISIBLE : View.VISIBLE);
+                            showProgress ?  View.INVISIBLE : View.VISIBLE);
                     findViewById(R.id.rightProgress).setVisibility(
-                            isGoodSignal || !patchClient.isConnected()
-                                    ?  View.INVISIBLE : View.VISIBLE);
+                            showProgress ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.leftProgressLabel).setVisibility(
+                            showProgress ?  View.INVISIBLE : View.VISIBLE);
+                    findViewById(R.id.rightProgressLabel).setVisibility(
+                            showProgress ?  View.INVISIBLE : View.VISIBLE);
+
+                    findViewById(R.id.leftNumber).setVisibility(
+                            showProgress ?  View.VISIBLE : View.INVISIBLE);
+                    findViewById(R.id.rightNumber).setVisibility(
+                            showProgress ?  View.VISIBLE : View.INVISIBLE);
 
                     boolean isStableSignal =
                             signals.isStableHorizontal() && signals.isStableVertical();
