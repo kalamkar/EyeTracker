@@ -10,8 +10,7 @@ public class Settings {
     private static final String TAG = "Settings";
 
     private static final String DAY_DREAM = "DAY_DREAM";
-    private static final String FREEZE_GAZE = "freeze_gaze";
-    private static final String SHOW_GESTURES = "show_gestures";
+    private static final String SHOW_BLINKMARKS = "show_blinkmarks";
     private static final String SHOW_NUMBERS = "show_numbers";
     private static final String SHOW_CHART = "show_chart";
     private static final String WHACK_A_MOLE = "whack_a_mole";
@@ -35,24 +34,14 @@ public class Settings {
                 context.getPackageName(), 0).edit().putBoolean(DAY_DREAM, dayDream).apply();
     }
 
-    public boolean shouldFreezeGaze() {
+    public boolean shouldShowBlinkmarks() {
         return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(FREEZE_GAZE, false);
+                context.getPackageName(), 0).getBoolean(SHOW_BLINKMARKS, false);
     }
 
-    public void setFreezeGaze(boolean freezeGaze) {
+    public void setShowBlinkmarks(boolean showBlinkmarks) {
         context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putBoolean(FREEZE_GAZE, freezeGaze).apply();
-    }
-
-    public boolean shouldShowGestures() {
-        return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_GESTURES, false);
-    }
-
-    public void setShowGestures(boolean showGestures) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putBoolean(SHOW_GESTURES, showGestures).apply();
+                context.getPackageName(), 0).edit().putBoolean(SHOW_BLINKMARKS, showBlinkmarks).apply();
     }
 
     public boolean shouldShowNumbers() {

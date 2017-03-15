@@ -24,7 +24,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/garden3"
+                android:src="@drawable/world1"
                 android:scaleType="centerCrop"/>
 
             <care.dovetail.tracker.ui.GridView
@@ -94,7 +94,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/garden3"
+                android:src="@drawable/world1"
                 android:scaleType="centerCrop"/>
 
             <care.dovetail.tracker.ui.GridView

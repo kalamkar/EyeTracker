@@ -6,7 +6,7 @@
     <string name="ble_not_supported">Bluetooth LE not supported.</string>
 
     <string name="day_dream">DayDream</string>
-    <string name="gestures">Gestures</string>
+    <string name="blink_marks">Blink Marks</string>
     <string name="numbers">Numbers</string>
     <string name="chart">Chart</string>
     <string name="blinks">Blinks</string>

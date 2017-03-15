@@ -1,7 +1,6 @@
 package care.dovetail.tracker.ui;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,35 +22,25 @@ public class SettingsActivity extends Activity {
 
     private final Settings settings = new Settings(this);
 
-    private ToggleButton dayDream;
-    private ToggleButton showGestures;
-    private ToggleButton showNumbers;
-    private ToggleButton showChart;
-    private ToggleButton whackAMole;
-    private SeekBar numSteps;
     private TextView numStepsValue;
-    private Spinner algorithm;
-    private Spinner cursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        SharedPreferences prefs = getSharedPreferences(getPackageName(), 0);
-
-        dayDream = (ToggleButton) findViewById(R.id.dayDream);
-        showGestures = (ToggleButton) findViewById(R.id.showGestures);
-        showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
-        showChart = (ToggleButton) findViewById(R.id.showChart);
-        whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
-        numSteps = (SeekBar) findViewById(R.id.num_steps);
+        ToggleButton dayDream = (ToggleButton) findViewById(R.id.dayDream);
+        ToggleButton showBlinkmarks = (ToggleButton) findViewById(R.id.showBlinkmarks);
+        ToggleButton showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
+        ToggleButton showChart = (ToggleButton) findViewById(R.id.showChart);
+        ToggleButton whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
+        SeekBar numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
-        algorithm = (Spinner) findViewById(R.id.algo);
-        cursor = (Spinner) findViewById(R.id.cursor);
+        Spinner algorithm = (Spinner) findViewById(R.id.algo);
+        Spinner cursor = (Spinner) findViewById(R.id.cursor);
 
         dayDream.setChecked(settings.isDayDream());
-        showGestures.setChecked(settings.shouldShowGestures());
+        showBlinkmarks.setChecked(settings.shouldShowBlinkmarks());
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
         whackAMole.setChecked(settings.shouldWhackAMole());
@@ -67,10 +56,10 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        showGestures.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showBlinkmarks.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                settings.setShowGestures(isChecked);
+                settings.setShowBlinkmarks(isChecked);
             }
         });
 
