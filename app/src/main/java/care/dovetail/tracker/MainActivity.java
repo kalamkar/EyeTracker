@@ -189,7 +189,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 rightChart.updateFeature2(signals.feature2(), signals.verticalRange());
             }
 
-            if (settings.shouldShowBlinks()) {
+            if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {
                 leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
                 rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
             } else if (settings.shouldShowAccel()) {
