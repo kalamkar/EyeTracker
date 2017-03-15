@@ -169,6 +169,13 @@ public abstract class SignalProcessor {
             int index = feature.startIndex - BLINK_WINDOW;
             feature.sector = getSector(horizontal[index], vertical[index]);
         }
+        if (Feature.Type.BLINK.equals(feature.type)
+                || Feature.Type.SMALL_BLINK.equals(feature.type)) {
+            removeSpike(vertical,
+                    feature.startIndex - BLINK_WINDOW/2, feature.endIndex + BLINK_WINDOW/2);
+            removeSpike(horizontal,
+                    feature.startIndex - BLINK_WINDOW/2, feature.endIndex + BLINK_WINDOW/2);
+        }
         observer.onFeature(feature);
     }
 
@@ -351,6 +358,15 @@ public abstract class SignalProcessor {
      * @return int value of maximum half graph height
      */
     abstract protected int maxGraphHeight();
+
+    private static void removeSpike(int values[], int startIndex, int endIndex) {
+        startIndex = Math.max(0, startIndex);
+        endIndex = Math.min(values.length - 1, endIndex);
+        float slope = (values[startIndex] - values[endIndex]) / (endIndex - startIndex);
+        for (int i = startIndex; i < endIndex; i++) {
+            values[i] = Math.round(values[startIndex] - ((i - startIndex) * slope));
+        }
+    }
 
     private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
         int min = median - halfGraphHeight + 1;
