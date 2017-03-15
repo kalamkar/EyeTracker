@@ -22,6 +22,8 @@ public abstract class SignalProcessor {
         void onFeature(Feature feature);
     }
 
+    private static final int MILLIS_PER_UPDATE = 1000 / Config.SAMPLING_FREQ;
+
     private static final int BLINK_WINDOW = 20;
 
     private static final int MAX_STABLE_SLOPE = 25;
@@ -51,17 +53,17 @@ public abstract class SignalProcessor {
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
+    protected long stableHorizontalMillis;
+    protected long stableVerticalMillis;
+
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
     protected int hHalfGraphHeight = minGraphHeight();
     protected int vHalfGraphHeight = minGraphHeight();
 
-//    protected int maxHHalfGraphHeight = minGraphHeight();
-//    protected int maxVHalfGraphHeight = minGraphHeight();
-
-    protected long maxHHeightAge = 0;
-    protected long maxVHeightAge = 0;
+    private long maxHHeightAge = 0;
+    private long maxVHeightAge = 0;
 
     protected Stats hStats = new Stats(null);
     protected Stats vStats = new Stats(null);
@@ -108,12 +110,16 @@ public abstract class SignalProcessor {
 
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
-            goodSignalMillis += 1000 / Config.SAMPLING_FREQ;
+            goodSignalMillis += MILLIS_PER_UPDATE;
         } else if (!isGoodSignal && lastUpdateWasGood) {
             resetSignal();
             resetCalibration();
         }
         lastUpdateWasGood = isGoodSignal;
+
+        stableHorizontalMillis = isStableHorizontal()
+                ? stableHorizontalMillis + MILLIS_PER_UPDATE : 0;
+        stableVerticalMillis = isStableVertical() ? stableVerticalMillis + MILLIS_PER_UPDATE : 0;
 
         maybeUpdateHorizontalHeight();
         maybeUpdateVerticalHeight();
@@ -125,15 +131,15 @@ public abstract class SignalProcessor {
         Arrays.fill(vertical, 0);
     }
 
-    private void resetCalibration() {
+    protected void resetCalibration() {
         hHalfGraphHeight = minGraphHeight();
         vHalfGraphHeight = minGraphHeight();
 
-//        maxHHalfGraphHeight = minGraphHeight();
-//        maxVHalfGraphHeight = minGraphHeight();
-
         maxHHeightAge = 0;
         maxVHeightAge = 0;
+
+        stableHorizontalMillis = 0;
+        stableVerticalMillis = 0;
     }
 
     protected void maybeUpdateHorizontalHeight() {
@@ -143,7 +149,6 @@ public abstract class SignalProcessor {
             int newHHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
             hHalfGraphHeight = newHHalfGraphHeight;
-//            maxHHalfGraphHeight = newHHalfGraphHeight;
             maxHHeightAge = 0;
         }
     }
@@ -155,7 +160,6 @@ public abstract class SignalProcessor {
             int newVHalfGraphHeight = Math.min(maxGraphHeight(),
                     Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
             vHalfGraphHeight = newVHalfGraphHeight;
-//            maxVHalfGraphHeight = newVHalfGraphHeight;
             maxVHeightAge = 0;
         }
     }
