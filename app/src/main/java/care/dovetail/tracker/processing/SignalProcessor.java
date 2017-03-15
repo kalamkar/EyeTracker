@@ -132,8 +132,8 @@ public abstract class SignalProcessor {
     }
 
     protected void resetCalibration() {
-        hHalfGraphHeight = minGraphHeight();
-        vHalfGraphHeight = minGraphHeight();
+        hHalfGraphHeight = (minGraphHeight() + maxGraphHeight()) / 2;
+        vHalfGraphHeight = hHalfGraphHeight;
 
         maxHHeightAge = 0;
         maxVHeightAge = 0;
