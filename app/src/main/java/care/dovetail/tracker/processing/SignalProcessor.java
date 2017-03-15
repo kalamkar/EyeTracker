@@ -165,6 +165,10 @@ public abstract class SignalProcessor {
     }
 
     protected void onFeature(Feature feature) {
+        if (Feature.Type.BLINK.equals(feature.type)) {
+            int index = feature.startIndex - BLINK_WINDOW;
+            feature.sector = getSector(horizontal[index], vertical[index]);
+        }
         observer.onFeature(feature);
     }
 
@@ -181,13 +185,20 @@ public abstract class SignalProcessor {
     abstract protected int processVertical(int value);
 
     /**
-     * Get the cell or sector in the grid for current eye gaze.
+     * Get the cell or sector in the grid for current (latest) eye gaze.
      * @return Pair of horizontal (column) and vertical (row) value in that order.
      */
     public final Pair<Integer, Integer> getSector() {
         int hValue = horizontal[horizontal.length - 1];
         int vValue = vertical[vertical.length - 1];
+        return getSector(hValue, vValue);
+    }
 
+    /**
+     * Get the cell or sector in the grid for given values of eye gaze.
+     * @return Pair of horizontal (column) and vertical (row) value in that order.
+     */
+    private Pair<Integer, Integer> getSector(int hValue, int vValue) {
         int hLevel = getLevel(hValue, numSteps, horizontalBase(),
                 (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
         int vLevel = getLevel(vValue, numSteps, verticalBase(),

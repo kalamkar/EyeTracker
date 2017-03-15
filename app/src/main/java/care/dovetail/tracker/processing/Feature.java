@@ -1,5 +1,7 @@
 package care.dovetail.tracker.processing;
 
+import android.util.Pair;
+
 import java.util.Arrays;
 
 import care.dovetail.tracker.Config;
@@ -32,6 +34,7 @@ public class Feature {
     public final int values[];
     public Channel channel;
     public int confidence;
+    public Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
     public Feature(Type type, int startIndex, int endIndex, int values[]) {
         this.type = type;

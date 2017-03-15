@@ -54,8 +54,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Ringtone ringtone;
 
-    private boolean gazeFrozen = false;
-
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
     private static final int MOLE_NUM_STEPS = 5;
 
@@ -248,10 +246,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
                     ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
 
-                    if (!gazeFrozen || !settings.shouldFreezeGaze()) {
-                        leftGrid.highlight(sector.first, sector.second);
-                        rightGrid.highlight(sector.first, sector.second);
-                    }
+                    leftGrid.highlight(sector.first, sector.second);
+                    rightGrid.highlight(sector.first, sector.second);
                 }
             });
         }
@@ -271,10 +267,18 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     @Override
-    public void onFeature(Feature feature) {
+    public void onFeature(final Feature feature) {
         if (Feature.Type.BLINK == feature.type && signals.isGoodSignal()) {
             ringtone.play();
-            gazeFrozen = !gazeFrozen;
+            if (settings.shouldFreezeGaze()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        leftGrid.mark(feature.sector.first, feature.sector.second);
+                        rightGrid.mark(feature.sector.first, feature.sector.second);
+                    }
+                });
+            }
             if (settings.shouldWhackAMole()) {
                 runOnUiThread(new Runnable() {
                     @Override
