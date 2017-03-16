@@ -35,7 +35,7 @@ public abstract class SignalProcessor {
     private static final float VERTICAL_FOV_FACTOR = 0.7f;
 
     private static final int SMALL_BLINK_HEIGHT = 5000;
-    private static final int MIN_BLINK_HEIGHT = 8000;
+    private static final int MIN_BLINK_HEIGHT = 10000;
     private static final int MAX_BLINK_HEIGHT = 30000;
 
     protected final int numSteps;
