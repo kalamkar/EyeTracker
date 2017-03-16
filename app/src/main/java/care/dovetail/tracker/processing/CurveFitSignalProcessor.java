@@ -79,16 +79,6 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     }
 
     @Override
-    protected int horizontalBase() {
-        return 0;
-    }
-
-    @Override
-    protected int verticalBase() {
-        return 0;
-    }
-
-    @Override
     protected int minGraphHeight() {
         return MIN_HALF_GRAPH_HEIGHT;
     }

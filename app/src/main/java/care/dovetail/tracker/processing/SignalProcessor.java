@@ -62,6 +62,9 @@ public abstract class SignalProcessor {
     protected int hHalfGraphHeight = minGraphHeight();
     protected int vHalfGraphHeight = minGraphHeight();
 
+    protected int horizontalBase = 0;
+    protected int verticalBase = 0;
+
     private long maxHHeightAge = 0;
     private long maxVHeightAge = 0;
 
@@ -206,9 +209,9 @@ public abstract class SignalProcessor {
      * @return Pair of horizontal (column) and vertical (row) value in that order.
      */
     private Pair<Integer, Integer> getSector(int hValue, int vValue) {
-        int hLevel = getLevel(hValue, numSteps, horizontalBase(),
+        int hLevel = getLevel(hValue, numSteps, horizontalBase,
                 (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
-        int vLevel = getLevel(vValue, numSteps, verticalBase(),
+        int vLevel = getLevel(vValue, numSteps, verticalBase,
                 (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
         return Pair.create(hLevel, vLevel);
     }
@@ -334,18 +337,6 @@ public abstract class SignalProcessor {
         return Pair.create(blinkStats.median - MAX_BLINK_HEIGHT,
                 blinkStats.median + MAX_BLINK_HEIGHT);
     }
-
-    /**
-     * Baseline (center gaze) value for horizontal channel, used for sector calculation.
-     * @return int value of baseline
-     */
-    abstract protected int horizontalBase();
-
-    /**
-     * Baseline (center gaze) value for vertical channel, used for sector calculation.
-     * @return int value of baseline
-     */
-    abstract protected int verticalBase();
 
     /**
      * Minimum limit for half graph height

@@ -61,6 +61,7 @@ public class BandpassSignalProcessor extends SignalProcessor {
                 && newHHalfGraphHeight > maxHHalfGraphHeight) {
             hHalfGraphHeight = newHHalfGraphHeight;
             maxHHalfGraphHeight = newHHalfGraphHeight;
+            horizontalBase = (hStats.min + hStats.max) / 2;
         }
     }
 
@@ -74,17 +75,8 @@ public class BandpassSignalProcessor extends SignalProcessor {
                 && newVHalfGraphHeight > maxVHalfGraphHeight) {
             vHalfGraphHeight = newVHalfGraphHeight;
             maxVHalfGraphHeight = newVHalfGraphHeight;
+            verticalBase = (vStats.min + vStats.max) / 2;
         }
-    }
-
-    @Override
-    protected int horizontalBase() {
-        return /* 0; // */ (hStats.min + hStats.max) / 2;
-    }
-
-    @Override
-    protected int verticalBase() {
-        return /* 0; // */ (vStats.min + vStats.max) / 2;
     }
 
     @Override
