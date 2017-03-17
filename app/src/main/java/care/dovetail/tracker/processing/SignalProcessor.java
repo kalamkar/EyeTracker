@@ -50,6 +50,7 @@ public abstract class SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
             4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
 
+    protected long startTimeMillis;
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
@@ -125,6 +126,8 @@ public abstract class SignalProcessor {
         } else if (!isGoodSignal && lastUpdateWasGood) {
             resetSignal();
             resetCalibration();
+        } else {
+            startTimeMillis = System.currentTimeMillis();
         }
         lastUpdateWasGood = isGoodSignal;
 
@@ -137,6 +140,7 @@ public abstract class SignalProcessor {
     }
 
     private void resetSignal() {
+        startTimeMillis = System.currentTimeMillis();
         goodSignalMillis = 0;
         Arrays.fill(horizontal, 0);
         Arrays.fill(vertical, 0);

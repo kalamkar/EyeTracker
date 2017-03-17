@@ -32,8 +32,8 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d\n%d", hHalfGraphHeight, vHalfGraphHeight,
-                goodSignalMillis / 1000);
+        return String.format("%d\n%d\n%d,%d", hHalfGraphHeight, vHalfGraphHeight,
+                (System.currentTimeMillis() - startTimeMillis) / 1000, goodSignalMillis / 1000);
     }
 
     @Override
