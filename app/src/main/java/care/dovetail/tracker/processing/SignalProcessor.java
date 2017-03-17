@@ -60,9 +60,6 @@ public abstract class SignalProcessor {
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
-    protected final int feature1[] = new int[Config.GRAPH_LENGTH];
-    protected final int feature2[] = new int[Config.GRAPH_LENGTH];
-
     protected int hHalfGraphHeight = minGraphHeight();
     protected int vHalfGraphHeight = minGraphHeight();
 
@@ -78,6 +75,9 @@ public abstract class SignalProcessor {
     protected Stats hQualityStats = new Stats(null);
     protected Stats vQualityStats = new Stats(null);
 
+    protected long processingMillisSum = 0;
+    protected long processingCount = 1;
+
     public SignalProcessor(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
         this.observer = observer;
@@ -89,6 +89,8 @@ public abstract class SignalProcessor {
      * @param vValue vertical channel value
      */
     public synchronized final void update(int hValue, int vValue) {
+        long startTime = System.currentTimeMillis();
+
         blinkUpdateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
@@ -115,11 +117,6 @@ public abstract class SignalProcessor {
         vQualityStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ,
                 Config.SAMPLING_FREQ);
 
-        System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
-        feature1[feature1.length - 1] = 0;
-        System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
-        feature2[feature2.length - 1] = 0;
-
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
             goodSignalMillis += MILLIS_PER_UPDATE;
@@ -137,6 +134,9 @@ public abstract class SignalProcessor {
 
         maybeUpdateHorizontalHeight();
         maybeUpdateVerticalHeight();
+
+        processingMillisSum += (System.currentTimeMillis() - startTime);
+        processingCount++;
     }
 
     private void resetSignal() {
@@ -298,22 +298,6 @@ public abstract class SignalProcessor {
      */
     public final int[] blinks() {
         return blinks;
-    }
-
-    /**
-     * Time series of processed values from any feature to be displayed as chart.
-     * @return Array of ints
-     */
-    public final int[] feature1() {
-        return feature1;
-    }
-
-    /**
-     * Time series of processed values from any feature to be displayed as chart.
-     * @return Array of ints
-     */
-    public final int[] feature2() {
-        return feature2;
     }
 
     /**
