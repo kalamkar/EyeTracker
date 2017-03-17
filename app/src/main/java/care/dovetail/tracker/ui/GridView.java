@@ -6,10 +6,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Pair;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -22,7 +22,12 @@ public class GridView extends View {
     private Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private Canvas canvas;
 
+    private final static int ALPHA = 175;
+    private final static int MIN_ALPHA = 75;
+    private final static int MAX_ALPHA = 175;
+
     private final static int MAX_MARKED = 10;
+    private final static int HEATMAP_LENGTH = 100;
 
     private int numSteps = 5;
     private CursorStyle style = CursorStyle.RECTANGLE;
@@ -30,15 +35,34 @@ public class GridView extends View {
     private int cellWidth = 0;
     private int cellHeight = 0;
 
-    private final List<Pair<Integer, Integer>> marked = new ArrayList<>();
+    private final List<Sector> marked = new ArrayList<>();
+
+    private boolean heatmap;
 
     public enum CursorStyle {
         CIRCLE,
         RECTANGLE
     }
 
+    private static class Sector {
+        private int horizontal;
+        private int vertical;
+
+        private Sector(int horizontal, int vertical) {
+            this.horizontal = horizontal;
+            this.vertical = vertical;
+        }
+
+        @Override
+        public int hashCode() {
+            return horizontal * 100 + vertical;
+        }
+    }
+
     public GridView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        paint.setColor(Color.WHITE);
+        paint.setAlpha(ALPHA);
     }
 
     public void setNumSteps(int numSteps) {
@@ -49,10 +73,23 @@ public class GridView extends View {
 
     public void setCursorStyle(CursorStyle style) {
         this.style = style;
+        switch (style) {
+            case CIRCLE:
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(5.0f);
+                break;
+            case RECTANGLE:
+            default:
+        }
+
+    }
+
+    public void setHeatmap(boolean enabled) {
+        heatmap = enabled;
     }
 
     public void mark(int horizontalSector, int verticalSector) {
-        marked.add(Pair.create(horizontalSector, verticalSector));
+        marked.add(new Sector(horizontalSector, verticalSector));
         if (marked.size() > MAX_MARKED) {
             marked.remove(0);
         }
@@ -61,7 +98,34 @@ public class GridView extends View {
 
     public void highlight(int horizontalSector, int verticalSector) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
-        drawSector(horizontalSector, verticalSector);
+
+        if (heatmap) {
+            marked.add(new Sector(horizontalSector, verticalSector));
+            if (marked.size() > HEATMAP_LENGTH) {
+                marked.remove(0);
+            }
+            HashMap<Sector, Integer> heatmap = new HashMap<>();
+            int max = 0;
+            for (Sector sector : marked) {
+                int frequency = heatmap.containsKey(sector) ? heatmap.get(sector) + 1 : 1;
+                max = Math.max(max, frequency);
+                heatmap.put(sector, frequency);
+            }
+            drawHeatmap(heatmap , max);
+        } else {
+            for (Sector sector : marked) {
+                drawSector(sector.horizontal, sector.vertical);
+            }
+            drawSector(horizontalSector, verticalSector);
+        }
+    }
+
+    private void drawHeatmap(HashMap<Sector, Integer> heatmap, int maxFrequency) {
+        for (Sector sector : heatmap.keySet()) {
+            int frequency = heatmap.get(sector);
+            paint.setAlpha(MIN_ALPHA + (frequency * (MAX_ALPHA - MIN_ALPHA) / maxFrequency));
+            drawSector(sector.horizontal, sector.vertical);
+        }
     }
 
     private void drawSector(int horizontalSector, int verticalSector) {
@@ -98,24 +162,13 @@ public class GridView extends View {
         canvas = new Canvas();
         canvas.setBitmap(bitmap);
         canvas.drawColor(Color.TRANSPARENT);
-        for (Pair<Integer, Integer> sector : marked) {
-            drawSector(sector.first, sector.second);
-        }
     }
 
     private void drawRect(float left, float top) {
-        Paint paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setAlpha((int) Math.round(255.0 * 0.7));
         canvas.drawRect(left, top, left + cellWidth, top + cellHeight, paint);
     }
 
     private void drawCircle(float left, float top) {
-        Paint paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(5.0f);
-        paint.setAlpha((int) Math.round(255.0 * 0.7));
         float centerX = left + Math.round(cellWidth / 2);
         float centerY = top + Math.round(cellHeight / 2);
         float radius = Math.round(Math.min(canvas.getHeight(), canvas.getWidth()) / 10);
