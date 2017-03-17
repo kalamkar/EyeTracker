@@ -31,8 +31,8 @@ public abstract class SignalProcessor {
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
 
-    private static final float HORIZONTAL_FOV_FACTOR = 0.7f;
-    private static final float VERTICAL_FOV_FACTOR = 0.7f;
+    private static final float HORIZONTAL_FOV_FACTOR = 1.0f;
+    private static final float VERTICAL_FOV_FACTOR = 1.0f;
 
     private static final int SMALL_BLINK_HEIGHT = 5000;
     private static final int MIN_BLINK_HEIGHT = 10000;
@@ -58,6 +58,9 @@ public abstract class SignalProcessor {
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
+
+    protected final int feature1[] = new int[Config.GRAPH_LENGTH];
+    protected final int feature2[] = new int[Config.GRAPH_LENGTH];
 
     protected int hHalfGraphHeight = minGraphHeight();
     protected int vHalfGraphHeight = minGraphHeight();
@@ -110,6 +113,11 @@ public abstract class SignalProcessor {
         vStats = new Stats(vertical);
         vQualityStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ,
                 Config.SAMPLING_FREQ);
+
+        System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
+        feature1[feature1.length - 1] = 0;
+        System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
+        feature2[feature2.length - 1] = 0;
 
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
@@ -293,7 +301,7 @@ public abstract class SignalProcessor {
      * @return Array of ints
      */
     public final int[] feature1() {
-        return new int[0];
+        return feature1;
     }
 
     /**
@@ -301,7 +309,7 @@ public abstract class SignalProcessor {
      * @return Array of ints
      */
     public final int[] feature2() {
-        return new int[0];
+        return feature2;
     }
 
     /**

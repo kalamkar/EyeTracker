@@ -55,13 +55,15 @@ public class BandpassSignalProcessor extends SignalProcessor {
         if (stableHorizontalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
             maxHHalfGraphHeight -= maxHHalfGraphHeight * 10 / 100;
         }
+        int max = hStats.percentile95;
+        int min = hStats.percentile5;
         int newHHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
+                Math.max(minGraphHeight(), (max - min) / 2));
         if (stableHorizontalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
                 && newHHalfGraphHeight > maxHHalfGraphHeight) {
             hHalfGraphHeight = newHHalfGraphHeight;
             maxHHalfGraphHeight = newHHalfGraphHeight;
-            horizontalBase = (hStats.min + hStats.max) / 2;
+            horizontalBase = (min + max) / 2;
         }
     }
 
@@ -69,13 +71,15 @@ public class BandpassSignalProcessor extends SignalProcessor {
         if (stableVerticalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
             maxVHalfGraphHeight -= maxVHalfGraphHeight * 10 / 100;
         }
+        int max = vStats.percentile95;
+        int min = vStats.percentile5;
         int newVHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
+                Math.max(minGraphHeight(), (max - min) / 2));
         if (stableVerticalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
                 && newVHalfGraphHeight > maxVHalfGraphHeight) {
             vHalfGraphHeight = newVHalfGraphHeight;
             maxVHalfGraphHeight = newVHalfGraphHeight;
-            verticalBase = (vStats.min + vStats.max) / 2;
+            verticalBase = (min + max) / 2;
         }
     }
 
