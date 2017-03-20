@@ -22,7 +22,7 @@ public abstract class SignalProcessor {
         void onFeature(Feature feature);
     }
 
-    private static final int MILLIS_PER_UPDATE = 1000 / Config.SAMPLING_FREQ;
+    private static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
 
     private static final int BLINK_WINDOW = 20; // 400 millis
 
@@ -50,7 +50,7 @@ public abstract class SignalProcessor {
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
-            1.0 / ((double) Config.SAMPLING_FREQ), 2.5 / ((double) Config.SAMPLING_FREQ)));
+            1.0 / Config.SAMPLING_FREQ, 2.5 / Config.SAMPLING_FREQ));
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;

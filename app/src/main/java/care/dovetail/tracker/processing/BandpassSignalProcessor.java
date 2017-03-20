@@ -17,11 +17,11 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            0.0625 / ((double) Config.SAMPLING_FREQ), 1.0 / ((double) Config.SAMPLING_FREQ)));
+            0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            0.0625 / ((double) Config.SAMPLING_FREQ), 1.0 / ((double) Config.SAMPLING_FREQ)));
+            0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
 
     protected int maxHHalfGraphHeight = minGraphHeight();
     protected int maxVHalfGraphHeight = minGraphHeight();
