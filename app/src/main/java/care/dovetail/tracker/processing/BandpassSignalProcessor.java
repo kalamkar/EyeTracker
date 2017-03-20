@@ -6,7 +6,6 @@ import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignFisher;
-import care.dovetail.tracker.Config;
 
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
@@ -17,11 +16,11 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            0.25 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
+            0.25 / 200, 4.0 / 200));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            0.25 / Config.SAMPLING_FREQ, 4.0 / Config.SAMPLING_FREQ));
+            0.25 / 200, 4.0 / 200));
 
     protected int maxHHalfGraphHeight = minGraphHeight();
     protected int maxVHalfGraphHeight = minGraphHeight();
@@ -32,9 +31,8 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d\n%d,%d,%d", hHalfGraphHeight, vHalfGraphHeight,
-                (System.currentTimeMillis() - startTimeMillis) / 1000, goodSignalMillis / 1000,
-                processingMillisSum / processingCount);
+        return String.format("%d\n%d\n%d", hHalfGraphHeight, vHalfGraphHeight,
+                goodSignalMillis / 1000);
     }
 
     @Override

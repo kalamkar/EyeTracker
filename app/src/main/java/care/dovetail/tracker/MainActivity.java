@@ -58,7 +58,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private GridView leftMoleGrid;
     private GridView rightMoleGrid;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -14,7 +14,7 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private static final String TAG = "CurveFitSignalProcessor";
 
     private static final int POLYNOMIAL_DEGREE = 2;
-    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 10;
+    private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 1.66667;
     private static final int DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR
             = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
@@ -35,11 +35,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / Config.SAMPLING_FREQ, 0));
+            4.0 / 200, 0));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / Config.SAMPLING_FREQ, 0));
+            4.0 / 200, 0));
 
     public CurveFitSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);

@@ -24,7 +24,9 @@ public abstract class SignalProcessor {
 
     private static final int MILLIS_PER_UPDATE = 1000 / Config.SAMPLING_FREQ;
 
-    private static final int BLINK_WINDOW = 20;
+    private static final int BLINK_WINDOW = 20; // 400 millis
+
+    private static final int QUALITY_WINDOW = 200; // 4 seconds
 
     private static final int MAX_STABLE_SLOPE = 25;
 
@@ -48,9 +50,8 @@ public abstract class SignalProcessor {
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
-            4.0 / Config.SAMPLING_FREQ, 10.0 / Config.SAMPLING_FREQ));
+            4.0 / 200, 10.0 / 200));
 
-    protected long startTimeMillis;
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
@@ -75,12 +76,10 @@ public abstract class SignalProcessor {
     protected Stats hQualityStats = new Stats(null);
     protected Stats vQualityStats = new Stats(null);
 
-    protected long processingMillisSum = 0;
-    protected long processingCount = 1;
-
     public SignalProcessor(FeatureObserver observer, int numSteps) {
         this.numSteps = numSteps;
         this.observer = observer;
+        resetSignal();
     }
 
     /**
@@ -89,12 +88,10 @@ public abstract class SignalProcessor {
      * @param vValue vertical channel value
      */
     public synchronized final void update(int hValue, int vValue) {
-        long startTime = System.currentTimeMillis();
-
         blinkUpdateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
-        blinkStats = new Stats(blinks, blinks.length - Config.SAMPLING_FREQ, Config.SAMPLING_FREQ);
+        blinkStats = new Stats(blinks, blinks.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         if (++blinkWindowIndex == BLINK_WINDOW) {
             blinkWindowIndex = 0;
@@ -108,14 +105,12 @@ public abstract class SignalProcessor {
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
         hStats = new Stats(horizontal);
-        hQualityStats = new Stats(horizontal, horizontal.length - Config.SAMPLING_FREQ,
-                Config.SAMPLING_FREQ);
+        hQualityStats = new Stats(horizontal, horizontal.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = processVertical(vValue);
         vStats = new Stats(vertical);
-        vQualityStats = new Stats(vertical, vertical.length - Config.SAMPLING_FREQ,
-                Config.SAMPLING_FREQ);
+        vQualityStats = new Stats(vertical, vertical.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
@@ -123,8 +118,6 @@ public abstract class SignalProcessor {
         } else if (!isGoodSignal && lastUpdateWasGood) {
             resetSignal();
             resetCalibration();
-        } else {
-            startTimeMillis = System.currentTimeMillis();
         }
         lastUpdateWasGood = isGoodSignal;
 
@@ -134,13 +127,9 @@ public abstract class SignalProcessor {
 
         maybeUpdateHorizontalHeight();
         maybeUpdateVerticalHeight();
-
-        processingMillisSum += (System.currentTimeMillis() - startTime);
-        processingCount++;
     }
 
     private void resetSignal() {
-        startTimeMillis = System.currentTimeMillis();
         goodSignalMillis = 0;
         Arrays.fill(horizontal, 0);
         Arrays.fill(vertical, 0);
