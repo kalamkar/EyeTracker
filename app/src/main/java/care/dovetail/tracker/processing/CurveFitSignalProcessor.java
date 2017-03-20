@@ -35,11 +35,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / 200, 0));
+            1.0 / ((double) Config.SAMPLING_FREQ), 0));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            4.0 / 200, 0));
+            1.0 / ((double) Config.SAMPLING_FREQ), 0));
 
     public CurveFitSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);

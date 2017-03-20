@@ -50,7 +50,7 @@ public abstract class SignalProcessor {
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
-            4.0 / 200, 10.0 / 200));
+            1.0 / ((double) Config.SAMPLING_FREQ), 2.5 / ((double) Config.SAMPLING_FREQ)));
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
