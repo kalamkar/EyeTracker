@@ -250,8 +250,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private class MoleUpdater extends TimerTask {
         @Override
         public void run() {
-            // Add some randomness so that its updating every 2, 4 or 6 seconds.
-            if (Stats.random(0, 3) != 0) {
+            // Add some randomness so that its updating every 2 or 4 seconds.
+            if (Stats.random(0, 2) != 0) {
                 return;
             }
             runOnUiThread(new Runnable() {
