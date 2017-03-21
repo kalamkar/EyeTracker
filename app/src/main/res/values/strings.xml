@@ -20,7 +20,7 @@
     <string-array name="algo">
         <item>Bandpass</item>
         <item>Curve Fit</item>
-        <item>Prakash</item>
+        <item>Pass Through</item>
     </string-array>
 
     <string-array name="cursor">
