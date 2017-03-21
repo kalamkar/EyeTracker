@@ -9,7 +9,6 @@ public class PassThroughSignalProcessor extends SignalProcessor {
 
     public PassThroughSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);
-        lastUpdateMillis = System.currentTimeMillis();
     }
 
     @Override
@@ -22,6 +21,7 @@ public class PassThroughSignalProcessor extends SignalProcessor {
     protected int processHorizontal(int value) {
         updateCount++;
         long currentTime = System.currentTimeMillis();
+        lastUpdateMillis = lastUpdateMillis == 0 ? currentTime : lastUpdateMillis;
         sumTimeBetweenUpdateMillis += (currentTime - lastUpdateMillis);
         lastUpdateMillis = currentTime;
         return value;
