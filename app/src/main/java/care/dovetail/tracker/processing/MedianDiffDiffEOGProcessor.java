@@ -14,13 +14,17 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
     private int lastHorizontalDiff;
     private int lastVerticalDiff;
 
+    private int hLevel;
+    private int vLevel;
+
     public MedianDiffDiffEOGProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);
     }
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d", goodSignalMillis / 1000);
+        return String.format("%d\n%d\n%d", hHalfGraphHeight, vHalfGraphHeight,
+                goodSignalMillis / 1000);
     }
 
     @Override
@@ -32,7 +36,8 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
         int medianDiffDiff = medianDiff - lastHorizontalDiff;
         lastHorizontalMedian = median;
         lastHorizontalDiff = medianDiff;
-        return medianDiffDiff;
+        hLevel += medianDiffDiff;
+        return hLevel;
     }
 
     @Override
@@ -44,17 +49,15 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
         int medianDiffDiff = medianDiff - lastVerticalDiff;
         lastVerticalMedian = median;
         lastVerticalDiff = medianDiff;
-        return medianDiffDiff;
+        vLevel += medianDiffDiff;
+        return vLevel;
     }
 
     @Override
-    public boolean isGoodSignal() {
-        return true;
-    }
-
-    @Override
-    public int getSignalQuality() {
-        return 100;
+    protected void onFeature(Feature feature) {
+        super.onFeature(feature);
+        hLevel = 0;
+        vLevel = 0;
     }
 
     @Override
