@@ -48,7 +48,7 @@ public abstract class SignalProcessor {
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignExstrom.design(
-            FilterPassType.bandpass, 1, 1.25 / Config.SAMPLING_FREQ, 2.5 / Config.SAMPLING_FREQ));
+            FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
