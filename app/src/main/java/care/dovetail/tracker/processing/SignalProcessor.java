@@ -5,10 +5,9 @@ import android.util.Pair;
 
 import java.util.Arrays;
 
-import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
-import biz.source_code.dsp.filter.IirFilterDesignFisher;
+import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
@@ -48,9 +47,8 @@ public abstract class SignalProcessor {
     private Stats blinkStats = new Stats(null);
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
 
-    private final IirFilter blinkFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.bandpass, FilterCharacteristicsType.bessel, 1 /* order */, 0,
-            1.0 / Config.SAMPLING_FREQ, 2.5 / Config.SAMPLING_FREQ));
+    private final IirFilter blinkFilter = new IirFilter(IirFilterDesignExstrom.design(
+            FilterPassType.bandpass, 1, 1.25 / Config.SAMPLING_FREQ, 2.5 / Config.SAMPLING_FREQ));
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
@@ -227,7 +225,7 @@ public abstract class SignalProcessor {
      * Check if we are getting good signal i.e. low noise from rubbing, movements etc.
      * @return true if the signal is good
      */
-    public final boolean isGoodSignal() {
+    public boolean isGoodSignal() {
         double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return deviation != 0 && (deviation / QUALITY_UNIT) < MAX_NOISE_DEVIATION;
     }
@@ -236,7 +234,7 @@ public abstract class SignalProcessor {
      * Get signal quality
      * @return int from 0 to 100 indicating signal quality (higher the better).
      */
-    public final int getSignalQuality() {
+    public int getSignalQuality() {
         double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return 100 - Math.min(100, (int) (deviation / QUALITY_UNIT));
     }
@@ -245,7 +243,7 @@ public abstract class SignalProcessor {
      * Check if the the electrode contact is not present or bad
      * @return true if the electrode contact is not present or bad
      */
-    public boolean isBadContact() {
+    public final boolean isBadContact() {
         return blinkStats.stdDev == 0 && blinkUpdateCount >= blinks.length;
     }
 
