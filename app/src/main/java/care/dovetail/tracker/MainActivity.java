@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
     private static final int GAZE_UPDATE_MILLIS = 100;
+    private static final int MOLE_UPDATE_MILLIS = 2000;
 
     private final Settings settings = new Settings(this);
 
@@ -47,6 +48,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private Timer chartUpdateTimer;
     private Timer sectorUpdateTimer;
+    private Timer moleUpdateTimer;
 
     private Ringtone ringtone;
 
@@ -244,6 +246,25 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         }
     }
 
+    private class MoleUpdater extends TimerTask {
+        @Override
+        public void run() {
+            // Add some randomness so that its updating every 2, 4 or 6 seconds.
+            if (Stats.random(0, 3) != 0) {
+                return;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    moleSector = Pair.create(Stats.random(0, MOLE_NUM_STEPS),
+                            Stats.random(0, MOLE_NUM_STEPS));
+                    leftMoleGrid.highlight(moleSector.first, moleSector.second);
+                    rightMoleGrid.highlight(moleSector.first, moleSector.second);
+                }
+            });
+        }
+    }
+
     @Override
     public void onFeature(final Feature feature) {
         if (Feature.Type.BLINK == feature.type && signals.isGoodSignal()) {
@@ -254,17 +275,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     public void run() {
                         leftGrid.mark(feature.sector.first, feature.sector.second);
                         rightGrid.mark(feature.sector.first, feature.sector.second);
-                    }
-                });
-            }
-            if (settings.shouldWhackAMole()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        moleSector = Pair.create(Stats.random(0, MOLE_NUM_STEPS),
-                                Stats.random(0, MOLE_NUM_STEPS));
-                        leftMoleGrid.highlight(moleSector.first, moleSector.second);
-                        rightMoleGrid.highlight(moleSector.first, moleSector.second);
                     }
                 });
             }
@@ -330,6 +340,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
         sectorUpdateTimer = new Timer();
         sectorUpdateTimer.schedule(new SectorUpdater(), 0, GAZE_UPDATE_MILLIS);
+
+        if (settings.shouldWhackAMole()) {
+            moleUpdateTimer = new Timer();
+            moleUpdateTimer.schedule(new MoleUpdater(), 0, MOLE_UPDATE_MILLIS);
+        }
     }
 
     public void stopBluetooth() {
@@ -339,6 +354,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         }
         if (sectorUpdateTimer != null) {
             sectorUpdateTimer.cancel();
+        }
+        if (moleUpdateTimer != null) {
+            moleUpdateTimer.cancel();
         }
         moleSector = Pair.create(-1, -1);
     }

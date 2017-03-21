@@ -41,7 +41,8 @@ public class GridView extends View {
 
     public enum CursorStyle {
         CIRCLE,
-        RECTANGLE
+        RECTANGLE,
+        NONE
     }
 
     private static class Sector {
@@ -133,6 +134,8 @@ public class GridView extends View {
             float left = cellWidth * horizontalSector;
             float top = cellHeight * verticalSector;
             switch (style) {
+                case NONE:
+                    break;
                 case CIRCLE:
                     drawCircle(left, top);
                     break;

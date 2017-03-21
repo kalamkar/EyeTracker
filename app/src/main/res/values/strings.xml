@@ -26,6 +26,7 @@
     <string-array name="cursor">
         <item>Circle</item>
         <item>Rectangle</item>
+        <item>None</item>
     </string-array>
 
 </resources>
