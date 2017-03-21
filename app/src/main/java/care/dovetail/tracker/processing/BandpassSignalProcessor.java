@@ -13,8 +13,6 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 12000);
 
-    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 5000;
-
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
@@ -22,9 +20,6 @@ public class BandpassSignalProcessor extends SignalProcessor {
     private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
-
-    protected int maxHHalfGraphHeight = minGraphHeight();
-    protected int maxVHalfGraphHeight = minGraphHeight();
 
     public BandpassSignalProcessor(FeatureObserver observer, int numSteps) {
         super(observer, numSteps);
@@ -44,44 +39,6 @@ public class BandpassSignalProcessor extends SignalProcessor {
     @Override
     protected int processVertical(int value) {
         return (int) vFilter.step(value);
-    }
-
-    protected void resetCalibration() {
-        super.resetCalibration();
-        maxHHalfGraphHeight = minGraphHeight();
-        maxVHalfGraphHeight = minGraphHeight();
-    }
-
-    protected void maybeUpdateHorizontalHeight() {
-        if (stableHorizontalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
-            maxHHalfGraphHeight -= maxHHalfGraphHeight * 10 / 100;
-        }
-        int max = hStats.percentile95;
-        int min = hStats.percentile5;
-        int newHHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (max - min) / 2));
-        if (stableHorizontalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
-                && newHHalfGraphHeight > maxHHalfGraphHeight) {
-            hHalfGraphHeight = newHHalfGraphHeight;
-            maxHHalfGraphHeight = newHHalfGraphHeight;
-            horizontalBase = (min + max) / 2;
-        }
-    }
-
-    protected void maybeUpdateVerticalHeight() {
-        if (stableVerticalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
-            maxVHalfGraphHeight -= maxVHalfGraphHeight * 10 / 100;
-        }
-        int max = vStats.percentile95;
-        int min = vStats.percentile5;
-        int newVHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (max - min) / 2));
-        if (stableVerticalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
-                && newVHalfGraphHeight > maxVHalfGraphHeight) {
-            vHalfGraphHeight = newVHalfGraphHeight;
-            maxVHalfGraphHeight = newVHalfGraphHeight;
-            verticalBase = (min + max) / 2;
-        }
     }
 
     @Override

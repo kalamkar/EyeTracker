@@ -21,6 +21,8 @@ public abstract class SignalProcessor {
         void onFeature(Feature feature);
     }
 
+    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 5000;
+
     private static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
 
     private static final int BLINK_WINDOW = 20; // 400 millis
@@ -65,8 +67,8 @@ public abstract class SignalProcessor {
     protected int horizontalBase = 0;
     protected int verticalBase = 0;
 
-    private long maxHHeightAge = 0;
-    private long maxVHeightAge = 0;
+    protected int maxHHalfGraphHeight = minGraphHeight();
+    protected int maxVHalfGraphHeight = minGraphHeight();
 
     protected Stats hStats = new Stats(null);
     protected Stats vStats = new Stats(null);
@@ -137,32 +139,43 @@ public abstract class SignalProcessor {
         hHalfGraphHeight = (minGraphHeight() + maxGraphHeight()) / 2;
         vHalfGraphHeight = hHalfGraphHeight;
 
-        maxHHeightAge = 0;
-        maxVHeightAge = 0;
+        maxHHalfGraphHeight = minGraphHeight();
+        maxVHalfGraphHeight = minGraphHeight();
 
         stableHorizontalMillis = 0;
         stableVerticalMillis = 0;
     }
 
+
     protected void maybeUpdateHorizontalHeight() {
-        maxHHeightAge++;
-        if (isGoodSignal() && isStableHorizontal()
-                && Math.floor(maxHHeightAge / horizontal.length) > 0) {
-            int newHHalfGraphHeight = Math.min(maxGraphHeight(),
-                    Math.max(minGraphHeight(), (hStats.max - hStats.min) / 2));
+        if (stableHorizontalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
+            maxHHalfGraphHeight -= maxHHalfGraphHeight * 10 / 100;
+        }
+        int max = hStats.percentile95;
+        int min = hStats.percentile5;
+        int newHHalfGraphHeight = Math.min(maxGraphHeight(),
+                Math.max(minGraphHeight(), (max - min) / 2));
+        if (stableHorizontalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
+                && newHHalfGraphHeight > maxHHalfGraphHeight) {
             hHalfGraphHeight = newHHalfGraphHeight;
-            maxHHeightAge = 0;
+            maxHHalfGraphHeight = newHHalfGraphHeight;
+            horizontalBase = (min + max) / 2;
         }
     }
 
     protected void maybeUpdateVerticalHeight() {
-        maxVHeightAge++;
-        if (isGoodSignal() && isStableVertical()
-                && Math.floor(maxVHeightAge / vertical.length) > 0) {
-            int newVHalfGraphHeight = Math.min(maxGraphHeight(),
-                    Math.max(minGraphHeight(), (vStats.max - vStats.min) / 2));
+        if (stableVerticalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
+            maxVHalfGraphHeight -= maxVHalfGraphHeight * 10 / 100;
+        }
+        int max = vStats.percentile95;
+        int min = vStats.percentile5;
+        int newVHalfGraphHeight = Math.min(maxGraphHeight(),
+                Math.max(minGraphHeight(), (max - min) / 2));
+        if (stableVerticalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
+                && newVHalfGraphHeight > maxVHalfGraphHeight) {
             vHalfGraphHeight = newVHalfGraphHeight;
-            maxVHeightAge = 0;
+            maxVHalfGraphHeight = newVHalfGraphHeight;
+            verticalBase = (min + max) / 2;
         }
     }
 
