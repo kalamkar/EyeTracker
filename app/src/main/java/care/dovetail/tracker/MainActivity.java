@@ -24,6 +24,7 @@ import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.Feature;
+import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
 import care.dovetail.tracker.processing.PassThroughSignalProcessor;
 import care.dovetail.tracker.processing.SignalProcessor;
 import care.dovetail.tracker.ui.ChartFragment;
@@ -331,6 +332,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
             case 2:
                 signals = new PassThroughSignalProcessor(this, settings.getNumSteps());
+                break;
+            case 3:
+                signals = new MedianDiffDiffEOGProcessor(this, settings.getNumSteps());
                 break;
         }
         patchClient.connect();
