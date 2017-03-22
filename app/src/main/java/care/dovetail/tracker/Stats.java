@@ -52,7 +52,7 @@ public class Stats {
         this.average = basicStats.average;
         this.changes = basicStats.changes;
 
-        if (values == null) {
+        if (values == null || values.length == 0) {
             this.median = 0;
             this.percentile5 = 0;
             this.percentile10 = 0;
@@ -68,8 +68,10 @@ public class Stats {
         this.median = copyOfValues[(int) Math.round(copyOfValues.length * 0.50)];
         this.percentile5 = copyOfValues[(int) Math.round(copyOfValues.length * 0.05)];
         this.percentile10 = copyOfValues[(int) Math.round(copyOfValues.length * 0.10)];
-        this.percentile90 = copyOfValues[(int) Math.round(copyOfValues.length * 0.90)];
-        this.percentile95 = copyOfValues[(int) Math.round(copyOfValues.length * 0.95)];
+        this.percentile90 = copyOfValues[Math.min(
+                (int) Math.round(copyOfValues.length * 0.90), copyOfValues.length - 1)];
+        this.percentile95 = copyOfValues[Math.min(
+                (int) Math.round(copyOfValues.length * 0.95), copyOfValues.length - 1)];
         this.stdDev = calculateStdDeviation(values, average);
         this.zeroCrossings = calculateZeroCrossings(values, median);
         this.slope = calculateSlope(values);
@@ -120,7 +122,7 @@ public class Stats {
     }
 
     private static float calculateSlope(int values[]) {
-        int medianWindow = Math.min(1, values.length / 20); // 5% size for median window
+        int medianWindow = Math.max(1, values.length / 20); // 5% size for median window
         int start = calculateMedian(values, 0, medianWindow);
         int end = calculateMedian(values, values.length - medianWindow, medianWindow);
         return (start - end) / values.length;
