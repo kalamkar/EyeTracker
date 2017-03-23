@@ -1,14 +1,29 @@
 package care.dovetail.tracker.processing;
 
+import android.util.Pair;
+
+import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
-public class MedianDiffDiffEOGProcessor extends SignalProcessor {
+public class MedianDiffDiffEOGProcessor implements EOGProcessor {
     private static final String TAG = "MedianDiffDiffEOGProcessor";
 
     private final static int THRESH = 3;
+    private final static int MU_SCALE = 3;
+    private final static int SIGMA_SCALE = 1;
 
-    private final int hOriginal[] = new int[10];
-    private final int vOriginal[] = new int[10];
+    private final int numSteps;
+
+    private long goodSignalMillis;
+
+    private final int hRaw[] = new int[10];
+    private final int vRaw[] = new int[10];
+
+    private final int hBaseline[] = new int[10];
+    private final int vBaseline[] = new int[10];
+
+    private final int hShift[] = new int[10];
+    private final int vShift[] = new int[10];
 
     private int lastHorizontalMedian;
     private int lastVerticalMedian;
@@ -17,47 +32,84 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
     private int lastVerticalDiff;
 
     public MedianDiffDiffEOGProcessor(int numSteps) {
-        super(numSteps);
+        this.numSteps = numSteps;
+    }
+
+    @Override
+    public void update(int hValue, int vValue) {
+        goodSignalMillis += Config.MILLIS_PER_UPDATE;
+        processHorizontal(hValue);
+        processVertical(vValue);
+    }
+
+    @Override
+    public Pair<Integer, Integer> getSector() {
+        return null;
     }
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d\n%d", hHalfGraphHeight, vHalfGraphHeight,
-                goodSignalMillis / 1000);
+        return String.format("%d", goodSignalMillis / 1000);
     }
 
-    @Override
-    protected int processHorizontal(int value) {
-        System.arraycopy(hOriginal, 1, hOriginal, 0, hOriginal.length - 1);
-        hOriginal[hOriginal.length - 1] = value;
-        int median = new Stats(hOriginal).median;
+    protected void processHorizontal(int value) {
+        System.arraycopy(hRaw, 1, hRaw, 0, hRaw.length - 1);
+        hRaw[hRaw.length - 1] = value;
+
+        int median = new Stats(hRaw).median;
         int medianDiff = median - lastHorizontalMedian;
         int medianDiffDiff = medianDiff - lastHorizontalDiff;
-        int shift = Math.abs(medianDiffDiff) > hStats.stdDev * THRESH ? medianDiffDiff : 0;
         lastHorizontalMedian = median;
         lastHorizontalDiff = medianDiff;
-        return shift;
+
+        Stats baselineStats = new Stats(hBaseline);
+        System.arraycopy(hShift, 1, hShift, 0, hShift.length - 1);
+        if (Math.abs(medianDiffDiff) > baselineStats.stdDev * THRESH) {
+            hShift[hShift.length - 1] = medianDiffDiff;
+            if (Math.random() < 0.5) {  // TODO(abhi): Replace 0.5 with normcdf
+                System.arraycopy(hBaseline, 1, hBaseline, 0, hBaseline.length - 1);
+                hBaseline[hBaseline.length - 1] = medianDiffDiff;
+            }
+        } else {
+            hShift[hShift.length - 1] = 0;
+            System.arraycopy(hBaseline, 1, hBaseline, 0, hBaseline.length - 1);
+            hBaseline[hBaseline.length - 1] = medianDiffDiff;
+        }
+        Stats shiftStats = new Stats(hShift);
+        // shiftStats.max, shiftStats.maxIndex
+        // shiftStats.min, shiftStats.minIndex
+        int mu = MU_SCALE * baselineStats.stdDev;
+        int sigma = SIGMA_SCALE * baselineStats.stdDev;
     }
 
-    @Override
-    protected int processVertical(int value) {
-        System.arraycopy(vOriginal, 1, vOriginal, 0, vOriginal.length - 1);
-        vOriginal[vOriginal.length - 1] = value;
-        int median = new Stats(vOriginal).median;
+    protected void processVertical(int value) {
+        System.arraycopy(vRaw, 1, vRaw, 0, vRaw.length - 1);
+        vRaw[vRaw.length - 1] = value;
+
+        int median = new Stats(vRaw).median;
         int medianDiff = median - lastVerticalMedian;
         int medianDiffDiff = medianDiff - lastVerticalDiff;
-        int shift = Math.abs(medianDiffDiff) > vStats.stdDev * THRESH ? medianDiffDiff : 0;
         lastVerticalMedian = median;
         lastVerticalDiff = medianDiff;
-        return shift;
-    }
 
-    protected void maybeUpdateHorizontalHeight() {
-        hHalfGraphHeight = (hStats.percentile95 - hStats.percentile5) / 2;
-    }
-
-    protected void maybeUpdateVerticalHeight() {
-        vHalfGraphHeight = (vStats.percentile95 - vStats.percentile5) / 2;
+        Stats baselineStats = new Stats(vBaseline);
+        System.arraycopy(vShift, 1, vShift, 0, vShift.length - 1);
+        if (Math.abs(medianDiffDiff) > baselineStats.stdDev * THRESH) {
+            vShift[vShift.length - 1] = medianDiffDiff;
+            if (Math.random() < 0.5) {  // TODO(abhi): Replace 0.5 with normcdf
+                System.arraycopy(vBaseline, 1, vBaseline, 0, vBaseline.length - 1);
+                vBaseline[vBaseline.length - 1] = medianDiffDiff;
+            }
+        } else {
+            vShift[vShift.length - 1] = 0;
+            System.arraycopy(vBaseline, 1, vBaseline, 0, vBaseline.length - 1);
+            vBaseline[vBaseline.length - 1] = medianDiffDiff;
+        }
+        Stats shiftStats = new Stats(vShift);
+        // shiftStats.max, shiftStats.maxIndex
+        // shiftStats.min, shiftStats.minIndex
+        int mu = MU_SCALE * baselineStats.stdDev;
+        int sigma = SIGMA_SCALE * baselineStats.stdDev;
     }
 
     @Override
@@ -71,12 +123,32 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
     }
 
     @Override
-    protected int minGraphHeight() {
-        return 200;
+    public boolean isStableHorizontal() {
+        return false;
     }
 
     @Override
-    protected int maxGraphHeight() {
-        return 5000;
+    public boolean isStableVertical() {
+        return false;
+    }
+
+    @Override
+    public int[] horizontal() {
+        return new int[0];
+    }
+
+    @Override
+    public int[] vertical() {
+        return new int[0];
+    }
+
+    @Override
+    public Pair<Integer, Integer> horizontalRange() {
+        return null;
+    }
+
+    @Override
+    public Pair<Integer, Integer> verticalRange() {
+        return null;
     }
 }
