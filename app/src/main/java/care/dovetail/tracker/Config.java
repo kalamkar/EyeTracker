@@ -7,5 +7,7 @@ public class Config {
 
     public static final double SAMPLING_FREQ  = 51.2; // 204.8;
 
+    public static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
+
     public static final int BLINK_WINDOW  = 20;
 }

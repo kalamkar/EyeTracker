@@ -11,12 +11,10 @@ import care.dovetail.tracker.Stats;
 /**
  * Interface for signal processor algorithms to determine cell / sector on the grid for eye gaze.
  */
-public abstract class SignalProcessor implements Feature.FeatureObserver {
+public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureObserver {
     private static final String TAG = "SignalProcessor";
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 5000;
-
-    private static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
 
     private static final int QUALITY_WINDOW = 200; // 4 seconds
 
@@ -59,11 +57,7 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
         resetSignal();
     }
 
-    /**
-     * Update the processor with any newly acquired signal values from all the channels
-     * @param hValue horizontal channel value
-     * @param vValue vertical channel value
-     */
+    @Override
     public synchronized final void update(int hValue, int vValue) {
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
@@ -77,7 +71,7 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
 
         boolean isGoodSignal = isGoodSignal();
         if (isGoodSignal) {
-            goodSignalMillis += MILLIS_PER_UPDATE;
+            goodSignalMillis += Config.MILLIS_PER_UPDATE;
         } else if (!isGoodSignal && lastUpdateWasGood) {
             resetSignal();
             resetCalibration();
@@ -85,8 +79,9 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
         lastUpdateWasGood = isGoodSignal;
 
         stableHorizontalMillis = isStableHorizontal()
-                ? stableHorizontalMillis + MILLIS_PER_UPDATE : 0;
-        stableVerticalMillis = isStableVertical() ? stableVerticalMillis + MILLIS_PER_UPDATE : 0;
+                ? stableHorizontalMillis + Config.MILLIS_PER_UPDATE : 0;
+        stableVerticalMillis = isStableVertical()
+                ? stableVerticalMillis + Config.MILLIS_PER_UPDATE : 0;
 
         maybeUpdateHorizontalHeight();
         maybeUpdateVerticalHeight();
@@ -142,6 +137,7 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
         }
     }
 
+    @Override
     public void onFeature(Feature feature) {
         int blinkWindow = BlinkDetector.BLINK_WINDOW;
         if (Feature.Type.BLINK.equals(feature.type)) {
@@ -169,10 +165,8 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
      */
     abstract protected int processVertical(int value);
 
-    /**
-     * Get the cell or sector in the grid for current (latest) eye gaze.
-     * @return Pair of horizontal (column) and vertical (row) value in that order.
-     */
+
+    @Override
     public final Pair<Integer, Integer> getSector() {
         int hValue = horizontal[horizontal.length - 1];
         int vValue = vertical[vertical.length - 1];
@@ -191,67 +185,39 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
         return Pair.create(hLevel, vLevel);
     }
 
-    /**
-     *
-     * @return String with numbers to be displayed on screen for debug purpose.
-     */
-    public abstract String getDebugNumbers();
-
-    /**
-     * Check if we are getting good signal i.e. low noise from rubbing, movements etc.
-     * @return true if the signal is good
-     */
+    @Override
     public boolean isGoodSignal() {
         double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return deviation != 0 && (deviation / QUALITY_UNIT) < MAX_NOISE_DEVIATION;
     }
 
-    /**
-     * Get signal quality
-     * @return int from 0 to 100 indicating signal quality (higher the better).
-     */
+    @Override
     public int getSignalQuality() {
         double deviation = Math.sqrt(Math.max(hQualityStats.stdDev, vQualityStats.stdDev));
         return 100 - Math.min(100, (int) (deviation / QUALITY_UNIT));
     }
 
-    /**
-     * Is the horizontal signal stable so that we can calibrate on the fly.
-     * @return true if horizontal signal is stable
-     */
+    @Override
     public boolean isStableHorizontal() {
         return hStats != null && Math.abs(hStats.slope) < MAX_STABLE_SLOPE ;
     }
 
-    /**
-     * Is the vertical signal stable so that we can calibrate on the fly.
-     * @return true if the vertical signal is stable
-     */
+    @Override
     public boolean isStableVertical() {
         return vStats != null && Math.abs(vStats.slope) < MAX_STABLE_SLOPE ;
     }
 
-    /**
-     * Time series of processed values from horizontal channel to be displayed as chart.
-     * @return Array of ints
-     */
+    @Override
     public final int[] horizontal() {
         return horizontal;
     }
 
-    /**
-     * Time series of processed values from vertical channel to be displayed as chart.
-     * @return Array of ints
-     */
+    @Override
     public final int[] vertical() {
         return vertical;
     }
 
-    /**
-     * Range of minimum and maximum values for chart from horizontal channel. This does NOT have to
-     * be min and max from horizontal() values above.
-     * @return minimum and maximum values in that order.
-     */
+    @Override
     public Pair<Integer, Integer> horizontalRange() {
         if (hHalfGraphHeight * 2 < (hStats.max - hStats.min) / 2) {
             return Pair.create(hStats.min, hStats.max);
@@ -259,11 +225,7 @@ public abstract class SignalProcessor implements Feature.FeatureObserver {
         return Pair.create(-hHalfGraphHeight, hHalfGraphHeight);
     }
 
-    /**
-     * Range of minimum and maximum values for chart from vertical channel. This does NOT have to
-     * be min and max from vertical() values above.
-     * @return minimum and maximum values in that order.
-     */
+    @Override
     public Pair<Integer, Integer> verticalRange() {
         if (vHalfGraphHeight * 2 < (vStats.max - vStats.min) / 2) {
             return Pair.create(vStats.min, vStats.max);

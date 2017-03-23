@@ -25,10 +25,10 @@ import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.BlinkDetector;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
+import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
 import care.dovetail.tracker.processing.PassThroughSignalProcessor;
-import care.dovetail.tracker.processing.SignalProcessor;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.SettingsActivity;
@@ -44,7 +44,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private final Settings settings = new Settings(this);
 
     private final ShimmerClient patchClient = new ShimmerClient(this, this);
-    private SignalProcessor signals;
+    private EOGProcessor signals;
     private BlinkDetector blinks;
     private AccelerationProcessor accelerometer;
 
@@ -332,9 +332,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             default:
             case 0:
                 signals = new BandpassSignalProcessor(settings.getNumSteps());
+                blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 1:
                 signals = new CurveFitSignalProcessor(settings.getNumSteps());
+                blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 2:
                 signals = new PassThroughSignalProcessor(settings.getNumSteps());
@@ -343,7 +345,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
                 break;
         }
-        blinks.addFeatureObserver(signals);
         patchClient.connect();
 
         chartUpdateTimer = new Timer();
