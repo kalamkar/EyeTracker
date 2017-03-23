@@ -1,7 +1,5 @@
 package care.dovetail.tracker.processing;
 
-import android.util.Pair;
-
 import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
@@ -11,7 +9,8 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final Pair<Integer, Integer> HALF_GRAPH_HEIGHT = new Pair<>(2000, 12000);
+    private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
+    private static final int MAX_HALF_GRAPH_HEIGHT = 12000;
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
@@ -22,7 +21,7 @@ public class BandpassSignalProcessor extends SignalProcessor {
             0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
 
     public BandpassSignalProcessor(int numSteps) {
-        super(numSteps);
+        super(numSteps, new LongMemoryCalibrator(MIN_HALF_GRAPH_HEIGHT, MAX_HALF_GRAPH_HEIGHT));
     }
 
     @Override
@@ -39,15 +38,5 @@ public class BandpassSignalProcessor extends SignalProcessor {
     @Override
     protected int processVertical(int value) {
         return (int) vFilter.step(value);
-    }
-
-    @Override
-    protected int minGraphHeight() {
-        return HALF_GRAPH_HEIGHT.first;
-    }
-
-    @Override
-    protected int maxGraphHeight() {
-        return HALF_GRAPH_HEIGHT.second;
     }
 }

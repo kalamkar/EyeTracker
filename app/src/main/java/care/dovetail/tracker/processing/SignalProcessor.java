@@ -38,10 +38,11 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
     protected Stats hQualityStats = new Stats(null);
     protected Stats vQualityStats = new Stats(null);
 
-    protected Calibrator calibrator = new LongMemoryCalibrator(minGraphHeight(), maxGraphHeight());
+    protected final Calibrator calibrator;
 
-    public SignalProcessor(int numSteps) {
+    public SignalProcessor(int numSteps, Calibrator calibrator) {
         this.numSteps = numSteps;
+        this.calibrator = calibrator;
         resetSignal();
     }
 
@@ -182,18 +183,6 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
         }
         return Pair.create(-calibrator.verticalGraphHeight(), calibrator.verticalGraphHeight());
     }
-
-    /**
-     * Minimum limit for half graph height
-     * @return int value of minimum half graph height
-     */
-    abstract protected int minGraphHeight();
-
-    /**
-     * Maximum limit for half graph height
-     * @return int value of maximum half graph height
-     */
-    abstract protected int maxGraphHeight();
 
     private static void removeSpike(int values[], int startIndex, int endIndex) {
         startIndex = Math.max(0, startIndex);

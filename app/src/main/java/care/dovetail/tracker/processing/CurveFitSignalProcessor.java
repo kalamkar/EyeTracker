@@ -19,8 +19,7 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
-    private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
+    private static final int HALF_GRAPH_HEIGHT = 3000;
 
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
@@ -37,7 +36,7 @@ public class CurveFitSignalProcessor extends SignalProcessor {
             FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
 
     public CurveFitSignalProcessor(int numSteps) {
-        super(numSteps);
+        super(numSteps, new StaticCalibrator(HALF_GRAPH_HEIGHT));
     }
 
     @Override
@@ -72,16 +71,6 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
         return vFiltered[vFiltered.length - 1]
                 - (int) vFunction.value(vertical.length + vFunctionIntervalCount);
-    }
-
-    @Override
-    protected int minGraphHeight() {
-        return MIN_HALF_GRAPH_HEIGHT;
-    }
-
-    @Override
-    protected int maxGraphHeight() {
-        return MAX_HALF_GRAPH_HEIGHT;
     }
 
     private static PolynomialFunction getCurve(int[] values, int downSampleFactor) {
