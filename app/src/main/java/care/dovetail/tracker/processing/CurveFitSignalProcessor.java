@@ -4,10 +4,9 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
-import biz.source_code.dsp.filter.FilterCharacteristicsType;
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
-import biz.source_code.dsp.filter.IirFilterDesignFisher;
+import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
 
 public class CurveFitSignalProcessor extends SignalProcessor {
@@ -23,8 +22,6 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
     private static final int MAX_HALF_GRAPH_HEIGHT = 8000;
 
-    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 0;
-
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
 
@@ -33,13 +30,11 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private int hFunctionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
     private int vFunctionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
 
-    private final IirFilter hFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            1.0 / Config.SAMPLING_FREQ, 0));
+    private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
+            FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
 
-    private final IirFilter vFilter = new IirFilter(IirFilterDesignFisher.design(
-            FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
-            1.0 / Config.SAMPLING_FREQ, 0));
+    private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
+            FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
 
     public CurveFitSignalProcessor(int numSteps) {
         super(numSteps);
@@ -47,8 +42,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", calibrator.horizontalGraphHeight(),
-                calibrator.verticalGraphHeight());
+        return String.format("%d\n%d\n%d", calibrator.horizontalGraphHeight(),
+                calibrator.verticalGraphHeight(), sumProcessingMillis / updateCount);
     }
 
     @Override

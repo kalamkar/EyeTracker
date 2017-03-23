@@ -26,6 +26,9 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
+    protected long sumProcessingMillis = 0;
+    protected long updateCount = 1;
+
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
@@ -44,6 +47,8 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
 
     @Override
     public synchronized final void update(int hValue, int vValue) {
+        long startTime = System.currentTimeMillis();
+
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
         hStats = new Stats(horizontal);
@@ -71,6 +76,9 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
                 ? calibrator.getStableVerticalMillis() + Config.MILLIS_PER_UPDATE : 0);
 
         calibrator.update();
+
+        sumProcessingMillis += (System.currentTimeMillis() - startTime);
+        updateCount++;
     }
 
     private void resetSignal() {
