@@ -339,7 +339,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 2:
-                signals = new PassThroughSignalProcessor(settings.getNumSteps());
+                signals = new PassThroughSignalProcessor();
                 break;
             case 3:
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
