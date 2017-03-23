@@ -25,7 +25,9 @@ public class BandpassBlinkDetector implements BlinkDetector {
 
     private static final int QUALITY_WINDOW = 200; // 4 seconds
 
-    private long blinkUpdateCount = 0;
+    private static final int MIN_STD_DEV = 5000;
+
+    private long updateCount = 0;
     private int blinkWindowIndex = 0;
     private Stats blinkStats = new Stats(null);
     private final int blinks[] = new int[Config.GRAPH_LENGTH];
@@ -37,35 +39,31 @@ public class BandpassBlinkDetector implements BlinkDetector {
 
     @Override
     public void update(int value) {
-        blinkUpdateCount++;
+        updateCount++;
         System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
         blinks[blinks.length - 1] = (int) blinkFilter.step(value);
         blinkStats = new Stats(blinks, blinks.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
-        if (++blinkWindowIndex == BLINK_WINDOW) {
-            blinkWindowIndex = 0;
-            Feature blink = maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
-                    MAX_BLINK_HEIGHT);
-            if (blink != null) {
-                for (Feature.FeatureObserver observer : observers) {
-                    observer.onFeature(blink);
-                }
-            }
+        if (updateCount >= blinks.length && blinkStats.stdDev == 0) {
+            notifyFeature(new Feature(Feature.Type.BAD_CONTACT, 0, 0, new int[0]));
+        } else if (updateCount % QUALITY_WINDOW == 0 && blinkStats.stdDev > MIN_STD_DEV) {
+            // Every 4 seconds check signal quality and send notification if signal is bad.
+            notifyFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, new int[0]));
+        } else if (updateCount % BLINK_WINDOW == 0 && blinkStats.stdDev < MIN_STD_DEV) {
+            notifyFeature(maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
+                    MAX_BLINK_HEIGHT));
         }
     }
 
-
     @Override
-    public final boolean isBadContact() {
-        return blinkStats.stdDev == 0 && blinkUpdateCount >= blinks.length;
+    public int getQuality() {
+        return blinkStats.stdDev;
     }
-
 
     @Override
     public final int[] blinks() {
         return blinks;
     }
-
 
     @Override
     public Pair<Integer, Integer> blinkRange() {
@@ -77,6 +75,15 @@ public class BandpassBlinkDetector implements BlinkDetector {
     public void addFeatureObserver(Feature.FeatureObserver observer) {
         if (!observers.contains(observer)) {
             observers.add(observer);
+        }
+    }
+
+    private void notifyFeature(Feature feature) {
+        if (feature == null) {
+            return;
+        }
+        for (Feature.FeatureObserver observer : observers) {
+            observer.onFeature(feature);
         }
     }
 

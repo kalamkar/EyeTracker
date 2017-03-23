@@ -16,12 +16,6 @@ public interface BlinkDetector {
     void update(int value);
 
     /**
-     * Check if the the electrode contact is not present or bad
-     * @return true if the electrode contact is not present or bad
-     */
-    boolean isBadContact();
-
-    /**
      * Time series of processed values from blink channel to be displayed as chart.
      * @return Array of ints
      */
@@ -39,4 +33,6 @@ public interface BlinkDetector {
      * @param observer
      */
     void addFeatureObserver(Feature.FeatureObserver observer);
+
+    int getQuality();
 }

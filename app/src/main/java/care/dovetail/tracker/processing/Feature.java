@@ -18,6 +18,7 @@ public class Feature {
         BLINK,
         SMALL_BLINK,
         TRIPLE_BLINK,
+        BAD_CONTACT,
         BAD_SIGNAL
     }
 

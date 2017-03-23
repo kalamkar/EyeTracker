@@ -8,6 +8,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -202,11 +203,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
-            if (blinks.isBadContact() && patchClient.isConnected()) {
-                stopBluetooth();
-                startBluetooth();
-                return;
-            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -217,21 +213,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         sector = signals.getSector();
                     }
 
-                    boolean showProgress = isGoodSignal || !patchClient.isConnected();
-
-                    findViewById(R.id.leftProgress).setVisibility(
-                            showProgress ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.rightProgress).setVisibility(
-                            showProgress ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.leftProgressLabel).setVisibility(
-                            showProgress ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.rightProgressLabel).setVisibility(
-                            showProgress ?  View.INVISIBLE : View.VISIBLE);
-
-                    findViewById(R.id.leftNumber).setVisibility(
-                            showProgress ?  View.VISIBLE : View.INVISIBLE);
-                    findViewById(R.id.rightNumber).setVisibility(
-                            showProgress ?  View.VISIBLE : View.INVISIBLE);
+                    showQualityProgress(!isGoodSignal && patchClient.isConnected());
 
                     boolean isStableSignal =
                             signals.isStableHorizontal() && signals.isStableVertical();
@@ -271,7 +253,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(final Feature feature) {
-        if (Feature.Type.BLINK == feature.type && signals.isGoodSignal()) {
+        if (Feature.Type.BLINK == feature.type) {
             ringtone.play();
             if (settings.shouldShowBlinkmarks()) {
                 runOnUiThread(new Runnable() {
@@ -282,6 +264,11 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                     }
                 });
             }
+        } else if (Feature.Type.BAD_CONTACT == feature.type && patchClient.isConnected()) {
+            stopBluetooth();
+            startBluetooth();
+        } else if (Feature.Type.BAD_SIGNAL == feature.type) {
+            ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
         }
     }
 
@@ -321,6 +308,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         show ?  View.INVISIBLE : View.VISIBLE);
                 findViewById(R.id.rightBlue).setVisibility(
                         show ?  View.INVISIBLE : View.VISIBLE);
+
+                showQualityProgress(show);
             }
         });
     }
@@ -382,5 +371,21 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+
+    private void showQualityProgress(boolean showProgress) {
+        findViewById(R.id.leftProgress).setVisibility(
+                showProgress ?  View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.rightProgress).setVisibility(
+                showProgress ?  View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.leftProgressLabel).setVisibility(
+                showProgress ?  View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.rightProgressLabel).setVisibility(
+                showProgress ?  View.VISIBLE : View.INVISIBLE);
+
+        findViewById(R.id.leftNumber).setVisibility(
+                showProgress ? View.INVISIBLE : View.VISIBLE);
+        findViewById(R.id.rightNumber).setVisibility(
+                showProgress ? View.INVISIBLE : View.VISIBLE);
     }
 }
