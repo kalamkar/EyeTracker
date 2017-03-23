@@ -5,27 +5,18 @@ import android.util.Pair;
 
 import java.util.Arrays;
 
-import biz.source_code.dsp.filter.FilterPassType;
-import biz.source_code.dsp.filter.IirFilter;
-import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 
 /**
  * Interface for signal processor algorithms to determine cell / sector on the grid for eye gaze.
  */
-public abstract class SignalProcessor {
+public abstract class SignalProcessor implements Feature.FeatureObserver {
     private static final String TAG = "SignalProcessor";
-
-    public interface FeatureObserver {
-        void onFeature(Feature feature);
-    }
 
     private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 5000;
 
     private static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
-
-    private static final int BLINK_WINDOW = 20; // 400 millis
 
     private static final int QUALITY_WINDOW = 200; // 4 seconds
 
@@ -37,20 +28,7 @@ public abstract class SignalProcessor {
     private static final float HORIZONTAL_FOV_FACTOR = 1.0f;
     private static final float VERTICAL_FOV_FACTOR = 1.0f;
 
-    private static final int SMALL_BLINK_HEIGHT = 5000;
-    private static final int MIN_BLINK_HEIGHT = 10000;
-    private static final int MAX_BLINK_HEIGHT = 30000;
-
     protected final int numSteps;
-    protected final FeatureObserver observer;
-
-    private long blinkUpdateCount = 0;
-    private int blinkWindowIndex = 0;
-    private Stats blinkStats = new Stats(null);
-    private final int blinks[] = new int[Config.GRAPH_LENGTH];
-
-    private final IirFilter blinkFilter = new IirFilter(IirFilterDesignExstrom.design(
-            FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
@@ -76,9 +54,8 @@ public abstract class SignalProcessor {
     protected Stats hQualityStats = new Stats(null);
     protected Stats vQualityStats = new Stats(null);
 
-    public SignalProcessor(FeatureObserver observer, int numSteps) {
+    public SignalProcessor(int numSteps) {
         this.numSteps = numSteps;
-        this.observer = observer;
         resetSignal();
     }
 
@@ -88,20 +65,6 @@ public abstract class SignalProcessor {
      * @param vValue vertical channel value
      */
     public synchronized final void update(int hValue, int vValue) {
-        blinkUpdateCount++;
-        System.arraycopy(blinks, 1, blinks, 0, blinks.length - 1);
-        blinks[blinks.length - 1] = (int) blinkFilter.step(vValue);
-        blinkStats = new Stats(blinks, blinks.length - QUALITY_WINDOW, QUALITY_WINDOW);
-
-        if (++blinkWindowIndex == BLINK_WINDOW) {
-            blinkWindowIndex = 0;
-            Feature blink = Feature.maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
-                    MAX_BLINK_HEIGHT);
-            if (blink != null) {
-                onFeature(blink);
-            }
-        }
-
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
         hStats = new Stats(horizontal);
@@ -179,19 +142,19 @@ public abstract class SignalProcessor {
         }
     }
 
-    protected void onFeature(Feature feature) {
+    public void onFeature(Feature feature) {
+        int blinkWindow = BlinkDetector.BLINK_WINDOW;
         if (Feature.Type.BLINK.equals(feature.type)) {
-            int index = feature.startIndex - BLINK_WINDOW;
+            int index = feature.startIndex - blinkWindow;
             feature.sector = getSector(horizontal[index], vertical[index]);
         }
         if (Feature.Type.BLINK.equals(feature.type)
                 || Feature.Type.SMALL_BLINK.equals(feature.type)) {
             removeSpike(vertical,
-                    feature.startIndex - BLINK_WINDOW/2, feature.endIndex + BLINK_WINDOW/2);
+                    feature.startIndex - blinkWindow/2, feature.endIndex + blinkWindow/2);
             removeSpike(horizontal,
-                    feature.startIndex - BLINK_WINDOW/2, feature.endIndex + BLINK_WINDOW/2);
+                    feature.startIndex - blinkWindow/2, feature.endIndex + blinkWindow/2);
         }
-        observer.onFeature(feature);
     }
 
     /**
@@ -253,14 +216,6 @@ public abstract class SignalProcessor {
     }
 
     /**
-     * Check if the the electrode contact is not present or bad
-     * @return true if the electrode contact is not present or bad
-     */
-    public final boolean isBadContact() {
-        return blinkStats.stdDev == 0 && blinkUpdateCount >= blinks.length;
-    }
-
-    /**
      * Is the horizontal signal stable so that we can calibrate on the fly.
      * @return true if horizontal signal is stable
      */
@@ -293,14 +248,6 @@ public abstract class SignalProcessor {
     }
 
     /**
-     * Time series of processed values from blink channel to be displayed as chart.
-     * @return Array of ints
-     */
-    public final int[] blinks() {
-        return blinks;
-    }
-
-    /**
      * Range of minimum and maximum values for chart from horizontal channel. This does NOT have to
      * be min and max from horizontal() values above.
      * @return minimum and maximum values in that order.
@@ -309,7 +256,7 @@ public abstract class SignalProcessor {
         if (hHalfGraphHeight * 2 < (hStats.max - hStats.min) / 2) {
             return Pair.create(hStats.min, hStats.max);
         }
-        return Pair.create(-hHalfGraphHeight * 2, hHalfGraphHeight * 2);
+        return Pair.create(-hHalfGraphHeight, hHalfGraphHeight);
     }
 
     /**
@@ -321,17 +268,7 @@ public abstract class SignalProcessor {
         if (vHalfGraphHeight * 2 < (vStats.max - vStats.min) / 2) {
             return Pair.create(vStats.min, vStats.max);
         }
-        return Pair.create(-vHalfGraphHeight * 2, vHalfGraphHeight * 2);
-    }
-
-    /**
-     * Range of minimum and maximum values for chart from blink channel. This does NOT have to
-     * be min and max from blinks() values above.
-     * @return minimum and maximum values in that order.
-     */
-    public Pair<Integer, Integer> blinkRange() {
-        return Pair.create(blinkStats.median - MAX_BLINK_HEIGHT,
-                blinkStats.median + MAX_BLINK_HEIGHT);
+        return Pair.create(-vHalfGraphHeight, vHalfGraphHeight);
     }
 
     /**

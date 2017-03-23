@@ -21,8 +21,8 @@ public class BandpassSignalProcessor extends SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
 
-    public BandpassSignalProcessor(FeatureObserver observer, int numSteps) {
-        super(observer, numSteps);
+    public BandpassSignalProcessor(int numSteps) {
+        super(numSteps);
     }
 
     @Override

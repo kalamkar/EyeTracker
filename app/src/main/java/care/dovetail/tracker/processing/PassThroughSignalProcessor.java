@@ -7,8 +7,8 @@ public class PassThroughSignalProcessor extends SignalProcessor {
     private long lastUpdateMillis = 0;
     private long updateCount = 1;
 
-    public PassThroughSignalProcessor(FeatureObserver observer, int numSteps) {
-        super(observer, numSteps);
+    public PassThroughSignalProcessor(int numSteps) {
+        super(numSteps);
     }
 
     @Override

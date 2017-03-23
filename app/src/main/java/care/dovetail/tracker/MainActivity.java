@@ -21,7 +21,9 @@ import java.util.TimerTask;
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.processing.AccelerationProcessor;
+import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BandpassSignalProcessor;
+import care.dovetail.tracker.processing.BlinkDetector;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
@@ -32,7 +34,7 @@ import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
-        SignalProcessor.FeatureObserver, AccelerationProcessor.ShakingObserver {
+        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
@@ -43,6 +45,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private final ShimmerClient patchClient = new ShimmerClient(this, this);
     private SignalProcessor signals;
+    private BlinkDetector blinks;
     private AccelerationProcessor accelerometer;
 
     private FileDataWriter writer = null;
@@ -176,8 +179,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             }
 
             if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {
-                leftChart.updateChannel3(signals.blinks(), signals.blinkRange());
-                rightChart.updateChannel3(signals.blinks(), signals.blinkRange());
+                leftChart.updateChannel3(blinks.blinks(), blinks.blinkRange());
+                rightChart.updateChannel3(blinks.blinks(), blinks.blinkRange());
             }
 
             runOnUiThread(new Runnable() {
@@ -199,7 +202,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
-            if (signals.isBadContact() && patchClient.isConnected()) {
+            if (blinks.isBadContact() && patchClient.isConnected()) {
                 stopBluetooth();
                 startBluetooth();
                 return;
@@ -284,6 +287,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onNewValues(int channel1, int channel2) {
+        blinks.update(channel2);
         signals.update(channel1, channel2);
         if (writer != null) {
             Pair<Integer, Integer> estimate = signals.getSector();
@@ -322,21 +326,24 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     public void startBluetooth() {
+        blinks = new BandpassBlinkDetector();
+        blinks.addFeatureObserver(this);
         switch (settings.getAlgorithm()) {
             default:
             case 0:
-                signals = new BandpassSignalProcessor(this, settings.getNumSteps());
+                signals = new BandpassSignalProcessor(settings.getNumSteps());
                 break;
             case 1:
-                signals = new CurveFitSignalProcessor(this, settings.getNumSteps());
+                signals = new CurveFitSignalProcessor(settings.getNumSteps());
                 break;
             case 2:
-                signals = new PassThroughSignalProcessor(this, settings.getNumSteps());
+                signals = new PassThroughSignalProcessor(settings.getNumSteps());
                 break;
             case 3:
-                signals = new MedianDiffDiffEOGProcessor(this, settings.getNumSteps());
+                signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
                 break;
         }
+        blinks.addFeatureObserver(signals);
         patchClient.connect();
 
         chartUpdateTimer = new Timer();

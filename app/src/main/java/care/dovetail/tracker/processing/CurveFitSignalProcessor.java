@@ -41,8 +41,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
             FilterPassType.lowpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             1.0 / Config.SAMPLING_FREQ, 0));
 
-    public CurveFitSignalProcessor(FeatureObserver observer, int numSteps) {
-        super(observer, numSteps);
+    public CurveFitSignalProcessor(int numSteps) {
+        super(numSteps);
     }
 
     @Override

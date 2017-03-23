@@ -5,8 +5,10 @@ import care.dovetail.tracker.Stats;
 public class MedianDiffDiffEOGProcessor extends SignalProcessor {
     private static final String TAG = "MedianDiffDiffEOGProcessor";
 
-    private final int hOriginal[] = new int[50];
-    private final int vOriginal[] = new int[50];
+    private final static int THRESH = 3;
+
+    private final int hOriginal[] = new int[10];
+    private final int vOriginal[] = new int[10];
 
     private int lastHorizontalMedian;
     private int lastVerticalMedian;
@@ -14,11 +16,8 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
     private int lastHorizontalDiff;
     private int lastVerticalDiff;
 
-    private int hLevel;
-    private int vLevel;
-
-    public MedianDiffDiffEOGProcessor(FeatureObserver observer, int numSteps) {
-        super(observer, numSteps);
+    public MedianDiffDiffEOGProcessor(int numSteps) {
+        super(numSteps);
     }
 
     @Override
@@ -34,10 +33,10 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
         int median = new Stats(hOriginal).median;
         int medianDiff = median - lastHorizontalMedian;
         int medianDiffDiff = medianDiff - lastHorizontalDiff;
+        int shift = Math.abs(medianDiffDiff) > hStats.stdDev * THRESH ? medianDiffDiff : 0;
         lastHorizontalMedian = median;
         lastHorizontalDiff = medianDiff;
-        hLevel += medianDiffDiff;
-        return hLevel;
+        return shift;
     }
 
     @Override
@@ -47,26 +46,37 @@ public class MedianDiffDiffEOGProcessor extends SignalProcessor {
         int median = new Stats(vOriginal).median;
         int medianDiff = median - lastVerticalMedian;
         int medianDiffDiff = medianDiff - lastVerticalDiff;
+        int shift = Math.abs(medianDiffDiff) > vStats.stdDev * THRESH ? medianDiffDiff : 0;
         lastVerticalMedian = median;
         lastVerticalDiff = medianDiff;
-        vLevel += medianDiffDiff;
-        return vLevel;
+        return shift;
+    }
+
+    protected void maybeUpdateHorizontalHeight() {
+        hHalfGraphHeight = (hStats.percentile95 - hStats.percentile5) / 2;
+    }
+
+    protected void maybeUpdateVerticalHeight() {
+        vHalfGraphHeight = (vStats.percentile95 - vStats.percentile5) / 2;
     }
 
     @Override
-    protected void onFeature(Feature feature) {
-        super.onFeature(feature);
-        hLevel = 0;
-        vLevel = 0;
+    public boolean isGoodSignal() {
+        return true;
+    }
+
+    @Override
+    public int getSignalQuality() {
+        return 100;
     }
 
     @Override
     protected int minGraphHeight() {
-        return 2000;
+        return 200;
     }
 
     @Override
     protected int maxGraphHeight() {
-        return 8000;
+        return 5000;
     }
 }
