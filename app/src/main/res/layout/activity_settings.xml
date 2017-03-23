@@ -101,4 +101,35 @@
             android:layout_alignParentEnd="true" />
     </RelativeLayout>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_vertical_margin">
+        <TextView
+            android:text="@string/graph_height"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/graph_height_label"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"/>
+
+        <SeekBar
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/graph_height_label"
+            android:id="@+id/graph_height"
+            android:max="12000"
+            android:layout_toStartOf="@+id/graph_height_value"/>
+
+        <TextView
+            android:id="@+id/graph_height_value"
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/graph_height_label"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+
 </LinearLayout>

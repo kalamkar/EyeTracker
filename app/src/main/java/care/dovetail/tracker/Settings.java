@@ -17,6 +17,7 @@ public class Settings {
     private static final String NUM_STEPS = "num_steps";
     private static final String ALGORITHM = "algorithm";
     private static final String CURSOR_STYLE = "cursor_style";
+    private static final String GRAPH_HEIGHT = "graph_height";
 
     private final Context context;
 
@@ -78,10 +79,6 @@ public class Settings {
                 context.getPackageName(), 0).edit().putBoolean(WHACK_A_MOLE, whackAMole).apply();
     }
 
-    public boolean shouldShowAccel() {
-        return false;
-    }
-
     public int getNumSteps() {
         return context.getSharedPreferences(context.getPackageName(), 0).getInt(NUM_STEPS, 5);
     }
@@ -89,6 +86,15 @@ public class Settings {
     public void setNumSteps(int numSteps) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(NUM_STEPS, numSteps).apply();
+    }
+
+    public int getGraphHeight() {
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(GRAPH_HEIGHT, 3000);
+    }
+
+    public void setGraphHeight(int graphHeight) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putInt(GRAPH_HEIGHT, graphHeight).apply();
     }
 
     public int getAlgorithm() {

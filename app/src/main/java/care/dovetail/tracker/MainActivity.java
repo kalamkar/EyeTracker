@@ -335,7 +335,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 1:
-                signals = new CurveFitSignalProcessor(settings.getNumSteps());
+                signals = new CurveFitSignalProcessor(
+                        settings.getNumSteps(), settings.getGraphHeight());
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 2:

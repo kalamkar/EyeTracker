@@ -23,6 +23,7 @@ public class SettingsActivity extends Activity {
     private final Settings settings = new Settings(this);
 
     private TextView numStepsValue;
+    private TextView graphHeightValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +37,8 @@ public class SettingsActivity extends Activity {
         ToggleButton whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
         SeekBar numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
+        SeekBar graphHeight = (SeekBar) findViewById(R.id.graph_height);
+        graphHeightValue = (TextView)  findViewById(R.id.graph_height_value);
         Spinner algorithm = (Spinner) findViewById(R.id.algo);
         Spinner cursor = (Spinner) findViewById(R.id.cursor);
 
@@ -46,6 +49,8 @@ public class SettingsActivity extends Activity {
         whackAMole.setChecked(settings.shouldWhackAMole());
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
+        graphHeight.setProgress(settings.getGraphHeight());
+        graphHeightValue.setText(Integer.toString(settings.getGraphHeight()));
         algorithm.setSelection(settings.getAlgorithm());
         cursor.setSelection(settings.getCursorStyle());
 
@@ -89,6 +94,17 @@ public class SettingsActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 numStepsValue.setText(Integer.toString(progress));
                 settings.setNumSteps(progress);
+            }
+
+            @Override  public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        graphHeight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                graphHeightValue.setText(Integer.toString(progress));
+                settings.setGraphHeight(progress);
             }
 
             @Override  public void onStartTrackingTouch(SeekBar seekBar) {}

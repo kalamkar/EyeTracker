@@ -19,8 +19,6 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     private static final int FUNCTION_CALCULATE_INTERVAL = 5;
 
-    private static final int HALF_GRAPH_HEIGHT = 3000;
-
     private final int hFiltered[] = new int[Config.GRAPH_LENGTH];
     private final int vFiltered[] = new int[Config.GRAPH_LENGTH];
 
@@ -35,8 +33,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
             FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
 
-    public CurveFitSignalProcessor(int numSteps) {
-        super(numSteps, new StaticCalibrator(HALF_GRAPH_HEIGHT));
+    public CurveFitSignalProcessor(int numSteps, int graphHeight) {
+        super(numSteps, new StaticCalibrator(graphHeight));
     }
 
     @Override
