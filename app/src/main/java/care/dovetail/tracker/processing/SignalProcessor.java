@@ -14,8 +14,6 @@ import care.dovetail.tracker.Stats;
 public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureObserver {
     private static final String TAG = "SignalProcessor";
 
-    private static final int WAIT_TIME_FOR_STABILITY_MILLIS = 5000;
-
     private static final int QUALITY_WINDOW = 200; // 4 seconds
 
     private static final int MAX_STABLE_SLOPE = 25;
@@ -23,34 +21,21 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
 
-    private static final float HORIZONTAL_FOV_FACTOR = 1.0f;
-    private static final float VERTICAL_FOV_FACTOR = 1.0f;
-
     protected final int numSteps;
 
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
-    protected long stableHorizontalMillis;
-    protected long stableVerticalMillis;
-
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
-
-    protected int hHalfGraphHeight = minGraphHeight();
-    protected int vHalfGraphHeight = minGraphHeight();
-
-    protected int horizontalBase = 0;
-    protected int verticalBase = 0;
-
-    protected int maxHHalfGraphHeight = minGraphHeight();
-    protected int maxVHalfGraphHeight = minGraphHeight();
 
     protected Stats hStats = new Stats(null);
     protected Stats vStats = new Stats(null);
 
     protected Stats hQualityStats = new Stats(null);
     protected Stats vQualityStats = new Stats(null);
+
+    protected Calibrator calibrator = new LongMemoryCalibrator(minGraphHeight(), maxGraphHeight());
 
     public SignalProcessor(int numSteps) {
         this.numSteps = numSteps;
@@ -62,11 +47,13 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
         hStats = new Stats(horizontal);
+        calibrator.setHorizontalStats(hStats);
         hQualityStats = new Stats(horizontal, horizontal.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = processVertical(vValue);
         vStats = new Stats(vertical);
+        calibrator.setVerticalStats(vStats);
         vQualityStats = new Stats(vertical, vertical.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         boolean isGoodSignal = isGoodSignal();
@@ -74,67 +61,22 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
             goodSignalMillis += Config.MILLIS_PER_UPDATE;
         } else if (!isGoodSignal && lastUpdateWasGood) {
             resetSignal();
-            resetCalibration();
+            calibrator.reset();
         }
         lastUpdateWasGood = isGoodSignal;
 
-        stableHorizontalMillis = isStableHorizontal()
-                ? stableHorizontalMillis + Config.MILLIS_PER_UPDATE : 0;
-        stableVerticalMillis = isStableVertical()
-                ? stableVerticalMillis + Config.MILLIS_PER_UPDATE : 0;
+        calibrator.setStableHorizontalMillis(isStableHorizontal()
+                ? calibrator.getStableHorizontalMillis() + Config.MILLIS_PER_UPDATE : 0);
+        calibrator.setStableVerticalMillis(isStableVertical()
+                ? calibrator.getStableVerticalMillis() + Config.MILLIS_PER_UPDATE : 0);
 
-        maybeUpdateHorizontalHeight();
-        maybeUpdateVerticalHeight();
+        calibrator.update();
     }
 
     private void resetSignal() {
         goodSignalMillis = 0;
         Arrays.fill(horizontal, 0);
         Arrays.fill(vertical, 0);
-    }
-
-    protected void resetCalibration() {
-        hHalfGraphHeight = (minGraphHeight() + maxGraphHeight()) / 2;
-        vHalfGraphHeight = hHalfGraphHeight;
-
-        maxHHalfGraphHeight = minGraphHeight();
-        maxVHalfGraphHeight = minGraphHeight();
-
-        stableHorizontalMillis = 0;
-        stableVerticalMillis = 0;
-    }
-
-
-    protected void maybeUpdateHorizontalHeight() {
-        if (stableHorizontalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
-            maxHHalfGraphHeight -= maxHHalfGraphHeight * 10 / 100;
-        }
-        int max = hStats.percentile95;
-        int min = hStats.percentile5;
-        int newHHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (max - min) / 2));
-        if (stableHorizontalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
-                && newHHalfGraphHeight > maxHHalfGraphHeight) {
-            hHalfGraphHeight = newHHalfGraphHeight;
-            maxHHalfGraphHeight = newHHalfGraphHeight;
-            horizontalBase = (min + max) / 2;
-        }
-    }
-
-    protected void maybeUpdateVerticalHeight() {
-        if (stableVerticalMillis % WAIT_TIME_FOR_STABILITY_MILLIS == 0) {
-            maxVHalfGraphHeight -= maxVHalfGraphHeight * 10 / 100;
-        }
-        int max = vStats.percentile95;
-        int min = vStats.percentile5;
-        int newVHalfGraphHeight = Math.min(maxGraphHeight(),
-                Math.max(minGraphHeight(), (max - min) / 2));
-        if (stableVerticalMillis > WAIT_TIME_FOR_STABILITY_MILLIS
-                && newVHalfGraphHeight > maxVHalfGraphHeight) {
-            vHalfGraphHeight = newVHalfGraphHeight;
-            maxVHalfGraphHeight = newVHalfGraphHeight;
-            verticalBase = (min + max) / 2;
-        }
     }
 
     @Override
@@ -178,10 +120,10 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
      * @return Pair of horizontal (column) and vertical (row) value in that order.
      */
     private Pair<Integer, Integer> getSector(int hValue, int vValue) {
-        int hLevel = getLevel(hValue, numSteps, horizontalBase,
-                (int) (hHalfGraphHeight * HORIZONTAL_FOV_FACTOR));
-        int vLevel = getLevel(vValue, numSteps, verticalBase,
-                (int) (vHalfGraphHeight * VERTICAL_FOV_FACTOR));
+        int hLevel = getLevel(hValue, numSteps, calibrator.horizontalBase(),
+                calibrator.horizontalGraphHeight());
+        int vLevel = getLevel(vValue, numSteps, calibrator.verticalBase(),
+                calibrator.verticalGraphHeight());
         return Pair.create(hLevel, vLevel);
     }
 
@@ -219,18 +161,18 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        if (hHalfGraphHeight * 2 < (hStats.max - hStats.min) / 2) {
+        if (calibrator.horizontalGraphHeight() * 2 < (hStats.max - hStats.min) / 2) {
             return Pair.create(hStats.min, hStats.max);
         }
-        return Pair.create(-hHalfGraphHeight, hHalfGraphHeight);
+        return Pair.create(-calibrator.horizontalGraphHeight(), calibrator.horizontalGraphHeight());
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        if (vHalfGraphHeight * 2 < (vStats.max - vStats.min) / 2) {
+        if (calibrator.verticalGraphHeight() * 2 < (vStats.max - vStats.min) / 2) {
             return Pair.create(vStats.min, vStats.max);
         }
-        return Pair.create(-vHalfGraphHeight, vHalfGraphHeight);
+        return Pair.create(-calibrator.verticalGraphHeight(), calibrator.verticalGraphHeight());
     }
 
     /**

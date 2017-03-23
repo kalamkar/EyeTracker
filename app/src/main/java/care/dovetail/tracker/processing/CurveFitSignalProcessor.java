@@ -47,7 +47,8 @@ public class CurveFitSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d", hHalfGraphHeight, vHalfGraphHeight);
+        return String.format("%d\n%d", calibrator.horizontalGraphHeight(),
+                calibrator.verticalGraphHeight());
     }
 
     @Override
