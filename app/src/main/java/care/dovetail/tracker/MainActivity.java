@@ -96,7 +96,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         hideBars();
         updateUIFromSettings();
         startBluetooth();
-        showDualView(false);
+        showBluetoothSpinner();
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
         accelerometer.start();
@@ -151,7 +151,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     public void onConnect(String name) {
         Log.i(TAG, String.format("Connected to %s", name));
         writer = new FileDataWriter(this);
-        showDualView(true);
+        showQualityProgress();
     }
 
     @Override
@@ -159,7 +159,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         Log.i(TAG, String.format("Disconnected from %s", name));
         writer.close();
         writer = null;
-        showDualView(false);
+        showBluetoothSpinner();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -206,14 +206,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int quality = signals.getSignalQuality();
-                    boolean isGoodSignal = signals.isGoodSignal();
-                    Pair<Integer, Integer> sector = Pair.create(-1, -1);
-                    if (isGoodSignal) {
-                        sector = signals.getSector();
-                    }
+                    Pair<Integer, Integer> sector = signals.isGoodSignal()
+                            ? signals.getSector() : Pair.create(-1, -1);
+                    leftGrid.highlight(sector.first, sector.second);
+                    rightGrid.highlight(sector.first, sector.second);
 
-                    showQualityProgress(!isGoodSignal && patchClient.isConnected());
+                    int quality = signals.getSignalQuality();
+                    ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
+                    ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
 
                     boolean isStableSignal =
                             signals.isStableHorizontal() && signals.isStableVertical();
@@ -221,12 +221,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                             isStableSignal ?  View.INVISIBLE : View.VISIBLE);
                     findViewById(R.id.rightWarning).setVisibility(
                             isStableSignal ?  View.INVISIBLE : View.VISIBLE);
-
-                    ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
-                    ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
-
-                    leftGrid.highlight(sector.first, sector.second);
-                    rightGrid.highlight(sector.first, sector.second);
                 }
             });
         }
@@ -253,6 +247,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onFeature(final Feature feature) {
+//        Log.d(TAG, String.format("Got feature %s", feature.type.toString()));
         if (Feature.Type.BLINK == feature.type) {
             ringtone.play();
             if (settings.shouldShowBlinkmarks()) {
@@ -269,6 +264,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             startBluetooth();
         } else if (Feature.Type.BAD_SIGNAL == feature.type) {
             ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
+            showQualityProgress();
+        } else if (Feature.Type.GOOD_SIGNAL == feature.type) {
+            showDebugNumbers();
         }
     }
 
@@ -291,27 +289,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             stopBluetooth();
             startBluetooth();
         }
-    }
-
-    private void showDualView(final boolean show) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (MainActivity.this.isDestroyed()) {
-                    return;
-                }
-                leftGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                rightGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                leftMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                rightMoleGrid.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-                findViewById(R.id.leftBlue).setVisibility(
-                        show ?  View.INVISIBLE : View.VISIBLE);
-                findViewById(R.id.rightBlue).setVisibility(
-                        show ?  View.INVISIBLE : View.VISIBLE);
-
-                showQualityProgress(show);
-            }
-        });
     }
 
     public void startBluetooth() {
@@ -373,19 +350,57 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
-    private void showQualityProgress(boolean showProgress) {
-        findViewById(R.id.leftProgress).setVisibility(
-                showProgress ?  View.VISIBLE : View.INVISIBLE);
-        findViewById(R.id.rightProgress).setVisibility(
-                showProgress ?  View.VISIBLE : View.INVISIBLE);
-        findViewById(R.id.leftProgressLabel).setVisibility(
-                showProgress ?  View.VISIBLE : View.INVISIBLE);
-        findViewById(R.id.rightProgressLabel).setVisibility(
-                showProgress ?  View.VISIBLE : View.INVISIBLE);
+    private void showQualityProgress() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
 
-        findViewById(R.id.leftNumber).setVisibility(
-                showProgress ? View.INVISIBLE : View.VISIBLE);
-        findViewById(R.id.rightNumber).setVisibility(
-                showProgress ? View.INVISIBLE : View.VISIBLE);
+                findViewById(R.id.leftProgress).setVisibility(View.VISIBLE);
+                findViewById(R.id.rightProgress).setVisibility(View.VISIBLE);
+                findViewById(R.id.leftProgressLabel).setVisibility(View.VISIBLE);
+                findViewById(R.id.rightProgressLabel).setVisibility(View.VISIBLE);
+
+                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void showDebugNumbers() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
+
+                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
+
+                findViewById(R.id.leftNumber).setVisibility(View.VISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void showBluetoothSpinner() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.leftBlue).setVisibility(View.VISIBLE);
+                findViewById(R.id.rightBlue).setVisibility(View.VISIBLE);
+
+                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
+
+                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
+            }
+        });
     }
 }

@@ -37,6 +37,8 @@ public class BandpassBlinkDetector implements BlinkDetector {
 
     private final List<Feature.FeatureObserver> observers = new ArrayList<>();
 
+    private boolean goodSignal = false;
+
     @Override
     public void update(int value) {
         updateCount++;
@@ -46,10 +48,26 @@ public class BandpassBlinkDetector implements BlinkDetector {
 
         if (updateCount >= blinks.length && blinkStats.stdDev == 0) {
             notifyFeature(new Feature(Feature.Type.BAD_CONTACT, 0, 0, new int[0]));
-        } else if (updateCount % QUALITY_WINDOW == 0 && blinkStats.stdDev > MIN_STD_DEV) {
+            return;
+        }
+
+        if (updateCount % QUALITY_WINDOW == 0) {
             // Every 4 seconds check signal quality and send notification if signal is bad.
-            notifyFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, new int[0]));
-        } else if (updateCount % BLINK_WINDOW == 0 && blinkStats.stdDev < MIN_STD_DEV) {
+            if (blinkStats.stdDev > MIN_STD_DEV) {
+                goodSignal = false;
+                notifyFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, new int[0]));
+                return;
+            } else {
+                if (!goodSignal) {
+                    // This is a transition from bad signal to good, notify observers
+                    // We don't want to keep on notifying good signal though.
+                    notifyFeature(new Feature(Feature.Type.GOOD_SIGNAL, 0, 0, new int[0]));
+                }
+                goodSignal = true;
+            }
+        }
+
+        if (updateCount % BLINK_WINDOW == 0 && blinkStats.stdDev < MIN_STD_DEV) {
             notifyFeature(maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
                     MAX_BLINK_HEIGHT));
         }

@@ -39,7 +39,7 @@ public class PassThroughSignalProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> getSector() {
-        return null;
+        return Pair.create(-1, -1);
     }
 
     @Override

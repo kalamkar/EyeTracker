@@ -19,7 +19,8 @@ public class Feature {
         SMALL_BLINK,
         TRIPLE_BLINK,
         BAD_CONTACT,
-        BAD_SIGNAL
+        BAD_SIGNAL,
+        GOOD_SIGNAL
     }
 
     public enum Channel {
