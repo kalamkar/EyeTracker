@@ -96,7 +96,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         hideBars();
         updateUIFromSettings();
         startBluetooth();
-        showBluetoothSpinner();
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
         accelerometer.start();
@@ -159,7 +158,6 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         Log.i(TAG, String.format("Disconnected from %s", name));
         writer.close();
         writer = null;
-        showBluetoothSpinner();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -313,6 +311,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
         }
         patchClient.connect();
+        showBluetoothSpinner();
 
         chartUpdateTimer = new Timer();
         chartUpdateTimer.schedule(new ChartUpdater(), 0, GRAPH_UPDATE_MILLIS);
