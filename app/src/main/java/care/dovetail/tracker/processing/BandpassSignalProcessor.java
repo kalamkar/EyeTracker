@@ -8,9 +8,6 @@ import care.dovetail.tracker.Config;
 public class BandpassSignalProcessor extends SignalProcessor {
     private static final String TAG = "BandpassSignalProcessor";
 
-    private static final int MIN_HALF_GRAPH_HEIGHT = 2000;
-    private static final int MAX_HALF_GRAPH_HEIGHT = 12000;
-
     private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
             FilterPassType.bandpass, 2, 0.0625 / Config.SAMPLING_FREQ, 1.024 / Config.SAMPLING_FREQ));
 
@@ -23,7 +20,7 @@ public class BandpassSignalProcessor extends SignalProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%d\n%d\n%d", calibrator.horizontalGraphHeight(),
+        return String.format("%d\n%d,%d", calibrator.horizontalGraphHeight(),
                 sumProcessingMillis / updateCount, goodSignalMillis / 1000);
     }
 

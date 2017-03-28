@@ -28,10 +28,10 @@ public class CurveFitSignalProcessor extends SignalProcessor {
     private int vFunctionIntervalCount = FUNCTION_CALCULATE_INTERVAL - 1;
 
     private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
-            FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
+            FilterPassType.lowpass, 2 /* order */, 1.024 / Config.SAMPLING_FREQ, 0));
 
     private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
-            FilterPassType.lowpass, 2 /* order */, 1.0 / Config.SAMPLING_FREQ, 0));
+            FilterPassType.lowpass, 2 /* order */, 1.024 / Config.SAMPLING_FREQ, 0));
 
     public CurveFitSignalProcessor(int numSteps, int graphHeight) {
         super(numSteps, new StaticCalibrator(graphHeight));
