@@ -65,6 +65,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private GridView leftMoleGrid;
     private GridView rightMoleGrid;
 
+    private long lookupStartTimeMillis;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -158,6 +160,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         Log.i(TAG, String.format("Disconnected from %s", name));
         writer.close();
         writer = null;
+        hideAll();
     }
 
     private class ChartUpdater extends TimerTask {
@@ -283,8 +286,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onShakingChange(final boolean isShaking) {
-        if (isShaking && patchClient.isConnected()) {
+        long millisSinceLookup = System.currentTimeMillis() - lookupStartTimeMillis;
+        if (!isShaking || millisSinceLookup < 5000) {
+            return;
+        }
+        if (patchClient.isConnected()) {
             stopBluetooth();
+            startBluetooth();
+        } else {
             startBluetooth();
         }
     }
@@ -311,6 +320,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
         }
         patchClient.connect();
+        lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();
 
         chartUpdateTimer = new Timer();
@@ -391,6 +401,24 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
             public void run() {
                 findViewById(R.id.leftBlue).setVisibility(View.VISIBLE);
                 findViewById(R.id.rightBlue).setVisibility(View.VISIBLE);
+
+                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
+
+                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void hideAll() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
+                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
 
                 findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
                 findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
