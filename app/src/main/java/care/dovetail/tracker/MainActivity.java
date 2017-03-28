@@ -304,7 +304,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         switch (settings.getAlgorithm()) {
             default:
             case 0:
-                signals = new BandpassSignalProcessor(settings.getNumSteps());
+                signals = new BandpassSignalProcessor(
+                        settings.getNumSteps(), settings.getGraphHeight());
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 1:
@@ -360,73 +361,35 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     private void showQualityProgress() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
-
-                findViewById(R.id.leftProgress).setVisibility(View.VISIBLE);
-                findViewById(R.id.rightProgress).setVisibility(View.VISIBLE);
-                findViewById(R.id.leftProgressLabel).setVisibility(View.VISIBLE);
-                findViewById(R.id.rightProgressLabel).setVisibility(View.VISIBLE);
-
-                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
-            }
-        });
+        updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
     }
 
     private void showDebugNumbers() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
-
-                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
-
-                findViewById(R.id.leftNumber).setVisibility(View.VISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(View.VISIBLE);
-            }
-        });
+        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
     }
 
     private void showBluetoothSpinner() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.leftBlue).setVisibility(View.VISIBLE);
-                findViewById(R.id.rightBlue).setVisibility(View.VISIBLE);
-
-                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
-
-                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
-            }
-        });
+        updateStatusUI(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
     }
 
     private void hideAll() {
+        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.INVISIBLE);
+    }
+
+    private void updateStatusUI(final int spinner, final int progress, final int numbers) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                findViewById(R.id.leftBlue).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightBlue).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftBlue).setVisibility(spinner);
+                findViewById(R.id.rightBlue).setVisibility(spinner);
 
-                findViewById(R.id.leftProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgress).setVisibility(View.INVISIBLE);
-                findViewById(R.id.leftProgressLabel).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightProgressLabel).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftProgress).setVisibility(progress);
+                findViewById(R.id.rightProgress).setVisibility(progress);
+                findViewById(R.id.leftProgressLabel).setVisibility(progress);
+                findViewById(R.id.rightProgressLabel).setVisibility(progress);
 
-                findViewById(R.id.leftNumber).setVisibility(View.INVISIBLE);
-                findViewById(R.id.rightNumber).setVisibility(View.INVISIBLE);
+                findViewById(R.id.leftNumber).setVisibility(numbers);
+                findViewById(R.id.rightNumber).setVisibility(numbers);
             }
         });
     }

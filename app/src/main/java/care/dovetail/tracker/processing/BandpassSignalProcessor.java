@@ -20,8 +20,9 @@ public class BandpassSignalProcessor extends SignalProcessor {
             FilterPassType.bandpass, FilterCharacteristicsType.butterworth, 2 /* order */, 0,
             0.0625 / Config.SAMPLING_FREQ, 1.0 / Config.SAMPLING_FREQ));
 
-    public BandpassSignalProcessor(int numSteps) {
-        super(numSteps, new LongMemoryCalibrator(MIN_HALF_GRAPH_HEIGHT, MAX_HALF_GRAPH_HEIGHT));
+    public BandpassSignalProcessor(int numSteps, int graphHeight) {
+        // super(numSteps, new LongMemoryCalibrator(MIN_HALF_GRAPH_HEIGHT, MAX_HALF_GRAPH_HEIGHT));
+        super(numSteps, new StaticCalibrator(graphHeight));
     }
 
     @Override
