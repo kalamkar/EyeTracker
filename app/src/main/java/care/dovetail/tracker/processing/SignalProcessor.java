@@ -23,6 +23,9 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
 
     protected final int numSteps;
 
+    protected long lastUpdateTime;
+    protected long sumMillisBetweenUpdates;
+
     protected long goodSignalMillis;
     protected boolean lastUpdateWasGood = false;
 
@@ -49,6 +52,7 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
     @Override
     public synchronized final void update(int hValue, int vValue) {
         long startTime = System.currentTimeMillis();
+        sumMillisBetweenUpdates += startTime - lastUpdateTime;
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = processHorizontal(hValue);
@@ -80,9 +84,11 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
 
         sumProcessingMillis += (System.currentTimeMillis() - startTime);
         updateCount++;
+        lastUpdateTime = startTime;
     }
 
     private void resetSignal() {
+        lastUpdateTime = System.currentTimeMillis();
         goodSignalMillis = 0;
         Arrays.fill(horizontal, 0);
         Arrays.fill(vertical, 0);
