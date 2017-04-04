@@ -121,11 +121,11 @@ public class Stats {
         return new Stats(values.length, min, minIndex, max, maxIndex, sum, average, changes);
     }
 
-    private static float calculateSlope(int values[]) {
+    public static float calculateSlope(int values[]) {
         int medianWindow = Math.max(1, values.length / 20); // 5% size for median window
         int start = calculateMedian(values, 0, medianWindow);
         int end = calculateMedian(values, values.length - medianWindow, medianWindow);
-        return (start - end) / values.length;
+        return (end- start) / values.length;
     }
 
     public static int calculateMedian(int values[], int start, int length) {
