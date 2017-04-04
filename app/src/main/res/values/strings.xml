@@ -23,6 +23,7 @@
         <item>Curve Fit</item>
         <item>Pass Through</item>
         <item>Median Diff Diff</item>
+        <item>Driftless</item>
     </string-array>
 
     <string-array name="cursor">

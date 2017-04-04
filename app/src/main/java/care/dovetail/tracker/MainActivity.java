@@ -26,6 +26,7 @@ import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.BlinkDetector;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
+import care.dovetail.tracker.processing.DriftlessEogProcessor;
 import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
@@ -318,6 +319,9 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 break;
             case 3:
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
+                break;
+            case 4:
+                signals = new DriftlessEogProcessor(settings.getNumSteps());
                 break;
         }
         patchClient.connect();
