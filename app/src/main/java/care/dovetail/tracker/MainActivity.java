@@ -21,12 +21,12 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.BlinkDetector;
 import care.dovetail.tracker.processing.CurveFitSignalProcessor;
-import care.dovetail.tracker.processing.DriftlessEogProcessor;
 import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
@@ -321,7 +321,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
                 break;
             case 4:
-                signals = new DriftlessEogProcessor(settings.getNumSteps());
+                signals = new HybridEogProcessor(settings.getNumSteps());
                 break;
         }
         patchClient.connect();
