@@ -1,7 +1,5 @@
 package care.dovetail.tracker.eog;
 
-import android.util.Log;
-
 import care.dovetail.tracker.Stats;
 
 /**
@@ -51,18 +49,10 @@ public class FeatureBasedMinMaxTracker {
         return level;
     }
 
-    private static int getLevel(int value, int numSteps, int median, int halfGraphHeight) {
-        int min = median - halfGraphHeight + 1;
-        int max = median + halfGraphHeight - 1;
-        // Limiting the value between +ve and -ve maximums
-        // Shift the graph up so that it is between 0 and 2*halfGraph Height
-        int currentValue = Math.max(min, Math.min(max, value)) - min ;
-        if (currentValue >= 2 * halfGraphHeight || currentValue < 0) {
-            Log.w(TAG, String.format("Incorrect normalized value %d for value %d, median %d,"
-                    + "half height %d", currentValue, value, median, halfGraphHeight));
-        }
-        float stepHeight = (halfGraphHeight * 2) / numSteps;
-        int level = (int) Math.floor(currentValue / stepHeight);
+    private static int getLevel(int value, int min, int max, int numSteps) {
+        float stepHeight = (max - min) / numSteps;
+        value = Math.max(min, Math.min(max, value));
+        int level = (int) Math.floor((value - min) / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
