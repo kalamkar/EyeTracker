@@ -12,6 +12,7 @@ public class FeatureBasedMinMaxTracker {
     private final int window[];
 
     private final int numSteps;
+    private final float stddevMultiplier;
 
     private int min = 0;
     private int max = 0;
@@ -19,9 +20,10 @@ public class FeatureBasedMinMaxTracker {
 
     private long countSinceUpdate = 0;
 
-    public FeatureBasedMinMaxTracker(int windowSize, int numSteps) {
+    public FeatureBasedMinMaxTracker(int windowSize, int numSteps, float stddevMultiplier) {
         this.window = new int[windowSize];
         this.numSteps = numSteps;
+        this.stddevMultiplier = stddevMultiplier;
     }
 
     public int min() {
@@ -32,14 +34,20 @@ public class FeatureBasedMinMaxTracker {
         return max;
     }
 
+    public int level() {
+        return level;
+    }
+
     public int update(int value) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
 
         if (value != window[window.length - 2]) {
             Stats stats = new Stats(window);
-            min = stats.median + (int) ((countSinceUpdate / 2) * stats.slope) - (3 * stats.stdDev);
-            max = stats.median + (int) ((countSinceUpdate / 2) * stats.slope) + (3 * stats.stdDev);
+            min = stats.median + (int) ((countSinceUpdate / 2) * stats.slope)
+                    - (int) (stddevMultiplier * stats.stdDev);
+            max = stats.median + (int) ((countSinceUpdate / 2) * stats.slope)
+                    + (int) (stddevMultiplier * stats.stdDev);
             countSinceUpdate = 0;
         } else {
             countSinceUpdate++;

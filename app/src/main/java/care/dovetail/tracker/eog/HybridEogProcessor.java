@@ -15,8 +15,9 @@ public class HybridEogProcessor implements EOGProcessor {
     private static final int BLINK_WINDOW_LENGTH = 50;
     private static final int DRIFT_WINDOW_LENGTH = 500;
     private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 500;
-    private static final int CALIBRATION_WINDOW_LENGTH = 500;
     private static final int FEATURE_THRESHOLD_MULTIPLIER = 300;
+    private static final int MINMAX_WINDOW_LENGTH = 500;
+    private static final float MINMAX_STDDEV_MULTIPLIER = 3;
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
@@ -40,14 +41,25 @@ public class HybridEogProcessor implements EOGProcessor {
     private final FeatureBasedMinMaxTracker hMinMax;
     private final FeatureBasedMinMaxTracker vMinMax;
 
+    private long updateCount = 0;
+    private long lastUpdateTime;
+    private long sumMillisBetweenUpdates;
+    private long sumProcessingMillis;
+
     public HybridEogProcessor(int numSteps) {
         this.numSteps = numSteps;
-        hMinMax = new FeatureBasedMinMaxTracker(CALIBRATION_WINDOW_LENGTH, numSteps);
-        vMinMax = new FeatureBasedMinMaxTracker(CALIBRATION_WINDOW_LENGTH, numSteps);
+        hMinMax = new FeatureBasedMinMaxTracker(
+                MINMAX_WINDOW_LENGTH, numSteps, MINMAX_STDDEV_MULTIPLIER);
+        vMinMax = new FeatureBasedMinMaxTracker(
+                MINMAX_WINDOW_LENGTH, numSteps, MINMAX_STDDEV_MULTIPLIER);
     }
 
     @Override
     public void update(int hRaw, int vRaw) {
+        updateCount++;
+        long startTime = System.currentTimeMillis();
+        sumMillisBetweenUpdates += startTime - (updateCount > 1 ? lastUpdateTime : startTime);
+
         int hDriftless = hDrift.update(hRaw);
         int vDriftless = vDrift.update(vRaw);
 
@@ -75,6 +87,8 @@ public class HybridEogProcessor implements EOGProcessor {
         int hLevel = hMinMax.update(hDriftless);
         int vLevel = vMinMax.update(vDriftless);
         sector = Pair.create(hLevel, vLevel);
+
+        sumProcessingMillis += System.currentTimeMillis() - startTime;
     }
 
     @Override
@@ -84,7 +98,8 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return null;
+        return updateCount > 0 ? String.format("%d,%d", sumProcessingMillis / updateCount,
+                sumMillisBetweenUpdates / updateCount) : "";
     }
 
     @Override
