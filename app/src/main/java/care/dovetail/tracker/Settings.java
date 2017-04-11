@@ -66,7 +66,7 @@ public class Settings {
     }
 
     public boolean shouldShowBlinks() {
-        return shouldShowChart();
+        return false;  // shouldShowChart();
     }
 
     public boolean shouldWhackAMole() {
