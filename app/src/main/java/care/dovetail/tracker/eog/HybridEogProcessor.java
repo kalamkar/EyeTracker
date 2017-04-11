@@ -23,7 +23,7 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private final int numSteps;
 
-    private Pair<Integer, Integer> sector;
+    private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
     private final FixedWindowSlopeRemover hDrift = new FixedWindowSlopeRemover(DRIFT_WINDOW_LENGTH);
     private final FixedWindowSlopeRemover vDrift = new FixedWindowSlopeRemover(DRIFT_WINDOW_LENGTH);
