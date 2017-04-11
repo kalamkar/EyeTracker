@@ -59,6 +59,7 @@ public class HybridEogProcessor implements EOGProcessor {
         updateCount++;
         long startTime = System.currentTimeMillis();
         sumMillisBetweenUpdates += startTime - (updateCount > 1 ? lastUpdateTime : startTime);
+        lastUpdateTime = startTime;
 
         int hDriftless = hDrift.update(hRaw);
         int vDriftless = vDrift.update(vRaw);
