@@ -44,10 +44,9 @@ public class FeatureBasedMinMaxTracker {
 
         if (value != window[window.length - 2]) {
             Stats stats = new Stats(window);
-            min = stats.median + (int) ((countSinceUpdate / 2) * stats.slope)
-                    - (int) (stddevMultiplier * stats.stdDev);
-            max = stats.median + (int) ((countSinceUpdate / 2) * stats.slope)
-                    + (int) (stddevMultiplier * stats.stdDev);
+            int baseline = stats.median + (int) ((countSinceUpdate / 2) * stats.slope);
+            min = baseline - (int) (stddevMultiplier * stats.stdDev);
+            max = baseline + (int) (stddevMultiplier * stats.stdDev);
             countSinceUpdate = 0;
         } else {
             countSinceUpdate++;

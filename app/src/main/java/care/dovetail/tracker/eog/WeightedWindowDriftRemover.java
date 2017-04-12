@@ -51,4 +51,8 @@ public class WeightedWindowDriftRemover {
         }
         return windowMask;
     }
+
+    public void removeSpike(int size) {
+        RawBlinkDetector.removeSpike(window, size);
+    }
 }
