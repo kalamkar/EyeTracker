@@ -8,7 +8,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class SlopeFeatureRemover {
+public class SlopeFeaturePassthrough implements Transformation {
 
     private final int featureWindow[];
     private final double thresholdWindow[];
@@ -20,8 +20,8 @@ public class SlopeFeatureRemover {
 
     private int latestFeatureValue = 0;
 
-    public SlopeFeatureRemover(int windowSize, float thresholdMultiplier,
-                               int thresholdUpdateInterval) {
+    public SlopeFeaturePassthrough(int windowSize, float thresholdMultiplier,
+                                   int thresholdUpdateInterval) {
         this.featureWindow = new int[windowSize];
         this.thresholdWindow = new double[thresholdUpdateInterval];
         this.thresholdMultiplier = thresholdMultiplier;
@@ -29,6 +29,7 @@ public class SlopeFeatureRemover {
         threshold = (int) (1000 * thresholdMultiplier);
     }
 
+    @Override
     public int update(int value) {
         System.arraycopy(featureWindow, 1, featureWindow, 0, featureWindow.length - 1);
         featureWindow[featureWindow.length - 1] = value;
@@ -48,6 +49,11 @@ public class SlopeFeatureRemover {
             latestFeatureValue = value;
         }
 
-        return value - latestFeatureValue;
+        return latestFeatureValue;
+    }
+
+    @Override
+    public void removeSpike(int size) {
+        // RawBlinkDetector.removeSpike(thresholdWindow, size);
     }
 }

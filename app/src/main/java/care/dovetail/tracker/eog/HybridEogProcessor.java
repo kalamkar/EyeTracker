@@ -27,18 +27,19 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
-    private final FixedWindowSlopeRemover hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
-    private final FixedWindowSlopeRemover vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+    private final Transformation hPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
+    private final Transformation vPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
 
-    private final WeightedWindowDriftRemover hDrift2 =
-            new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
-    private final WeightedWindowDriftRemover vDrift2 =
-            new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+    private final Transformation hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+    private final Transformation vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
 
-    private final SlopeFeatureRemover hBaseline = new SlopeFeatureRemover(
+    private final Transformation hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+    private final Transformation vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+
+    private final Transformation hFeatures = new SlopeFeaturePassthrough(
             SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
             THRESHOLD_UPDATE_WINDOW_LENGTH);
-    private final SlopeFeatureRemover vBaseline = new SlopeFeatureRemover(
+    private final Transformation vFeatures = new SlopeFeaturePassthrough(
             SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
             THRESHOLD_UPDATE_WINDOW_LENGTH);
 
@@ -66,14 +67,20 @@ public class HybridEogProcessor implements EOGProcessor {
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
 
-        int hValue = hDrift1.update(hRaw);
-        int vValue = vDrift1.update(vRaw);
+        int hValue = hRaw;
+        int vValue = vRaw;
 
-        hValue = hDrift2.update(hValue);
-        vValue = vDrift2.update(vValue);
+        hValue = hDrift1.update(hValue);
+        vValue = vDrift1.update(vValue);
 
-        hValue -= hBaseline.update(hValue);
-        vValue -= vBaseline.update(vValue);
+        hValue = hPolyFit.update(hValue);
+        vValue = vPolyFit.update(vValue);
+
+//        hValue = hDrift2.update(hValue);
+//        vValue = vDrift2.update(vValue);
+
+        hValue = hFeatures.update(hValue);
+        vValue = vFeatures.update(vValue);
 
         if (blinkDetector.check(vValue)) {
             hDrift1.removeSpike(BLINK_WINDOW_LENGTH);
@@ -107,8 +114,7 @@ public class HybridEogProcessor implements EOGProcessor {
     @Override
     public String getDebugNumbers() {
         int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
-        return updateCount > 0 ? String.format("%d\n%d,%d", seconds,
-                hMinMax.max(), vMinMax.max()) : "";
+        return updateCount > 0 ? String.format("%d\n%d", seconds, processingMillis) : "";
     }
 
     @Override

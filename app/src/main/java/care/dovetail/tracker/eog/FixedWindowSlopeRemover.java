@@ -6,7 +6,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class FixedWindowSlopeRemover {
+public class FixedWindowSlopeRemover implements Transformation {
 
     private final int window[];
 
@@ -20,6 +20,7 @@ public class FixedWindowSlopeRemover {
         this.window = new int[windowSize];
     }
 
+    @Override
     public int update(int raw) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = raw;
@@ -36,6 +37,7 @@ public class FixedWindowSlopeRemover {
         return raw - (int) (countSinceUpdate * currentSlope) + shift;
     }
 
+    @Override
     public void removeSpike(int size) {
         RawBlinkDetector.removeSpike(window, size);
     }

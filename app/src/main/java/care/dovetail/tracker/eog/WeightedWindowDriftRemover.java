@@ -6,7 +6,7 @@ import org.apache.commons.math3.distribution.NormalDistribution;
  * Created by abhi on 4/11/17.
  */
 
-public class WeightedWindowDriftRemover {
+public class WeightedWindowDriftRemover implements Transformation {
 
     private final int window[];
     private final double windowMask[];
@@ -17,6 +17,7 @@ public class WeightedWindowDriftRemover {
         this.windowMask = getWindowMask(xx);
     }
 
+    @Override
     public int update(int value) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
@@ -52,6 +53,7 @@ public class WeightedWindowDriftRemover {
         return windowMask;
     }
 
+    @Override
     public void removeSpike(int size) {
         RawBlinkDetector.removeSpike(window, size);
     }
