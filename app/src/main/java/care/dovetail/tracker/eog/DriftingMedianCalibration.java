@@ -6,7 +6,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class FeatureBasedMinMaxTracker {
+public class DriftingMedianCalibration implements Calibration {
     private static final String TAG = "FeatureBasedMinMaxTrack";
 
     private final int window[];
@@ -20,24 +20,28 @@ public class FeatureBasedMinMaxTracker {
 
     private long countSinceUpdate = 0;
 
-    public FeatureBasedMinMaxTracker(int windowSize, int numSteps, float stddevMultiplier) {
+    public DriftingMedianCalibration(int windowSize, int numSteps, float stddevMultiplier) {
         this.window = new int[windowSize];
         this.numSteps = numSteps;
         this.stddevMultiplier = stddevMultiplier;
     }
 
+    @Override
     public int min() {
         return min;
     }
 
+    @Override
     public int max() {
         return max;
     }
 
+    @Override
     public int level() {
         return level;
     }
 
+    @Override
     public int update(int value) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
@@ -64,6 +68,7 @@ public class FeatureBasedMinMaxTracker {
         return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
 
+    @Override
     public void removeSpike(int size) {
         RawBlinkDetector.removeSpike(window, size);
     }

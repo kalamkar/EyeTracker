@@ -17,13 +17,11 @@ public class HybridEogProcessor implements EOGProcessor {
     private static final int DRIFT2_WINDOW_LENGTH = 1024;
     private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 500;
     private static final float FEATURE_THRESHOLD_MULTIPLIER = 2.0f;
-    private static final int MINMAX_WINDOW_LENGTH = 500;
-    private static final float MINMAX_STDDEV_MULTIPLIER = 2.0f;
+    private static final int CALIBRATION_WINDOW_LENGTH = 500;
+    private static final float CALIBRATION_RANGE_STDDEV_MULTIPLIER = 2.0f;
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
-
-    private final int numSteps;
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
@@ -45,19 +43,18 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private final RawBlinkDetector blinkDetector = new RawBlinkDetector(BLINK_WINDOW_LENGTH);
 
-    private final FeatureBasedMinMaxTracker hMinMax;
-    private final FeatureBasedMinMaxTracker vMinMax;
+    private final Calibration hCalibration;
+    private final Calibration vCalibration;
 
     private long updateCount = 0;
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
     public HybridEogProcessor(int numSteps) {
-        this.numSteps = numSteps;
-        hMinMax = new FeatureBasedMinMaxTracker(
-                MINMAX_WINDOW_LENGTH, numSteps, MINMAX_STDDEV_MULTIPLIER);
-        vMinMax = new FeatureBasedMinMaxTracker(
-                MINMAX_WINDOW_LENGTH, numSteps, MINMAX_STDDEV_MULTIPLIER);
+        hCalibration = new DriftingMedianCalibration(
+                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
+        vCalibration = new DriftingMedianCalibration(
+                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
@@ -89,8 +86,8 @@ public class HybridEogProcessor implements EOGProcessor {
             vDrift2.removeSpike(BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
-            hMinMax.removeSpike(BLINK_WINDOW_LENGTH);
-            vMinMax.removeSpike(BLINK_WINDOW_LENGTH);
+            hCalibration.removeSpike(BLINK_WINDOW_LENGTH);
+            vCalibration.removeSpike(BLINK_WINDOW_LENGTH);
         }
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
@@ -99,9 +96,9 @@ public class HybridEogProcessor implements EOGProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
 
-        int hLevel = hMinMax.update(hValue);
-        int vLevel = vMinMax.update(vValue);
-        sector = Pair.create(hLevel, vLevel);
+        hCalibration.update(hValue);
+        vCalibration.update(vValue);
+        sector = Pair.create(hCalibration.level(), vCalibration.level());
 
         processingMillis = System.currentTimeMillis() - startTime;
     }
@@ -149,11 +146,11 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(hMinMax.min(), hMinMax.max());
+        return Pair.create(hCalibration.min(), hCalibration.max());
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(vMinMax.min(), vMinMax.max());
+        return Pair.create(vCalibration.min(), vCalibration.max());
     }
 }
