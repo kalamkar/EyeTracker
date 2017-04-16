@@ -62,7 +62,7 @@ public class DriftingMedianCalibration implements Calibration {
 
     private static int getLevel(int value, int min, int max, int numSteps) {
         float stepHeight = (max - min) / numSteps;
-        value = Math.max(min, Math.min(max, value));
+        value = Math.max(min, Math.min(max - 1, value));
         int level = (int) Math.floor((value - min) / stepHeight);
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
