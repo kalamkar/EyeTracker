@@ -6,8 +6,8 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class DriftingMedianCalibration implements Calibration {
-    private static final String TAG = "FeatureBasedMinMaxTrack";
+public class FixedIntervalMedianCalibration implements Calibration {
+    private static final String TAG = "FixedWindowMedianCalibration";
 
     private final int window[];
 
@@ -18,9 +18,9 @@ public class DriftingMedianCalibration implements Calibration {
     private int max = 0;
     private int level = 0;
 
-    private long countSinceUpdate = 0;
+    private int countSinceUpdate = 0;
 
-    public DriftingMedianCalibration(int windowSize, int numSteps, float stddevMultiplier) {
+    public FixedIntervalMedianCalibration(int windowSize, int numSteps, float stddevMultiplier) {
         this.window = new int[windowSize];
         this.numSteps = numSteps;
         this.stddevMultiplier = stddevMultiplier;
@@ -46,7 +46,7 @@ public class DriftingMedianCalibration implements Calibration {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
 
-        if (value != window[window.length - 2]) {
+        if (countSinceUpdate % window.length == 0) {
             Stats stats = new Stats(window);
             int baseline = stats.median + (int) ((countSinceUpdate / 2) * stats.slope);
             min = baseline - (int) (stddevMultiplier * stats.stdDev);
@@ -56,16 +56,8 @@ public class DriftingMedianCalibration implements Calibration {
             countSinceUpdate++;
         }
 
-        level = getLevel(value, min, max, numSteps);
+        level = DriftingMedianCalibration.getLevel(value, min, max, numSteps);
         return level;
-    }
-
-    public static int getLevel(int value, int min, int max, int numSteps) {
-        float stepHeight = (max - min) / numSteps;
-        value = Math.max(min, Math.min(max - 1, value));
-        int level = (int) Math.floor((value - min) / stepHeight);
-        // Inverse the level
-        return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
 
     @Override

@@ -15,6 +15,7 @@ public class HybridEogProcessor implements EOGProcessor {
     private static final int BLINK_WINDOW_LENGTH = 50;
     private static final int DRIFT1_WINDOW_LENGTH = 500;
     private static final int DRIFT2_WINDOW_LENGTH = 1024;
+    private static final int MEDIAN_WINDOW_LENGTH = 20;
     private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 500;
     private static final float FEATURE_THRESHOLD_MULTIPLIER = 2.0f;
     private static final int CALIBRATION_WINDOW_LENGTH = 500;
@@ -30,6 +31,9 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private final Transformation hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
     private final Transformation vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+
+    private final Transformation hMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
+    private final Transformation vMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
 
     private final Transformation hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
     private final Transformation vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
@@ -51,7 +55,11 @@ public class HybridEogProcessor implements EOGProcessor {
     private long firstUpdateTimeMillis = 0;
 
     public HybridEogProcessor(int numSteps) {
-        hCalibration = new DriftingMedianCalibration(
+//        hCalibration = new DriftingMedianCalibration(
+//                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
+//        vCalibration = new DriftingMedianCalibration(
+//                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
+        hCalibration = new FixedIntervalMedianCalibration(
                 CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
         vCalibration = new DriftingMedianCalibration(
                 CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
@@ -70,14 +78,14 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hDrift1.update(hValue);
         vValue = vDrift1.update(vValue);
 
-        hValue = hPolyFit.update(hValue);
-        vValue = vPolyFit.update(vValue);
+        hValue = hMedian.update(hValue);
+        vValue = vMedian.update(vValue);
+
+//        hValue = hPolyFit.update(hValue);
+//        vValue = vPolyFit.update(vValue);
 
 //        hValue = hDrift2.update(hValue);
 //        vValue = vDrift2.update(vValue);
-
-        hValue = hFeatures.update(hValue);
-        vValue = vFeatures.update(vValue);
 
         if (blinkDetector.check(vValue)) {
             hDrift1.removeSpike(BLINK_WINDOW_LENGTH);
@@ -89,6 +97,9 @@ public class HybridEogProcessor implements EOGProcessor {
             hCalibration.removeSpike(BLINK_WINDOW_LENGTH);
             vCalibration.removeSpike(BLINK_WINDOW_LENGTH);
         }
+
+//        hValue = hFeatures.update(hValue);
+//        vValue = vFeatures.update(vValue);
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
