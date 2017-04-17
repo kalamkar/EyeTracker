@@ -6,7 +6,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class FeatureHoldDriftRemoval implements Transformation {
+public class FeatureHoldDriftRemoval implements Filter {
     private static final String TAG = "FeatureHoldDriftRemoval";
 
     private final int window[];

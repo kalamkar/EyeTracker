@@ -6,7 +6,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class FixedWindowSlopeRemover implements Transformation {
+public class FixedWindowSlopeRemover implements Filter {
 
     private final int window[];
 

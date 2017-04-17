@@ -28,25 +28,25 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
-    private final Transformation hPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
-    private final Transformation vPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
+    private final Filter hPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
+    private final Filter vPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
 
-    private final Transformation hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
-    private final Transformation vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+    private final Filter hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+    private final Filter vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
 
-    private final Transformation hMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
-    private final Transformation vMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
+    private final Filter hMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
+    private final Filter vMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
 
-    private final Transformation hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
-    private final Transformation vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+    private final Filter hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+    private final Filter vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
 
-    private final Transformation hDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
-    private final Transformation vDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
+    private final Filter hDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
+    private final Filter vDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
 
-    private final Transformation hFeatures = new SlopeFeaturePassthrough(
+    private final Filter hFeatures = new SlopeFeaturePassthrough(
             SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
             THRESHOLD_UPDATE_WINDOW_LENGTH);
-    private final Transformation vFeatures = new SlopeFeaturePassthrough(
+    private final Filter vFeatures = new SlopeFeaturePassthrough(
             SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
             THRESHOLD_UPDATE_WINDOW_LENGTH);
 

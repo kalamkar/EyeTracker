@@ -6,7 +6,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/16/17.
  */
 
-public class MedianFilter implements Transformation {
+public class MedianFilter implements Filter {
     private final int window[];
 
     public MedianFilter(int windowSize) {

@@ -10,7 +10,7 @@ import care.dovetail.tracker.Config;
  * Created by abhi on 4/10/17.
  */
 
-public class CurveFitDriftRemover implements Transformation {
+public class CurveFitDriftRemover implements Filter {
 
     private static final int POLYNOMIAL_DEGREE = 2;
     private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 1.66667;

@@ -8,7 +8,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/10/17.
  */
 
-public class SlopeFeaturePassthrough implements Transformation {
+public class SlopeFeaturePassthrough implements Filter {
 
     private final int featureWindow[];
     private final double thresholdWindow[];

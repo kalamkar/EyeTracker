@@ -6,7 +6,7 @@ import org.apache.commons.math3.distribution.NormalDistribution;
  * Created by abhi on 4/11/17.
  */
 
-public class WeightedWindowDriftRemover implements Transformation {
+public class WeightedWindowDriftRemover implements Filter {
 
     private final int window[];
     private final double windowMask[];
