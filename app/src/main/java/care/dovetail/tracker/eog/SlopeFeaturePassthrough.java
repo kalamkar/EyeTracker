@@ -30,7 +30,7 @@ public class SlopeFeaturePassthrough implements Filter {
     }
 
     @Override
-    public int update(int value) {
+    public int filter(int value) {
         System.arraycopy(featureWindow, 1, featureWindow, 0, featureWindow.length - 1);
         featureWindow[featureWindow.length - 1] = value;
         float slope = Stats.calculateSlope(featureWindow);

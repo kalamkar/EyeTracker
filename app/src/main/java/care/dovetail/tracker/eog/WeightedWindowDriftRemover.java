@@ -18,7 +18,7 @@ public class WeightedWindowDriftRemover implements Filter {
     }
 
     @Override
-    public int update(int value) {
+    public int filter(int value) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
 

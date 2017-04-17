@@ -5,7 +5,7 @@ package care.dovetail.tracker.eog;
  */
 
 interface Filter {
-    int update(int raw);
+    int filter(int raw);
 
     void removeSpike(int size);
 }

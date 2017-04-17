@@ -35,7 +35,7 @@ public class FixedRangeCalibration implements Calibration {
     }
 
     @Override
-    public int update(int value) {
+    public int filter(int value) {
         level = DriftingMedianCalibration.getLevel(value, min, max, numSteps);
         return level;
     }

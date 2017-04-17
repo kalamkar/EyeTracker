@@ -33,7 +33,7 @@ public class CurveFitDriftRemover implements Filter {
     }
 
     @Override
-    public int update(int raw) {
+    public int filter(int raw) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = raw;
 
