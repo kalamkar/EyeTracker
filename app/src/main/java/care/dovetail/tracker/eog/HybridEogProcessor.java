@@ -11,6 +11,8 @@ import care.dovetail.tracker.processing.EOGProcessor;
 
 public class HybridEogProcessor implements EOGProcessor {
 
+    private static final int CALIBRATION_RANGE = 10000;
+
     private static final int SLOPE_FEATURE_WINDOW_LENGTH = 5;
     private static final int BLINK_WINDOW_LENGTH = 50;
     private static final int DRIFT1_WINDOW_LENGTH = 500;
@@ -38,6 +40,9 @@ public class HybridEogProcessor implements EOGProcessor {
     private final Transformation hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
     private final Transformation vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
 
+    private final Transformation hDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
+    private final Transformation vDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
+
     private final Transformation hFeatures = new SlopeFeaturePassthrough(
             SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
             THRESHOLD_UPDATE_WINDOW_LENGTH);
@@ -60,9 +65,11 @@ public class HybridEogProcessor implements EOGProcessor {
 //        vCalibration = new DriftingMedianCalibration(
 //                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
         hCalibration = new FixedIntervalMedianCalibration(
-                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
-        vCalibration = new DriftingMedianCalibration(
-                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
+                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE);
+        vCalibration = new FixedIntervalMedianCalibration(
+                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE);
+//        hCalibration = new FixedRangeCalibration(numSteps, CALIBRATION_RANGE);
+//        vCalibration = new FixedRangeCalibration(numSteps, CALIBRATION_RANGE);
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
@@ -98,8 +105,11 @@ public class HybridEogProcessor implements EOGProcessor {
             vCalibration.removeSpike(BLINK_WINDOW_LENGTH);
         }
 
-//        hValue = hFeatures.update(hValue);
-//        vValue = vFeatures.update(vValue);
+        hValue = hFeatures.update(hValue);
+        vValue = vFeatures.update(vValue);
+
+//        hValue = hDrift3.update(hValue);
+//        vValue = vDrift3.update(vValue);
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
