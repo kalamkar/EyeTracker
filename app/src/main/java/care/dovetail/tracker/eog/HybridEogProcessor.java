@@ -2,7 +2,11 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.processing.EOGProcessor;
 
 /**
@@ -11,44 +15,35 @@ import care.dovetail.tracker.processing.EOGProcessor;
 
 public class HybridEogProcessor implements EOGProcessor {
 
-    private static final int CALIBRATION_RANGE = 10000;
-
     private static final int SLOPE_FEATURE_WINDOW_LENGTH = 5;
     private static final int BLINK_WINDOW_LENGTH = 50;
-    private static final int DRIFT1_WINDOW_LENGTH = 500;
-    private static final int DRIFT2_WINDOW_LENGTH = 1024;
-    private static final int MEDIAN_WINDOW_LENGTH = 20;
-    private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 500;
+    private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 512;
     private static final float FEATURE_THRESHOLD_MULTIPLIER = 2.0f;
-    private static final int CALIBRATION_WINDOW_LENGTH = 500;
-    private static final float CALIBRATION_RANGE_STDDEV_MULTIPLIER = 2.0f;
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
-    private final Filter hPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
-    private final Filter vPolyFit = new CurveFitDriftRemover(DRIFT1_WINDOW_LENGTH);
+    private final List<Filter> filters = new ArrayList<>();
 
-    private final Filter hDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
-    private final Filter vDrift1 = new FixedWindowSlopeRemover(DRIFT1_WINDOW_LENGTH);
+    private final Filter hDrift1;
+    private final Filter vDrift1;
 
-    private final Filter hMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
-    private final Filter vMedian = new MedianFilter(MEDIAN_WINDOW_LENGTH);
+//    private final Filter hMedian;
+//    private final Filter vMedian;
 
-    private final Filter hDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
-    private final Filter vDrift2 = new WeightedWindowDriftRemover(DRIFT2_WINDOW_LENGTH);
+    private final Filter hDrift2;
+    private final Filter vDrift2;
 
-    private final Filter hDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
-    private final Filter vDrift3 = new FeatureHoldDriftRemoval(DRIFT1_WINDOW_LENGTH);
+//    private final Filter hLongDrift;
+//    private final Filter vLongDrift;
 
-    private final Filter hFeatures = new SlopeFeaturePassthrough(
-            SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
-            THRESHOLD_UPDATE_WINDOW_LENGTH);
-    private final Filter vFeatures = new SlopeFeaturePassthrough(
-            SLOPE_FEATURE_WINDOW_LENGTH, FEATURE_THRESHOLD_MULTIPLIER,
-            THRESHOLD_UPDATE_WINDOW_LENGTH);
+    private final Filter hDrift3;
+    private final Filter vDrift3;
+
+    private final Filter hFeatures;
+    private final Filter vFeatures;
 
     private final RawBlinkDetector blinkDetector = new RawBlinkDetector(BLINK_WINDOW_LENGTH);
 
@@ -60,16 +55,43 @@ public class HybridEogProcessor implements EOGProcessor {
     private long firstUpdateTimeMillis = 0;
 
     public HybridEogProcessor(int numSteps) {
-//        hCalibration = new DriftingMedianCalibration(
-//                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
-//        vCalibration = new DriftingMedianCalibration(
-//                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE_STDDEV_MULTIPLIER);
-        hCalibration = new FixedIntervalMedianCalibration(
-                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE);
-        vCalibration = new FixedIntervalMedianCalibration(
-                CALIBRATION_WINDOW_LENGTH, numSteps, CALIBRATION_RANGE);
-//        hCalibration = new FixedRangeCalibration(numSteps, CALIBRATION_RANGE);
-//        vCalibration = new FixedRangeCalibration(numSteps, CALIBRATION_RANGE);
+        hDrift1 = new FixedWindowSlopeRemover(500);
+        vDrift1 = new FixedWindowSlopeRemover(500);
+        filters.add(hDrift1);
+        filters.add(vDrift1);
+
+        hDrift2 = new FixedWindowSlopeRemover(500);
+        vDrift2 = new FixedWindowSlopeRemover(500);
+        filters.add(hDrift2);
+        filters.add(vDrift2);
+
+//        hLongDrift = new SimpleDriftRemoval(50, FEATURE_THRESHOLD_MULTIPLIER);
+//        vLongDrift = new SimpleDriftRemoval(50, FEATURE_THRESHOLD_MULTIPLIER);
+//        filters.add(hLongDrift);
+//        filters.add(vLongDrift);
+
+//        hMedian = new MedianFilter(20);
+//        vMedian = new MedianFilter(20);
+//        filters.add(hMedian);
+//        filters.add(vMedian);
+
+        hDrift3 = new FeatureHoldDriftRemoval(50);
+        vDrift3 = new FeatureHoldDriftRemoval(50);
+        filters.add(hDrift3);
+        filters.add(vDrift3);
+
+        hFeatures = new SlopeFeaturePassthrough(SLOPE_FEATURE_WINDOW_LENGTH,
+                FEATURE_THRESHOLD_MULTIPLIER, THRESHOLD_UPDATE_WINDOW_LENGTH);
+        vFeatures = new SlopeFeaturePassthrough(SLOPE_FEATURE_WINDOW_LENGTH,
+                FEATURE_THRESHOLD_MULTIPLIER, THRESHOLD_UPDATE_WINDOW_LENGTH);
+        filters.add(hFeatures);
+        filters.add(vFeatures);
+
+        hCalibration = new FixedRangeCalibration(numSteps, 15000);
+        vCalibration = new FixedRangeCalibration(numSteps, 15000);
+        filters.add(hCalibration);
+        filters.add(vCalibration);
+
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
@@ -82,34 +104,31 @@ public class HybridEogProcessor implements EOGProcessor {
         int hValue = hRaw;
         int vValue = vRaw;
 
-        hValue = hDrift1.update(hValue);
-        vValue = vDrift1.update(vValue);
+        hValue = hDrift1.filter(hValue);
+        vValue = vDrift1.filter(vValue);
 
-        hValue = hMedian.update(hValue);
-        vValue = vMedian.update(vValue);
+        hValue = hDrift2.filter(hValue);
+        vValue = vDrift2.filter(vValue);
 
-//        hValue = hPolyFit.update(hValue);
-//        vValue = vPolyFit.update(vValue);
+//        hValue = hMedian.filter(hValue);
+//        vValue = vMedian.filter(vValue);
 
-//        hValue = hDrift2.update(hValue);
-//        vValue = vDrift2.update(vValue);
+//        hValue = hLongDrift.filter(hValue);
+//        vValue = vLongDrift.filter(vValue);
 
         if (blinkDetector.check(vValue)) {
-            hDrift1.removeSpike(BLINK_WINDOW_LENGTH);
-            vDrift1.removeSpike(BLINK_WINDOW_LENGTH);
-            hDrift2.removeSpike(BLINK_WINDOW_LENGTH);
-            vDrift2.removeSpike(BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
-            hCalibration.removeSpike(BLINK_WINDOW_LENGTH);
-            vCalibration.removeSpike(BLINK_WINDOW_LENGTH);
+            for (Filter filter : filters) {
+                filter.removeSpike(BLINK_WINDOW_LENGTH);
+            }
         }
 
-        hValue = hFeatures.update(hValue);
-        vValue = vFeatures.update(vValue);
+        hValue = hFeatures.filter(hValue);
+        vValue = vFeatures.filter(vValue);
 
-//        hValue = hDrift3.update(hValue);
-//        vValue = vDrift3.update(vValue);
+        hValue = hDrift3.filter(hValue);
+        vValue = vDrift3.filter(vValue);
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
@@ -117,8 +136,8 @@ public class HybridEogProcessor implements EOGProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
 
-        hCalibration.update(hValue);
-        vCalibration.update(vValue);
+        hCalibration.filter(hValue);
+        vCalibration.filter(vValue);
         sector = Pair.create(hCalibration.level(), vCalibration.level());
 
         processingMillis = System.currentTimeMillis() - startTime;
@@ -167,11 +186,13 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(hCalibration.min(), hCalibration.max());
+        Stats stats = new Stats(horizontal);
+        return Pair.create(stats.min, stats.max);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(vCalibration.min(), vCalibration.max());
+        Stats stats = new Stats(vertical);
+        return Pair.create(stats.min, stats.max);
     }
 }

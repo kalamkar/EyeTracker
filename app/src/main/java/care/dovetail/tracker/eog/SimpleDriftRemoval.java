@@ -1,13 +1,15 @@
 package care.dovetail.tracker.eog;
 
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
+
 import care.dovetail.tracker.Stats;
 
 /**
  * Created by abhi on 4/10/17.
  */
 
-public class FeatureHoldDriftRemoval implements Filter {
-    private static final String TAG = "FeatureHoldDriftRemoval";
+public class SimpleDriftRemoval implements Filter {
+    private static final String TAG = "SimpleDriftRemoval";
 
     private final int window[];
 
@@ -18,25 +20,31 @@ public class FeatureHoldDriftRemoval implements Filter {
 
     private int countSinceUpdate = 0;
 
-    public FeatureHoldDriftRemoval(int windowSize) {
+    private final double thresholdWindow[];
+    private final float thresholdMultiplier;
+    private int threshold;
+
+    public SimpleDriftRemoval(int windowSize, float thresholdMultiplier) {
         this.window = new int[windowSize];
+        this.thresholdWindow = new double[windowSize];
+        this.thresholdMultiplier = thresholdMultiplier;
     }
 
     @Override
     public int filter(int value) {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
-
         float drift = Stats.calculateSlope(window);
+
+        System.arraycopy(thresholdWindow, 1, thresholdWindow, 0, thresholdWindow.length - 1);
+        thresholdWindow[thresholdWindow.length - 1] = drift;
 
         if (countSinceUpdate % window.length == 0) {
             int median = Stats.calculateMedian(window, 0, window.length);
             newBase = median + (int) ((countSinceUpdate / 2) * drift);
 
-//            Stats stats = new Stats(window);
-//            int min = stats.min + (int) ((window.length - stats.minIndex) * drift);
-//            int max = stats.max + (int) ((window.length - stats.maxIndex) * drift);
-//            newBase = ((min + max) / 2);
+            double stddev = new StandardDeviation().evaluate(thresholdWindow);
+            threshold = (int) (stddev * thresholdMultiplier);
 
             countSinceUpdate = 0;
             cumulativeDrift = 0;
@@ -44,9 +52,7 @@ public class FeatureHoldDriftRemoval implements Filter {
 
         countSinceUpdate++;
 
-        // Hold the drift updates to min max during fixation / gaze. Since it is comparing simple
-        // values (and not slopes) this filter should be after SlopeFeaturePassthrough.
-        if (window[window.length - 1] != window[window.length - 2]) {
+        if (Math.abs(drift) > Math.abs(threshold)) {
             base = newBase;
             base += cumulativeDrift;
             cumulativeDrift = 0;
