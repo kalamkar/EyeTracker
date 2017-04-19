@@ -15,10 +15,7 @@ import care.dovetail.tracker.processing.EOGProcessor;
 
 public class HybridEogProcessor implements EOGProcessor {
 
-    private static final int SLOPE_FEATURE_WINDOW_LENGTH = 5;
     private static final int BLINK_WINDOW_LENGTH = 50;
-    private static final int THRESHOLD_UPDATE_WINDOW_LENGTH = 512;
-    private static final float FEATURE_THRESHOLD_MULTIPLIER = 2.0f;
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
@@ -30,17 +27,11 @@ public class HybridEogProcessor implements EOGProcessor {
     private final Filter hDrift1;
     private final Filter vDrift1;
 
-//    private final Filter hMedian;
-//    private final Filter vMedian;
-
     private final Filter hDrift2;
     private final Filter vDrift2;
 
-//    private final Filter hLongDrift;
-//    private final Filter vLongDrift;
-
-    private final Filter hDrift3;
-    private final Filter vDrift3;
+    private final Filter hCurveFit;
+    private final Filter vCurveFit;
 
     private final Filter hFeatures;
     private final Filter vFeatures;
@@ -65,20 +56,18 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hDrift2);
         filters.add(vDrift2);
 
-        hDrift3 = new ValueChangeCurveFitDriftRemoval(512);
-        vDrift3 = new ValueChangeCurveFitDriftRemoval(512);
-        filters.add(hDrift3);
-        filters.add(vDrift3);
+        hCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+        vCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+        filters.add(hCurveFit);
+        filters.add(vCurveFit);
 
-        hFeatures = new SlopeFeaturePassthrough(SLOPE_FEATURE_WINDOW_LENGTH,
-                FEATURE_THRESHOLD_MULTIPLIER, THRESHOLD_UPDATE_WINDOW_LENGTH);
-        vFeatures = new SlopeFeaturePassthrough(SLOPE_FEATURE_WINDOW_LENGTH,
-                FEATURE_THRESHOLD_MULTIPLIER, THRESHOLD_UPDATE_WINDOW_LENGTH);
+        hFeatures = new SlopeFeaturePassthrough(5, 2.0f, 512);
+        vFeatures = new SlopeFeaturePassthrough(5, 2.0f, 512);
         filters.add(hFeatures);
         filters.add(vFeatures);
 
-        hCalibration = new FixedRangeCalibration(numSteps, 10000);
-        vCalibration = new FixedRangeCalibration(numSteps, 10000);
+        hCalibration = new FixedRangeCalibration(numSteps, 8000);
+        vCalibration = new FixedRangeCalibration(numSteps, 8000);
         filters.add(hCalibration);
         filters.add(vCalibration);
 
@@ -100,7 +89,6 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hDrift2.filter(hValue);
         vValue = vDrift2.filter(vValue);
 
-
         if (blinkDetector.check(vValue)) {
             RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
@@ -112,8 +100,8 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hFeatures.filter(hValue);
         vValue = vFeatures.filter(vValue);
 
-        hValue = hDrift3.filter(hValue);
-        vValue = vDrift3.filter(vValue);
+        hValue = hCurveFit.filter(hValue);
+        vValue = vCurveFit.filter(vValue);
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
