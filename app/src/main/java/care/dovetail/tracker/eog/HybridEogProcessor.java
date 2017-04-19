@@ -22,6 +22,9 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
+    private Stats hStats = new Stats(new int[]{});
+    private Stats vStats = new Stats(new int[]{});
+
     private final List<Filter> filters = new ArrayList<>();
 
     private final Filter hDrift1;
@@ -61,8 +64,8 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hCurveFit);
         filters.add(vCurveFit);
 
-        hFeatures = new SlopeFeaturePassthrough(5, 2.0f, 512);
-        vFeatures = new SlopeFeaturePassthrough(5, 2.0f, 512);
+        hFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
+        vFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
         filters.add(hFeatures);
         filters.add(vFeatures);
 
@@ -113,6 +116,9 @@ public class HybridEogProcessor implements EOGProcessor {
         vCalibration.filter(vValue);
         sector = Pair.create(hCalibration.level(), vCalibration.level());
 
+        hStats = new Stats(horizontal);
+        vStats = new Stats(vertical);
+
         processingMillis = System.currentTimeMillis() - startTime;
     }
 
@@ -124,27 +130,28 @@ public class HybridEogProcessor implements EOGProcessor {
     @Override
     public String getDebugNumbers() {
         int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
-        return updateCount > 0 ? String.format("%d\n%d", seconds, processingMillis) : "";
+        int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
+        return updateCount > 0 ? String.format("%d\n%d, %dk", seconds, processingMillis, dev) : "";
     }
 
     @Override
     public boolean isGoodSignal() {
-        return true;
+        return isStableHorizontal() && isStableVertical() ;
     }
 
     @Override
     public int getSignalQuality() {
-        return 100;
+        return 100 - Math.min(100000, Math.max(hStats.stdDev, vStats.stdDev)) / 1000;
     }
 
     @Override
     public boolean isStableHorizontal() {
-        return true;
+        return hStats.stdDev < 20000;
     }
 
     @Override
     public boolean isStableVertical() {
-        return true;
+        return vStats.stdDev < 20000;
     }
 
     @Override
@@ -159,13 +166,13 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        Stats stats = new Stats(horizontal);
-        return Pair.create(stats.min, stats.max);
+        return Pair.create(hCalibration.min(), hCalibration.max());
+        // return Pair.create(hStats.min, hStats.max);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        Stats stats = new Stats(vertical);
-        return Pair.create(stats.min, stats.max);
+        return Pair.create(vCalibration.min(), vCalibration.max());
+        // return Pair.create(vStats.min, vStats.max);
     }
 }

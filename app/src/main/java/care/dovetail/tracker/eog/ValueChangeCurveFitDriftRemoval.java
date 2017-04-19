@@ -22,6 +22,8 @@ public class ValueChangeCurveFitDriftRemoval implements Filter {
 
     private int base = 0;
 
+    private int countSinceUpdate = 0;
+
     public ValueChangeCurveFitDriftRemoval(int windowSize) {
         this.window = new int[windowSize];
     }
@@ -31,10 +33,13 @@ public class ValueChangeCurveFitDriftRemoval implements Filter {
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
 
-        if (window[window.length - 1] != window[window.length - 2]) {
+        if (window[window.length - 1] != window[window.length - 2] && countSinceUpdate > 5) {
             PolynomialFunction function = getCurve(window, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
             base = (int) function.value(window.length + 1);
+            countSinceUpdate = 0;
         }
+
+        countSinceUpdate++;
 
         return value - base;
     }
