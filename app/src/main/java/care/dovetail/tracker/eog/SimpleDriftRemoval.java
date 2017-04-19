@@ -32,6 +32,7 @@ public class SimpleDriftRemoval implements Filter {
 
     @Override
     public int filter(int value) {
+
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
         float drift = Stats.calculateSlope(window);
@@ -52,6 +53,7 @@ public class SimpleDriftRemoval implements Filter {
 
         countSinceUpdate++;
 
+        // TODO(abhi) Use a separate feature slope window here for better feature detection.
         if (Math.abs(drift) > Math.abs(threshold)) {
             base = newBase;
             base += cumulativeDrift;

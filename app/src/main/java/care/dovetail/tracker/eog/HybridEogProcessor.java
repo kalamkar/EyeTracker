@@ -55,28 +55,18 @@ public class HybridEogProcessor implements EOGProcessor {
     private long firstUpdateTimeMillis = 0;
 
     public HybridEogProcessor(int numSteps) {
-        hDrift1 = new FixedWindowSlopeRemover(500);
-        vDrift1 = new FixedWindowSlopeRemover(500);
+        hDrift1 = new FixedWindowSlopeRemover(1024);
+        vDrift1 = new FixedWindowSlopeRemover(1024);
         filters.add(hDrift1);
         filters.add(vDrift1);
 
-        hDrift2 = new FixedWindowSlopeRemover(500);
-        vDrift2 = new FixedWindowSlopeRemover(500);
+        hDrift2 = new FixedWindowSlopeRemover(512);
+        vDrift2 = new FixedWindowSlopeRemover(512);
         filters.add(hDrift2);
         filters.add(vDrift2);
 
-//        hLongDrift = new SimpleDriftRemoval(50, FEATURE_THRESHOLD_MULTIPLIER);
-//        vLongDrift = new SimpleDriftRemoval(50, FEATURE_THRESHOLD_MULTIPLIER);
-//        filters.add(hLongDrift);
-//        filters.add(vLongDrift);
-
-//        hMedian = new MedianFilter(20);
-//        vMedian = new MedianFilter(20);
-//        filters.add(hMedian);
-//        filters.add(vMedian);
-
-        hDrift3 = new FeatureHoldDriftRemoval(50);
-        vDrift3 = new FeatureHoldDriftRemoval(50);
+        hDrift3 = new ValueChangeCurveFitDriftRemoval(512);
+        vDrift3 = new ValueChangeCurveFitDriftRemoval(512);
         filters.add(hDrift3);
         filters.add(vDrift3);
 
@@ -87,8 +77,8 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hFeatures);
         filters.add(vFeatures);
 
-        hCalibration = new FixedRangeCalibration(numSteps, 15000);
-        vCalibration = new FixedRangeCalibration(numSteps, 15000);
+        hCalibration = new FixedRangeCalibration(numSteps, 10000);
+        vCalibration = new FixedRangeCalibration(numSteps, 10000);
         filters.add(hCalibration);
         filters.add(vCalibration);
 
@@ -110,11 +100,6 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hDrift2.filter(hValue);
         vValue = vDrift2.filter(vValue);
 
-//        hValue = hMedian.filter(hValue);
-//        vValue = vMedian.filter(vValue);
-
-//        hValue = hLongDrift.filter(hValue);
-//        vValue = vLongDrift.filter(vValue);
 
         if (blinkDetector.check(vValue)) {
             RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
