@@ -115,16 +115,20 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     private void updateUIFromSettings() {
         if (settings.isDayDream()) {
-            findViewById(R.id.left).setPadding(
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
-            findViewById(R.id.right).setPadding(
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+            for (int id : new int[]{R.id.leftDebug, R.id.leftTracking, R.id.leftGestures}){
+                findViewById(id).setPadding(
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+            }
+            for (int id : new int[]{R.id.rightDebug, R.id.rightTracking, R.id.rightGestures}) {
+                findViewById(id).setPadding(
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
+                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+            }
         }
 
         int numSteps = settings.getNumSteps();
@@ -147,6 +151,14 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         } else {
             leftGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
             rightGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
+        }
+
+        if (settings.getAlgorithm() == 2) { // Gesture Recognizer
+            findViewById(R.id.gestures).setVisibility(View.VISIBLE);
+            findViewById(R.id.eye_tracking).setVisibility(View.INVISIBLE);
+        } else {
+            findViewById(R.id.gestures).setVisibility(View.INVISIBLE);
+            findViewById(R.id.eye_tracking).setVisibility(View.VISIBLE);
         }
     }
 
@@ -360,7 +372,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     private void hideBars() {
-        findViewById(R.id.binocular).setSystemUiVisibility(
+        findViewById(R.id.content).setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
