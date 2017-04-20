@@ -34,8 +34,8 @@ public class GestureRecognizer implements EOGProcessor {
         hDrift1 = new FixedWindowSlopeRemover(512);
         vDrift1 = new FixedWindowSlopeRemover(512);
 
-        hGesture = new SlopeGestureFilter(5, 512, 3.0f);
-        vGesture = new SlopeGestureFilter(5, 512, 3.0f);
+        hGesture = new SlopeGestureFilter(10, 512, 3.0f);
+        vGesture = new SlopeGestureFilter(10, 512, 3.0f);
     }
 
     @Override
