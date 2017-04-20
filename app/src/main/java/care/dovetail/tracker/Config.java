@@ -10,4 +10,6 @@ public class Config {
     public static final int MILLIS_PER_UPDATE = (int) Math.round(1000.0 / Config.SAMPLING_FREQ);
 
     public static final int BLINK_WINDOW  = 20;
+
+    public static final int GESTURE_VISIBILITY_MILLIS = 2000;
 }

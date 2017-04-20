@@ -21,6 +21,8 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.tracker.eog.GestureObserver;
+import care.dovetail.tracker.eog.GestureRecognizer;
 import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
@@ -30,13 +32,12 @@ import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
-import care.dovetail.tracker.processing.PassThroughSignalProcessor;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends Activity implements BluetoothDeviceListener,
-        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver {
+        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver, GestureObserver {
     private static final String TAG = "MainActivity";
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
@@ -273,6 +274,10 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     }
 
     @Override
+    public void onGesture(final Direction direction, final int amplitude) {
+    }
+
+    @Override
     public void onNewValues(int channel1, int channel2) {
         blinks.update(channel2);
         signals.update(channel1, channel2);
@@ -315,7 +320,7 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 2:
-                signals = new PassThroughSignalProcessor();
+                signals = new GestureRecognizer(this);
                 break;
             case 3:
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
