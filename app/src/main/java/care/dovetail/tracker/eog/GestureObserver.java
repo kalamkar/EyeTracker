@@ -9,7 +9,11 @@ public interface GestureObserver {
         LEFT,
         RIGHT,
         UP,
-        DOWN
+        DOWN,
+        UP_LEFT,
+        UP_RIGHT,
+        DOWN_LEFT,
+        DOWN_RIGHT
     }
 
     void onGesture(Direction direction, int amplitude);

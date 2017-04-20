@@ -2,9 +2,6 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.processing.EOGProcessor;
@@ -30,7 +27,7 @@ public class GestureRecognizer implements EOGProcessor {
 
     private int skipWindow = 0;
 
-    private String gesture = "";
+    private String gestureValue = "";
 
     public GestureRecognizer(GestureObserver gestureObserver) {
         this.gestureObserver = gestureObserver;
@@ -74,7 +71,7 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%s\n%d,%d", gesture, hGesture.threshold(), vGesture.threshold());
+        return String.format("%s\n%d,%d", gestureValue, hGesture.threshold(), vGesture.threshold());
     }
 
     @Override
@@ -118,37 +115,40 @@ public class GestureRecognizer implements EOGProcessor {
     }
 
     private boolean checkSlopes(int hSlope, int vSlope) {
-        if (hSlope == 0 && vSlope == 0) {
+        GestureObserver.Direction hDirection = hSlope > 0 ? GestureObserver.Direction.LEFT
+                : hSlope < 0 ? GestureObserver.Direction.RIGHT : null;
+        GestureObserver.Direction vDirection = vSlope > 0 ? GestureObserver.Direction.UP
+                : vSlope < 0 ? GestureObserver.Direction.DOWN : null;
+
+        GestureObserver.Direction direction;
+        int amplitude = 0;
+        if (hDirection != null && vDirection != null) {
+            if (vDirection == GestureObserver.Direction.UP) {
+                if (hDirection == GestureObserver.Direction.LEFT) {
+                    direction = GestureObserver.Direction.UP_LEFT;
+                } else {
+                    direction = GestureObserver.Direction.UP_RIGHT;
+                }
+            } else {
+                if (hDirection == GestureObserver.Direction.LEFT) {
+                    direction = GestureObserver.Direction.DOWN_LEFT;
+                } else {
+                    direction = GestureObserver.Direction.DOWN_RIGHT;
+                }
+            }
+            amplitude = Math.max(Math.abs(hSlope), Math.abs(vSlope));
+        } else if (hDirection != null) {
+            direction = hDirection;
+            amplitude = hSlope;
+        } else if (vDirection != null) {
+            direction = vDirection;
+            amplitude = vSlope;
+        } else {
+            gestureValue = "";
             return false;
         }
-        GestureObserver.Direction hDirection =
-                hSlope > 0 ? GestureObserver.Direction.LEFT : GestureObserver.Direction.RIGHT;
-
-        GestureObserver.Direction vDirection =
-                vSlope > 0 ? GestureObserver.Direction.UP : GestureObserver.Direction.DOWN;
-
-        if (hSlope != 0 && vSlope != 0) {
-            if (Math.abs(hSlope) > Math.abs(vSlope)) {
-                onGesture(hDirection, hSlope);
-            } else {
-                onGesture(vDirection, vSlope);
-            }
-        } else if (hSlope != 0) {
-            onGesture(hDirection, hSlope);
-        } else {
-            onGesture(vDirection, vSlope);
-        }
-        return true;
-    }
-
-    private void onGesture(GestureObserver.Direction direction, int amplitude) {
+        gestureValue = String.format("%s %d", direction.toString(), amplitude);
         gestureObserver.onGesture(direction, Math.abs(amplitude));
-        gesture = String.format("%s %d", direction.toString(), amplitude);
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                gesture = "";
-            }
-        }, Config.GESTURE_VISIBILITY_MILLIS);
+        return true;
     }
 }
