@@ -34,8 +34,8 @@ public class GestureRecognizer implements EOGProcessor {
         hDrift1 = new FixedWindowSlopeRemover(512);
         vDrift1 = new FixedWindowSlopeRemover(512);
 
-        hGesture = new SlopeGestureFilter(10, 512, 3.0f);
-        vGesture = new SlopeGestureFilter(10, 512, 3.0f);
+        hGesture = new SlopeGestureFilter(10, 512, 3.0f, 500);
+        vGesture = new SlopeGestureFilter(10, 512, 3.0f, 500);
     }
 
     @Override
@@ -49,7 +49,8 @@ public class GestureRecognizer implements EOGProcessor {
         hValue = hGesture.filter(hValue);
         vValue = vGesture.filter(vValue);
 
-        if (skipWindow <= 0 && checkSlopes(hValue, vValue)) {
+        // TODO(abhi): Enable vertical axis once its stable.
+        if (skipWindow <= 0 && checkSlopes(hValue, 0)) {
             skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         } else if (skipWindow > 0){
             skipWindow--;

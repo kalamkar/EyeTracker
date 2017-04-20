@@ -18,7 +18,8 @@ public class SlopeGestureFilter implements Filter {
 
     private int countSinceUpdate = 0;
 
-    public SlopeGestureFilter(int windowSize, int thresholdWindowSize, float thresholdMultiplier) {
+    public SlopeGestureFilter(int windowSize, int thresholdWindowSize, float thresholdMultiplier,
+                              int minThreshold) {
         window = new int[windowSize];
         thresholdWindow = new double[thresholdWindowSize];
         this.thresholdMultiplier = thresholdMultiplier;
@@ -36,13 +37,13 @@ public class SlopeGestureFilter implements Filter {
 
         if (countSinceUpdate == thresholdWindow.length) {
             double stddev = new StandardDeviation().evaluate(thresholdWindow);
-            threshold = (int) (stddev * thresholdMultiplier);
+            threshold = Math.max(500, (int) (stddev * thresholdMultiplier));
             countSinceUpdate = 0;
         } else {
             countSinceUpdate++;
         }
 
-        return Math.abs(slope) > Math.abs(500) && Math.abs(slope) < 1000 ? Math.round(slope) : 0;
+        return Math.abs(slope) > Math.abs(threshold) ? Math.round(slope) : 0;
     }
 
     @Override
