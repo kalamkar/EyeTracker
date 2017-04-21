@@ -3,6 +3,7 @@ package care.dovetail.tracker;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -307,6 +308,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 }
             }
         });
+        MediaPlayer.create(this, R.raw.page_flip).start();
     }
 
     @Override
