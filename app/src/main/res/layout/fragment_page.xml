@@ -6,9 +6,10 @@
     android:padding="10dip">
 
     <TextView
+        android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_horizontal"
-        android:id="@+id/text"/>
+        android:textSize="10sp"/>
 
 </FrameLayout>

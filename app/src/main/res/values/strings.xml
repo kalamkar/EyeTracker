@@ -33,11 +33,44 @@
     </string-array>
 
     <string-array name="pages">
-        <item>Page 1</item>
-        <item>Page 2</item>
-        <item>Page 3</item>
-        <item>Page 4</item>
-        <item>Page 5</item>
+        <item>
+            Page 1\nElectrooculography (EOG/E.O.G.) is a technique for measuring the
+            corneo-retinal standing potential that exists between the front and
+            the back of the human eye. The resulting signal is called the electrooculogram.
+            Primary applications are in ophthalmological diagnosis and in recording eye movements.
+        </item>
+        <item>
+            Page 2\nTo measure eye movement, pairs of electrodes are typically placed either above
+            and below the eye or to the left and right of the eye. If the eye moves from center
+            position toward one of the two electrodes, this electrode "sees" the positive side of
+            the retina and the opposite electrode "sees" the negative side of the retina.
+        </item>
+        <item>
+            Page 3\nElectrooculography was used by Robert Zemeckis and Jerome Chen,
+            the visual effects supervisor in the movie Beowulf, to enhance the performance capture
+            by correctly animating the eye movements of the actors. The result was an improvement
+            over the technique used for the film The Polar Express. Electrooculography,
+            in addition to other neuromuscular signals, is used as a computer input method
+            by the Neural Impulse Actuator.
+        </item>
+        <item>
+            Page 4\nEye tracking is the process of measuring either the point of gaze
+            (where one is looking) or the motion of an eye relative to the head.
+            An eye tracker is a device for measuring eye positions and eye movement.
+            Eye tracking is commonly used in a variety of different advertising media.
+            Commercials, print ads, online ads and sponsored programs are all conducive
+            to analysis with current eye tracking technology.
+        </item>
+        <item>
+            Page 5\nIn real life humans have a small round focal point at the center of our gaze,
+            and outside that region, most things are fuzzy and out of focus. This carries over
+            into our perception of virtual environments. Thus, even though most VR gear projects
+            a roughly 90 degree field of view, our eyes are only focusing (and bringing into focus)
+            a small portion of it at any one time. The rest of any crisp, flawlessly rendered image
+            is completely wasted on our eyes. Foveated rendering is a process which uses
+            the information given by eye tracking in VR games and other apps to only fully
+            render the objects within the direct line of sight of the viewer.
+        </item>
         <item>Page 6</item>
         <item>Page 7</item>
         <item>Page 8</item>
