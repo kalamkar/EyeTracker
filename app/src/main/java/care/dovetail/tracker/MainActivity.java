@@ -1,6 +1,5 @@
 package care.dovetail.tracker;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.SensorManager;
@@ -9,6 +8,8 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -33,10 +34,11 @@ import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
 import care.dovetail.tracker.ui.ChartFragment;
+import care.dovetail.tracker.ui.GestureBookPagerAdapter;
 import care.dovetail.tracker.ui.GridView;
 import care.dovetail.tracker.ui.SettingsActivity;
 
-public class MainActivity extends Activity implements BluetoothDeviceListener,
+public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
         Feature.FeatureObserver, AccelerationProcessor.ShakingObserver, GestureObserver {
     private static final String TAG = "MainActivity";
 
@@ -66,6 +68,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
     private GridView rightGrid;
     private GridView leftMoleGrid;
     private GridView rightMoleGrid;
+    private ViewPager leftPager;
+    private ViewPager rightPager;
 
     private long lookupStartTimeMillis;
 
@@ -92,6 +96,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         rightGrid = (GridView) findViewById(R.id.rightGrid);
         leftMoleGrid = (GridView) findViewById(R.id.leftMoleGrid);
         rightMoleGrid = (GridView) findViewById(R.id.rightMoleGrid);
+        leftPager = (ViewPager) findViewById(R.id.leftPager);
+        rightPager = (ViewPager) findViewById(R.id.rightPager);
     }
 
     @Override
@@ -156,6 +162,8 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
         if (settings.getAlgorithm() == 2) { // Gesture Recognizer
             findViewById(R.id.gestures).setVisibility(View.VISIBLE);
             findViewById(R.id.eye_tracking).setVisibility(View.INVISIBLE);
+            leftPager.setAdapter(new GestureBookPagerAdapter(this, getSupportFragmentManager()));
+            rightPager.setAdapter(new GestureBookPagerAdapter(this, getSupportFragmentManager()));
         } else {
             findViewById(R.id.gestures).setVisibility(View.INVISIBLE);
             findViewById(R.id.eye_tracking).setVisibility(View.VISIBLE);
@@ -287,6 +295,18 @@ public class MainActivity extends Activity implements BluetoothDeviceListener,
 
     @Override
     public void onGesture(final Direction direction, final int amplitude) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (direction == Direction.LEFT) {
+                    leftPager.setCurrentItem(leftPager.getCurrentItem() + 1);
+                    rightPager.setCurrentItem(rightPager.getCurrentItem() + 1);
+                } else {
+                    leftPager.setCurrentItem(leftPager.getCurrentItem() - 1);
+                    rightPager.setCurrentItem(rightPager.getCurrentItem() - 1);
+                }
+            }
+        });
     }
 
     @Override
