@@ -11,5 +11,5 @@ public class Config {
 
     public static final int BLINK_WINDOW  = 20;
 
-    public static final int GESTURE_VISIBILITY_MILLIS = 1000;
+    public static final int GESTURE_VISIBILITY_MILLIS = 2000;
 }

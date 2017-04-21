@@ -13,6 +13,7 @@ public class SlopeGestureFilter implements Filter {
     private final int window[];
     private final double thresholdWindow[];
     private final float thresholdMultiplier;
+    private final int minThreshold;
 
     private int threshold = 0;
 
@@ -23,6 +24,7 @@ public class SlopeGestureFilter implements Filter {
         window = new int[windowSize];
         thresholdWindow = new double[thresholdWindowSize];
         this.thresholdMultiplier = thresholdMultiplier;
+        this.minThreshold = minThreshold;
     }
 
     @Override
@@ -37,7 +39,7 @@ public class SlopeGestureFilter implements Filter {
 
         if (countSinceUpdate == thresholdWindow.length) {
             double stddev = new StandardDeviation().evaluate(thresholdWindow);
-            threshold = Math.max(500, (int) (stddev * thresholdMultiplier));
+            threshold = Math.max(minThreshold, (int) (stddev * thresholdMultiplier));
             countSinceUpdate = 0;
         } else {
             countSinceUpdate++;
@@ -48,6 +50,7 @@ public class SlopeGestureFilter implements Filter {
 
     @Override
     public void removeSpike(int size) {
+        // RawBlinkDetector.removeSpike(thresholdWindow, size);
     }
 
     public int threshold() {

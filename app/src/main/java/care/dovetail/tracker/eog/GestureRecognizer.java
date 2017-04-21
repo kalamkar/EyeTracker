@@ -22,8 +22,17 @@ public class GestureRecognizer implements EOGProcessor {
     private final Filter hDrift1;
     private final Filter vDrift1;
 
-    private final SlopeGestureFilter hGesture;
-    private final SlopeGestureFilter vGesture;
+    private final Filter hDrift2;
+    private final Filter vDrift2;
+
+    private final Filter hFeatures;
+    private final Filter vFeatures;
+
+    private final Filter hCurveFit;
+    private final Filter vCurveFit;
+
+    private final StepSlopeGestureFilter hGesture;
+    private final StepSlopeGestureFilter vGesture;
 
     private int skipWindow = 0;
 
@@ -31,11 +40,23 @@ public class GestureRecognizer implements EOGProcessor {
 
     public GestureRecognizer(GestureObserver gestureObserver) {
         this.gestureObserver = gestureObserver;
-        hDrift1 = new FixedWindowSlopeRemover(512);
-        vDrift1 = new FixedWindowSlopeRemover(512);
+        hDrift1 = new FixedWindowSlopeRemover(1024);
+        vDrift1 = new FixedWindowSlopeRemover(1024);
 
-        hGesture = new SlopeGestureFilter(10, 512, 3.0f, 500);
-        vGesture = new SlopeGestureFilter(10, 512, 3.0f, 500);
+        hDrift2 = new FixedWindowSlopeRemover(512);
+        vDrift2 = new FixedWindowSlopeRemover(512);
+
+        hFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
+        vFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
+
+        hCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+        vCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+
+//        hGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
+//        vGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
+
+        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000);
+        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000);
     }
 
     @Override
@@ -46,11 +67,19 @@ public class GestureRecognizer implements EOGProcessor {
         hValue = hDrift1.filter(hValue);
         vValue = vDrift1.filter(vValue);
 
-        hValue = hGesture.filter(hValue);
-        vValue = vGesture.filter(vValue);
+        hValue = hDrift2.filter(hValue);
+        vValue = vDrift2.filter(vValue);
 
-        // TODO(abhi): Enable vertical axis once its stable.
-        if (skipWindow <= 0 && checkSlopes(hValue, 0)) {
+        hValue = hFeatures.filter(hValue);
+        vValue = vFeatures.filter(vValue);
+
+        hValue = hCurveFit.filter(hValue);
+        vValue = vCurveFit.filter(vValue);
+
+        int hSlope = hGesture.filter(hValue);
+        int vSlope = vGesture.filter(vValue);
+
+        if (skipWindow <= 0 && isGoodSignal() && checkSlopes(hSlope, 0)) {
             skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         } else if (skipWindow > 0){
             skipWindow--;
@@ -77,22 +106,22 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public boolean isGoodSignal() {
-        return true;
+        return isStableHorizontal() && isStableVertical() ;
     }
 
     @Override
     public int getSignalQuality() {
-        return 100;
+        return 100 - Math.min(100000, Math.max(hStats.stdDev, vStats.stdDev)) / 1000;
     }
 
     @Override
     public boolean isStableHorizontal() {
-        return true;
+        return hStats.stdDev < 20000 && hStats.stdDev > 0;
     }
 
     @Override
     public boolean isStableVertical() {
-        return true;
+        return true; // vStats.stdDev < 20000 && vStats.stdDev > 0;
     }
 
     @Override
@@ -107,12 +136,14 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(-1000, 1000);
+        return Pair.create(-5000, 5000);
+//        return Pair.create(hStats.min, hStats.max);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(-1000, 1000);
+        return Pair.create(-5000, 5000);
+//        return Pair.create(vStats.min, vStats.max);
     }
 
     private boolean checkSlopes(int hSlope, int vSlope) {
