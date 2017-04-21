@@ -408,7 +408,8 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     private void showDebugNumbers() {
-        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
+        updateStatusUI(View.INVISIBLE, View.INVISIBLE,
+                settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void showBluetoothSpinner() {
