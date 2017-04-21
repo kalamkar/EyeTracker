@@ -55,8 +55,8 @@ public class GestureRecognizer implements EOGProcessor {
 //        hGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
 //        vGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
 
-        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000);
-        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000);
+        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000, 50);
+        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, 4000, 50);
     }
 
     @Override
@@ -101,7 +101,8 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%s\n%d,%d", gestureValue, hGesture.threshold(), vGesture.threshold());
+        return String.format("%s\n%d,%d", gestureValue, hGesture.threshold(),
+                hGesture.getGazeSize());
     }
 
     @Override
