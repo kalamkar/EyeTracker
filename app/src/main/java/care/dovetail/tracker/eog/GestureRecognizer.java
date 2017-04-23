@@ -55,8 +55,8 @@ public class GestureRecognizer implements EOGProcessor {
 //        hGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
 //        vGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
 
-        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 50);
-        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 50);
+        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
+        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
     }
 
     @Override

@@ -71,14 +71,51 @@
             the information given by eye tracking in VR games and other apps to only fully
             render the objects within the direct line of sight of the viewer.
         </item>
-        <item>Page 6</item>
-        <item>Page 7</item>
-        <item>Page 8</item>
-        <item>Page 9</item>
-        <item>Page 10</item>
-        <item>Page 11</item>
-        <item>Page 12</item>
-        <item>Page 13</item>
+        <item>
+            Page 6\nMost of the first uses of AR/VR eye tracking will be to improve general
+            AR/VR headset comfort and usability. That is because as a direct input device
+            eye tracking is actually fairly frustrating and useless. However, as a general
+            contextual signal indicating possible user intent or attentional focus,
+            it is quite useful. Many use cases for eye tracking will work in the background
+            like graphics rendering resource allocation (Foveated Rendering), data pre-fetch
+            and multi-modal smart 3D object selection. What all of these use cases have in common
+            is that, when working well, you don’t notice that they are doing anything.
+        </item>
+        <item>
+            Page 7\nEye movements are the most frequent (around 3 per second), fastest
+            (around 150–250 milliseconds), and mechanically simplest (one joint, no inertial
+            complexities) voluntary motor behavior in humans. Therefore, tracking eye movement
+            has been regarded as an great way to detect voluntary commands and changes in
+            physiological status. There are a number of methods for measuring eye movement.
+            Currently the most widely used are video-based eye trackers in which a camera
+            focuses on one or both eyes and records their movement as the viewer looks at
+            some kind of stimulus.
+        </item>
+        <item>
+            Page 8\nMost modern eye trackers utilize near-infrared technology along with a
+            high-resolution camera to track gaze direction. Near-infrared light is directed
+            toward the center of the eyes (pupil) causing visible reflections in the cornea
+            (outermost layer of the eye), which are tracked by a camera. It is based on the
+            principle that, if a fixed light source is directed at the eye, the amount of light
+            reflected back to a fixed detector will vary with the eye’s position.
+            A number of IR light sources are used for illumination, and photo detectors aimed at
+            receiving the reflected light for picking up the signal.
+        </item>
+        <item>
+            Page 9\nA human eyeball can be assumable as a spherical battery that the centre of
+            cornea is positive and the retina is negative. Imagine that the battery like this is
+            embedded in an eye socket and rotates around the torsional centre of eye. Consequently,
+            the micro-currents flow radially from the positive pole to the negative pole of
+            the battery through the conductive tissue in eye. These currents generate the
+            standing potentials (Electro-Oculograms) around the eye.
+        </item>
+        <item>
+            Page 10\nThe principle behind this is the sensing of the electrical “signature”
+            of eye’s movement. If electrodes are located symmetrically on either side of the eyes,
+            and the eye is looking straight ahead, the dipole is at right angles to the electric
+            field detected by the electrodes and the resultant output is zero. When the eye moves,
+            there exists a voltage shift with reference to the straight ahead position.
+        </item>
     </string-array>
 
 </resources>
