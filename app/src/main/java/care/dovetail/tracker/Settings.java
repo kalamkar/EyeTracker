@@ -18,6 +18,7 @@ public class Settings {
     private static final String ALGORITHM = "algorithm";
     private static final String CURSOR_STYLE = "cursor_style";
     private static final String GRAPH_HEIGHT = "graph_height";
+    private static final String THRESHOLD = "threshold";
 
     private final Context context;
 
@@ -113,5 +114,14 @@ public class Settings {
     public void setCursorStyle(int cursor) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(CURSOR_STYLE, cursor).apply();
+    }
+
+    public int getThreshold() {
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(THRESHOLD, 4000);
+    }
+
+    public void setThreshold(int threshold) {
+        context.getSharedPreferences(
+                context.getPackageName(), 0).edit().putInt(THRESHOLD, threshold).apply();
     }
 }

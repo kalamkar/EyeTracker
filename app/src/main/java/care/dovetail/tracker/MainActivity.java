@@ -354,7 +354,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 blinks.addFeatureObserver((Feature.FeatureObserver) signals);
                 break;
             case 2:
-                signals = new GestureRecognizer(this);
+                signals = new GestureRecognizer(this, settings.getThreshold());
                 break;
             case 3:
                 signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());

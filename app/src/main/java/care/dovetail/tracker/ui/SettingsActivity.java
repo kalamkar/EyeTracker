@@ -24,6 +24,7 @@ public class SettingsActivity extends Activity {
 
     private TextView numStepsValue;
     private TextView graphHeightValue;
+    private TextView thresholdValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,24 +36,35 @@ public class SettingsActivity extends Activity {
         ToggleButton showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
         ToggleButton showChart = (ToggleButton) findViewById(R.id.showChart);
         ToggleButton whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
-        SeekBar numSteps = (SeekBar) findViewById(R.id.num_steps);
-        numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
-        SeekBar graphHeight = (SeekBar) findViewById(R.id.graph_height);
-        graphHeightValue = (TextView)  findViewById(R.id.graph_height_value);
         Spinner algorithm = (Spinner) findViewById(R.id.algo);
         Spinner cursor = (Spinner) findViewById(R.id.cursor);
+
+        SeekBar numSteps = (SeekBar) findViewById(R.id.num_steps);
+        numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
+
+        SeekBar graphHeight = (SeekBar) findViewById(R.id.graph_height);
+        graphHeightValue = (TextView)  findViewById(R.id.graph_height_value);
+
+        SeekBar threshold = (SeekBar) findViewById(R.id.threshold);
+        thresholdValue = (TextView)  findViewById(R.id.threshold_value);
+
 
         dayDream.setChecked(settings.isDayDream());
         showBlinkmarks.setChecked(settings.shouldShowBlinkmarks());
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
         whackAMole.setChecked(settings.shouldWhackAMole());
-        numSteps.setProgress(settings.getNumSteps());
-        numStepsValue.setText(Integer.toString(settings.getNumSteps()));
-        graphHeight.setProgress(settings.getGraphHeight());
-        graphHeightValue.setText(Integer.toString(settings.getGraphHeight()));
         algorithm.setSelection(settings.getAlgorithm());
         cursor.setSelection(settings.getCursorStyle());
+
+        numSteps.setProgress(settings.getNumSteps());
+        numStepsValue.setText(Integer.toString(settings.getNumSteps()));
+
+        graphHeight.setProgress(settings.getGraphHeight());
+        graphHeightValue.setText(Integer.toString(settings.getGraphHeight()));
+
+        threshold.setProgress(settings.getThreshold());
+        thresholdValue.setText(Integer.toString(settings.getThreshold()));
 
         dayDream.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -129,6 +141,17 @@ public class SettingsActivity extends Activity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        threshold.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                thresholdValue.setText(Integer.toString(progress));
+                settings.setThreshold(progress);
+            }
+
+            @Override  public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 }

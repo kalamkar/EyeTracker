@@ -16,7 +16,7 @@
     <string name="accelerometer">Accel</string>
     <string name="grid_size">Grid size</string>
     <string name="graph_height">Graph height</string>
-    <string name="min_quality">Minimum Quality</string>
+    <string name="min_threshold">Minimum Threshold</string>
 
     <string-array name="algo">
         <item>Bandpass</item>
