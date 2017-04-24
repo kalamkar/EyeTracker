@@ -38,6 +38,10 @@ public class GestureRecognizer implements EOGProcessor {
 
     private String gestureValue = "";
 
+    private long updateCount = 0;
+    private long processingMillis;
+    private long firstUpdateTimeMillis = 0;
+
     public GestureRecognizer(GestureObserver gestureObserver, int threshold) {
         this.gestureObserver = gestureObserver;
         hDrift1 = new FixedWindowSlopeRemover(1024);
@@ -57,10 +61,16 @@ public class GestureRecognizer implements EOGProcessor {
 
         hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
         vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
+
+        firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
     @Override
     public void update(int hRaw, int vRaw) {
+        updateCount++;
+        long startTime = System.currentTimeMillis();
+        firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
+
         int hValue = hRaw;
         int vValue = vRaw;
 
@@ -92,6 +102,8 @@ public class GestureRecognizer implements EOGProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
         vStats = new Stats(vertical);
+
+        processingMillis = System.currentTimeMillis() - startTime;
     }
 
     @Override
@@ -101,8 +113,8 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-        return String.format("%s\n%d,%d", gestureValue, hGesture.threshold(),
-                hGesture.getGazeSize());
+        int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
+        return String.format("%d\n%d", seconds, hGesture.threshold());
     }
 
     @Override
@@ -117,7 +129,7 @@ public class GestureRecognizer implements EOGProcessor {
 
     @Override
     public boolean isStableHorizontal() {
-        return hStats.stdDev < 20000 && hStats.stdDev > 0;
+        return hStats.stdDev < 10000 && hStats.stdDev > 0;
     }
 
     @Override

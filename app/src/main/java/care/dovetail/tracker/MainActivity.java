@@ -404,7 +404,8 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     private void showQualityProgress() {
-        updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.INVISIBLE);
+        // updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
     }
 
     private void showDebugNumbers() {

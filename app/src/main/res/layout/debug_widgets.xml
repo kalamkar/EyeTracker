@@ -38,7 +38,8 @@
             android:layout_width="150dp"
             android:layout_height="100dp"
             android:gravity="center"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:textColor="@android:color/holo_blue_light"/>
 
         <RelativeLayout
             android:layout_width="100dp"
@@ -100,7 +101,8 @@
             android:layout_width="150dp"
             android:layout_height="100dp"
             android:gravity="center"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:textColor="@android:color/holo_blue_light"/>
 
         <RelativeLayout
             android:layout_width="100dp"
