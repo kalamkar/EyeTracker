@@ -15,7 +15,7 @@ public class Settings {
     private static final String SHOW_CHART = "show_chart";
     private static final String WHACK_A_MOLE = "whack_a_mole";
     private static final String NUM_STEPS = "num_steps";
-    private static final String ALGORITHM = "algorithm";
+    private static final String DEMO = "demo";
     private static final String CURSOR_STYLE = "cursor_style";
     private static final String GRAPH_HEIGHT = "graph_height";
     private static final String THRESHOLD = "threshold";
@@ -98,13 +98,13 @@ public class Settings {
                 context.getPackageName(), 0).edit().putInt(GRAPH_HEIGHT, graphHeight).apply();
     }
 
-    public int getAlgorithm() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getInt(ALGORITHM, 0);
+    public int getDemo() {
+        return context.getSharedPreferences(context.getPackageName(), 0).getInt(DEMO, 0);
     }
 
-    public void setAlgorithm(int algorithm) {
+    public void setDemo(int algorithm) {
         context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putInt(ALGORITHM, algorithm).apply();
+                context.getPackageName(), 0).edit().putInt(DEMO, algorithm).apply();
     }
 
     public int getCursorStyle() {

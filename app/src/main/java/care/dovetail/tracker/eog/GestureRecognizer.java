@@ -3,6 +3,7 @@ package care.dovetail.tracker.eog;
 import android.util.Pair;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.processing.EOGProcessor;
 
@@ -17,7 +18,7 @@ public class GestureRecognizer implements EOGProcessor {
     private Stats hStats = new Stats(new int[0]);
     private Stats vStats = new Stats(new int[0]);
 
-    private final GestureObserver gestureObserver;
+    private final EyeEvent.Observer eventObserver;
 
     private final Filter hDrift1;
     private final Filter vDrift1;
@@ -42,8 +43,8 @@ public class GestureRecognizer implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public GestureRecognizer(GestureObserver gestureObserver, int threshold) {
-        this.gestureObserver = gestureObserver;
+    public GestureRecognizer(EyeEvent.Observer eventObserver, int threshold) {
+        this.eventObserver = eventObserver;
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
 
@@ -160,25 +161,25 @@ public class GestureRecognizer implements EOGProcessor {
     }
 
     private boolean checkSlopes(int hSlope, int vSlope) {
-        GestureObserver.Direction hDirection = hSlope > 0 ? GestureObserver.Direction.LEFT
-                : hSlope < 0 ? GestureObserver.Direction.RIGHT : null;
-        GestureObserver.Direction vDirection = vSlope > 0 ? GestureObserver.Direction.UP
-                : vSlope < 0 ? GestureObserver.Direction.DOWN : null;
+        EyeEvent.Type hDirection = hSlope > 0 ? EyeEvent.Type.LEFT
+                : hSlope < 0 ? EyeEvent.Type.RIGHT : null;
+        EyeEvent.Type vDirection = vSlope > 0 ? EyeEvent.Type.UP
+                : vSlope < 0 ? EyeEvent.Type.DOWN : null;
 
-        GestureObserver.Direction direction;
+        EyeEvent.Type direction;
         int amplitude = 0;
         if (hDirection != null && vDirection != null) {
-            if (vDirection == GestureObserver.Direction.UP) {
-                if (hDirection == GestureObserver.Direction.LEFT) {
-                    direction = GestureObserver.Direction.UP_LEFT;
+            if (vDirection == EyeEvent.Type.UP) {
+                if (hDirection == EyeEvent.Type.LEFT) {
+                    direction = EyeEvent.Type.UP_LEFT;
                 } else {
-                    direction = GestureObserver.Direction.UP_RIGHT;
+                    direction = EyeEvent.Type.UP_RIGHT;
                 }
             } else {
-                if (hDirection == GestureObserver.Direction.LEFT) {
-                    direction = GestureObserver.Direction.DOWN_LEFT;
+                if (hDirection == EyeEvent.Type.LEFT) {
+                    direction = EyeEvent.Type.DOWN_LEFT;
                 } else {
-                    direction = GestureObserver.Direction.DOWN_RIGHT;
+                    direction = EyeEvent.Type.DOWN_RIGHT;
                 }
             }
             amplitude = Math.max(Math.abs(hSlope), Math.abs(vSlope));
@@ -193,7 +194,7 @@ public class GestureRecognizer implements EOGProcessor {
             return false;
         }
         gestureValue = String.format("%s %d", direction.toString(), amplitude);
-        gestureObserver.onGesture(direction, Math.abs(amplitude));
+        eventObserver.onEyeEvent(new EyeEvent(direction, Math.abs(amplitude)));
         return true;
     }
 }

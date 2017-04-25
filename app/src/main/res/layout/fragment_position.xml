@@ -10,7 +10,7 @@
     tools:showIn="@layout/activity_main">
 
     <FrameLayout
-        android:id="@+id/leftTracking"
+        android:id="@+id/left"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
@@ -37,7 +37,7 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/rightTracking"
+        android:id="@+id/right"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"

@@ -3,14 +3,13 @@ package care.dovetail.tracker;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.SensorManager;
-import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -23,24 +22,20 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.tracker.eog.GestureObserver;
 import care.dovetail.tracker.eog.GestureRecognizer;
 import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
-import care.dovetail.tracker.processing.BandpassSignalProcessor;
 import care.dovetail.tracker.processing.BlinkDetector;
-import care.dovetail.tracker.processing.CurveFitSignalProcessor;
 import care.dovetail.tracker.processing.EOGProcessor;
 import care.dovetail.tracker.processing.Feature;
-import care.dovetail.tracker.processing.MedianDiffDiffEOGProcessor;
 import care.dovetail.tracker.ui.ChartFragment;
-import care.dovetail.tracker.ui.GestureBookPagerAdapter;
-import care.dovetail.tracker.ui.GridView;
+import care.dovetail.tracker.ui.FruitFragment;
+import care.dovetail.tracker.ui.PositionFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
-        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver, GestureObserver {
+        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver {
     private static final String TAG = "MainActivity";
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
@@ -63,14 +58,8 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private Ringtone ringtone;
 
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
-    private static final int MOLE_NUM_STEPS = 5;
 
-    private GridView leftGrid;
-    private GridView rightGrid;
-    private GridView leftMoleGrid;
-    private GridView rightMoleGrid;
-    private ViewPager leftPager;
-    private ViewPager rightPager;
+    private Fragment demo;
 
     private long lookupStartTimeMillis;
 
@@ -92,13 +81,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
         accelerometer = new AccelerationProcessor(
                 (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
-
-        leftGrid = (GridView) findViewById(R.id.leftGrid);
-        rightGrid = (GridView) findViewById(R.id.rightGrid);
-        leftMoleGrid = (GridView) findViewById(R.id.leftMoleGrid);
-        rightMoleGrid = (GridView) findViewById(R.id.rightMoleGrid);
-        leftPager = (ViewPager) findViewById(R.id.leftPager);
-        rightPager = (ViewPager) findViewById(R.id.rightPager);
     }
 
     @Override
@@ -122,53 +104,22 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     private void updateUIFromSettings() {
         if (settings.isDayDream()) {
-            for (int id : new int[]{R.id.leftDebug, R.id.leftTracking, R.id.leftGestures}){
-                findViewById(id).setPadding(
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
-            }
-            for (int id : new int[]{R.id.rightDebug, R.id.rightTracking, R.id.rightGestures}) {
-                findViewById(id).setPadding(
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
-                        getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
-            }
+            findViewById(R.id.leftDebug).setPadding(
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
+            findViewById(R.id.rightDebug).setPadding(
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
+                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
         }
-
-        int numSteps = settings.getNumSteps();
-        ((GridView) findViewById(R.id.leftGrid)).setNumSteps(numSteps);
-        ((GridView) findViewById(R.id.rightGrid)).setNumSteps(numSteps);
 
         findViewById(R.id.leftNumber).setVisibility(
                 settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
         findViewById(R.id.rightNumber).setVisibility(
                 settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
-
-        if (settings.shouldWhackAMole()) {
-            leftGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-            rightGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-            leftMoleGrid.setCursorStyle(GridView.CursorStyle.RECTANGLE);
-            rightMoleGrid.setCursorStyle(GridView.CursorStyle.RECTANGLE);
-
-            leftMoleGrid.setNumSteps(MOLE_NUM_STEPS);
-            rightMoleGrid.setNumSteps(MOLE_NUM_STEPS);
-        } else {
-            leftGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-            rightGrid.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-        }
-
-        if (settings.getAlgorithm() == 2) { // Gesture Recognizer
-            findViewById(R.id.gestures).setVisibility(View.VISIBLE);
-            findViewById(R.id.eye_tracking).setVisibility(View.INVISIBLE);
-            leftPager.setAdapter(new GestureBookPagerAdapter(this, getSupportFragmentManager()));
-            rightPager.setAdapter(new GestureBookPagerAdapter(this, getSupportFragmentManager()));
-        } else {
-            findViewById(R.id.gestures).setVisibility(View.INVISIBLE);
-            findViewById(R.id.eye_tracking).setVisibility(View.VISIBLE);
-        }
     }
 
     @Override
@@ -227,14 +178,14 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
+            Pair<Integer, Integer> sector = signals.isGoodSignal()
+                    ? signals.getSector() : Pair.create(-1, -1);
+            ((EyeEvent.Observer) demo).onEyeEvent(
+                    new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
+
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Pair<Integer, Integer> sector = signals.isGoodSignal()
-                            ? signals.getSector() : Pair.create(-1, -1);
-                    leftGrid.highlight(sector.first, sector.second);
-                    rightGrid.highlight(sector.first, sector.second);
-
                     int quality = signals.getSignalQuality();
                     ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
                     ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
@@ -257,15 +208,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             if (Stats.random(0, 2) != 0) {
                 return;
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    moleSector = Pair.create(Stats.random(0, MOLE_NUM_STEPS),
-                            Stats.random(0, MOLE_NUM_STEPS));
-                    leftMoleGrid.highlight(moleSector.first, moleSector.second);
-                    rightMoleGrid.highlight(moleSector.first, moleSector.second);
-                }
-            });
+            moleSector = Pair.create(Stats.random(0, Config.MOLE_NUM_STEPS),
+                    Stats.random(0, Config.MOLE_NUM_STEPS));
+            ((EyeEvent.Observer) demo).onEyeEvent(new EyeEvent(
+                    EyeEvent.Type.WHACKAMOLE_POSITION, moleSector.first, moleSector.second));
         }
     }
 
@@ -274,15 +220,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 //        Log.d(TAG, String.format("Got feature %s", feature.type.toString()));
         if (Feature.Type.BLINK == feature.type) {
             ringtone.play();
-            if (settings.shouldShowBlinkmarks()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        leftGrid.mark(feature.sector.first, feature.sector.second);
-                        rightGrid.mark(feature.sector.first, feature.sector.second);
-                    }
-                });
-            }
         } else if (Feature.Type.BAD_CONTACT == feature.type && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
@@ -292,23 +229,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         } else if (Feature.Type.GOOD_SIGNAL == feature.type) {
             showDebugNumbers();
         }
-    }
-
-    @Override
-    public void onGesture(final Direction direction, final int amplitude) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (direction == Direction.LEFT) {
-                    leftPager.setCurrentItem(leftPager.getCurrentItem() + 1);
-                    rightPager.setCurrentItem(rightPager.getCurrentItem() + 1);
-                } else {
-                    leftPager.setCurrentItem(leftPager.getCurrentItem() - 1);
-                    rightPager.setCurrentItem(rightPager.getCurrentItem() - 1);
-                }
-            }
-        });
-        MediaPlayer.create(this, R.raw.page_flip).start();
     }
 
     @Override
@@ -341,27 +261,14 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     public void startBluetooth() {
         blinks = new BandpassBlinkDetector();
         blinks.addFeatureObserver(this);
-        switch (settings.getAlgorithm()) {
-            default:
-            case 0:
-                signals = new BandpassSignalProcessor(
-                        settings.getNumSteps(), settings.getGraphHeight());
-                blinks.addFeatureObserver((Feature.FeatureObserver) signals);
-                break;
-            case 1:
-                signals = new CurveFitSignalProcessor(
-                        settings.getNumSteps(), settings.getGraphHeight());
-                blinks.addFeatureObserver((Feature.FeatureObserver) signals);
-                break;
-            case 2:
-                signals = new GestureRecognizer(this, settings.getThreshold());
-                break;
-            case 3:
-                signals = new MedianDiffDiffEOGProcessor(settings.getNumSteps());
-                break;
-            case 4:
-                signals = new HybridEogProcessor(settings.getNumSteps());
-                break;
+        if (settings.getDemo() == 0) { // Gestures
+            demo = new FruitFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+            signals = new GestureRecognizer((EyeEvent.Observer) demo, settings.getThreshold());
+        } else if (settings.getDemo() == 1) { // Position
+            demo = new PositionFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+            signals = new HybridEogProcessor(settings.getNumSteps());
         }
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
@@ -404,8 +311,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     private void showQualityProgress() {
-        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.INVISIBLE);
-        // updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+         updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
     }
 
     private void showDebugNumbers() {

@@ -36,8 +36,7 @@ public class SettingsActivity extends Activity {
         ToggleButton showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
         ToggleButton showChart = (ToggleButton) findViewById(R.id.showChart);
         ToggleButton whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
-        Spinner algorithm = (Spinner) findViewById(R.id.algo);
-        Spinner cursor = (Spinner) findViewById(R.id.cursor);
+        Spinner demo = (Spinner) findViewById(R.id.demo);
 
         SeekBar numSteps = (SeekBar) findViewById(R.id.num_steps);
         numStepsValue = (TextView)  findViewById(R.id.num_steps_value);
@@ -54,8 +53,7 @@ public class SettingsActivity extends Activity {
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
         whackAMole.setChecked(settings.shouldWhackAMole());
-        algorithm.setSelection(settings.getAlgorithm());
-        cursor.setSelection(settings.getCursorStyle());
+        demo.setSelection(settings.getDemo());
 
         numSteps.setProgress(settings.getNumSteps());
         numStepsValue.setText(Integer.toString(settings.getNumSteps()));
@@ -123,20 +121,10 @@ public class SettingsActivity extends Activity {
             @Override  public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        algorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        demo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                settings.setAlgorithm(position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        cursor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                settings.setCursorStyle(position);
+                settings.setDemo(position);
             }
 
             @Override
