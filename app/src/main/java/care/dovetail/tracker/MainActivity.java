@@ -22,7 +22,6 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.tracker.eog.GestureRecognizer;
 import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
@@ -264,12 +263,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         if (settings.getDemo() == 0) { // Gestures
             demo = new FruitFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
-            signals = new GestureRecognizer((EyeEvent.Observer) demo, settings.getThreshold());
         } else if (settings.getDemo() == 1) { // Position
             demo = new PositionFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
-            signals = new HybridEogProcessor(settings.getNumSteps());
         }
+        signals = new HybridEogProcessor((EyeEvent.Observer) demo, settings.getNumSteps(),
+                settings.getThreshold());
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();

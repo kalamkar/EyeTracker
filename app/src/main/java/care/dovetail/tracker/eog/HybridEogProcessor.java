@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.processing.EOGProcessor;
 
@@ -24,6 +25,8 @@ public class HybridEogProcessor implements EOGProcessor {
 
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
+
+    private final EyeEvent.Observer eventObserver;
 
     private final List<Filter> filters = new ArrayList<>();
 
@@ -44,11 +47,18 @@ public class HybridEogProcessor implements EOGProcessor {
     private final Calibration hCalibration;
     private final Calibration vCalibration;
 
+    private final StepSlopeGestureFilter hGesture;
+    private final StepSlopeGestureFilter vGesture;
+
+    private int skipWindow = 0;
+
     private long updateCount = 0;
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public HybridEogProcessor(int numSteps) {
+    public HybridEogProcessor(EyeEvent.Observer eventObserver, int numSteps, int gestureThreshold) {
+        this.eventObserver = eventObserver;
+
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
         filters.add(hDrift1);
@@ -59,20 +69,25 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hDrift2);
         filters.add(vDrift2);
 
-        hCurveFit = new ValueChangeCurveFitDriftRemoval(512);
-        vCurveFit = new ValueChangeCurveFitDriftRemoval(512);
-        filters.add(hCurveFit);
-        filters.add(vCurveFit);
-
         hFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
         vFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
         filters.add(hFeatures);
         filters.add(vFeatures);
 
+        hCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+        vCurveFit = new ValueChangeCurveFitDriftRemoval(512);
+        filters.add(hCurveFit);
+        filters.add(vCurveFit);
+
         hCalibration = new FixedRangeCalibration(numSteps, 8000);
         vCalibration = new FixedRangeCalibration(numSteps, 8000);
         filters.add(hCalibration);
         filters.add(vCalibration);
+
+        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
+        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
+        filters.add(hGesture);
+        filters.add(vGesture);
 
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
@@ -106,6 +121,15 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hCurveFit.filter(hValue);
         vValue = vCurveFit.filter(vValue);
 
+        int hSlope = hGesture.filter(hValue);
+        int vSlope = vGesture.filter(vValue);
+
+        if (skipWindow <= 0 && isGoodSignal() && checkSlopes(hSlope, 0)) {
+            skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
+        } else if (skipWindow > 0){
+            skipWindow--;
+        }
+
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
 
@@ -131,7 +155,7 @@ public class HybridEogProcessor implements EOGProcessor {
     public String getDebugNumbers() {
         int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
         int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
-        return updateCount > 0 ? String.format("%d\n%d, %dk", seconds, processingMillis, dev) : "";
+        return updateCount > 0 ? String.format("%d\n%dk", seconds, dev) : "";
     }
 
     @Override
@@ -174,5 +198,42 @@ public class HybridEogProcessor implements EOGProcessor {
     public Pair<Integer, Integer> verticalRange() {
         return Pair.create(vCalibration.min(), vCalibration.max());
         // return Pair.create(vStats.min, vStats.max);
+    }
+
+    private boolean checkSlopes(int hSlope, int vSlope) {
+        EyeEvent.Direction hDirection = hSlope > 0 ? EyeEvent.Direction.LEFT
+                : hSlope < 0 ? EyeEvent.Direction.RIGHT : null;
+        EyeEvent.Direction vDirection = vSlope > 0 ? EyeEvent.Direction.UP
+                : vSlope < 0 ? EyeEvent.Direction.DOWN : null;
+
+        EyeEvent.Direction direction;
+        int amplitude = 0;
+        if (hDirection != null && vDirection != null) {
+            if (vDirection == EyeEvent.Direction.UP) {
+                if (hDirection == EyeEvent.Direction.LEFT) {
+                    direction = EyeEvent.Direction.UP_LEFT;
+                } else {
+                    direction = EyeEvent.Direction.UP_RIGHT;
+                }
+            } else {
+                if (hDirection == EyeEvent.Direction.LEFT) {
+                    direction = EyeEvent.Direction.DOWN_LEFT;
+                } else {
+                    direction = EyeEvent.Direction.DOWN_RIGHT;
+                }
+            }
+            amplitude = Math.max(Math.abs(hSlope), Math.abs(vSlope));
+        } else if (hDirection != null) {
+            direction = hDirection;
+            amplitude = hSlope;
+        } else if (vDirection != null) {
+            direction = vDirection;
+            amplitude = vSlope;
+        } else {
+            return false;
+        }
+        eventObserver.onEyeEvent(new EyeEvent(
+                EyeEvent.Type.GESTURE, direction, Math.abs(amplitude)));
+        return true;
     }
 }

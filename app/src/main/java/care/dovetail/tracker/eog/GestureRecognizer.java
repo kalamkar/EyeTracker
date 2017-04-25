@@ -57,9 +57,6 @@ public class GestureRecognizer implements EOGProcessor {
         hCurveFit = new ValueChangeCurveFitDriftRemoval(512);
         vCurveFit = new ValueChangeCurveFitDriftRemoval(512);
 
-//        hGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
-//        vGesture = new SlopeGestureFilter(5, 512, 3.0f, 1000);
-
         hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
         vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, threshold, 40);
 
