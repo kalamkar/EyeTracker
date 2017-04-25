@@ -15,6 +15,7 @@ import care.dovetail.tracker.processing.EOGProcessor;
  */
 
 public class HybridEogProcessor implements EOGProcessor {
+    private static final String TAG = "HybridEogProcessor";
 
     private static final int BLINK_WINDOW_LENGTH = 50;
 
@@ -27,6 +28,8 @@ public class HybridEogProcessor implements EOGProcessor {
     private Stats vStats = new Stats(new int[]{});
 
     private final EyeEvent.Observer eventObserver;
+
+    private final int numSteps;
 
     private final List<Filter> filters = new ArrayList<>();
 
@@ -55,6 +58,7 @@ public class HybridEogProcessor implements EOGProcessor {
 
     public HybridEogProcessor(EyeEvent.Observer eventObserver, int numSteps, int gestureThreshold) {
         this.eventObserver = eventObserver;
+        this.numSteps = numSteps;
 
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
@@ -128,6 +132,13 @@ public class HybridEogProcessor implements EOGProcessor {
         gestures.update(hValue, vValue);
         if (isGoodSignal() && gestures.hasEyeEvent()) {
             EyeEvent event = gestures.getEyeEvent();
+            if (event.type == EyeEvent.Type.GAZE) {
+                boolean left = sector.first <= numSteps / 3;
+                boolean right = sector.first >= numSteps * 2 / 3;
+                EyeEvent.Direction direction =  left ? EyeEvent.Direction.LEFT
+                        : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
+                event = new EyeEvent(EyeEvent.Type.GAZE, direction, 0);
+            }
             eventObserver.onEyeEvent(event);
         }
 

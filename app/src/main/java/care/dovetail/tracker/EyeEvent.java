@@ -57,4 +57,9 @@ public class EyeEvent {
         this.column = column;
         this.row = row;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s", type, direction);
+    }
 }

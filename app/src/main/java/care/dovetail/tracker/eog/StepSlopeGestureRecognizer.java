@@ -30,8 +30,13 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
             return;
         }
 
-        event = checkSlopes(hSlope, 0); // Ignoring vertical for now
-        if (event != null) {
+        if (hGesture.getGazeSize() > 40) {
+            event = new EyeEvent(EyeEvent.Type.GAZE);
+        }
+
+        EyeEvent gestureEvent = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
+        if (gestureEvent != null) {
+            event = gestureEvent;
             skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         }
     }
@@ -46,7 +51,7 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
         return event;
     }
 
-    private static EyeEvent checkSlopes(int hSlope, int vSlope) {
+    private static EyeEvent checkGestureSlopes(int hSlope, int vSlope) {
         EyeEvent.Direction hDirection = hSlope > 0 ? EyeEvent.Direction.LEFT
                 : hSlope < 0 ? EyeEvent.Direction.RIGHT : null;
         EyeEvent.Direction vDirection = vSlope > 0 ? EyeEvent.Direction.UP

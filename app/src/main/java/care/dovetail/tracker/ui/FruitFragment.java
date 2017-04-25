@@ -86,19 +86,19 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                             resetGaze();
                             break;
                     }
-                } else if (event.type == EyeEvent.Type.GAZE) {
-                    switch (event.direction) {
-                        case LEFT:
-                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-//                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
-                            resetGaze(100);
-                            break;
-                        case RIGHT:
-                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
-//                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
-                            resetGaze(100);
-                            break;
-                    }
+//                } else if (event.type == EyeEvent.Type.GAZE) {
+//                    switch (event.direction) {
+//                        case LEFT:
+//                            resetGaze();
+//                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
+//                            resetGaze(100);
+//                            break;
+//                        case RIGHT:
+//                            resetGaze();
+//                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
+//                            resetGaze(100);
+//                            break;
+//                    }
                 }
             }
         });
