@@ -161,25 +161,25 @@ public class GestureRecognizer implements EOGProcessor {
     }
 
     private boolean checkSlopes(int hSlope, int vSlope) {
-        EyeEvent.Type hDirection = hSlope > 0 ? EyeEvent.Type.LEFT
-                : hSlope < 0 ? EyeEvent.Type.RIGHT : null;
-        EyeEvent.Type vDirection = vSlope > 0 ? EyeEvent.Type.UP
-                : vSlope < 0 ? EyeEvent.Type.DOWN : null;
+        EyeEvent.Direction hDirection = hSlope > 0 ? EyeEvent.Direction.LEFT
+                : hSlope < 0 ? EyeEvent.Direction.RIGHT : null;
+        EyeEvent.Direction vDirection = vSlope > 0 ? EyeEvent.Direction.UP
+                : vSlope < 0 ? EyeEvent.Direction.DOWN : null;
 
-        EyeEvent.Type direction;
+        EyeEvent.Direction direction;
         int amplitude = 0;
         if (hDirection != null && vDirection != null) {
-            if (vDirection == EyeEvent.Type.UP) {
-                if (hDirection == EyeEvent.Type.LEFT) {
-                    direction = EyeEvent.Type.UP_LEFT;
+            if (vDirection == EyeEvent.Direction.UP) {
+                if (hDirection == EyeEvent.Direction.LEFT) {
+                    direction = EyeEvent.Direction.UP_LEFT;
                 } else {
-                    direction = EyeEvent.Type.UP_RIGHT;
+                    direction = EyeEvent.Direction.UP_RIGHT;
                 }
             } else {
-                if (hDirection == EyeEvent.Type.LEFT) {
-                    direction = EyeEvent.Type.DOWN_LEFT;
+                if (hDirection == EyeEvent.Direction.LEFT) {
+                    direction = EyeEvent.Direction.DOWN_LEFT;
                 } else {
-                    direction = EyeEvent.Type.DOWN_RIGHT;
+                    direction = EyeEvent.Direction.DOWN_RIGHT;
                 }
             }
             amplitude = Math.max(Math.abs(hSlope), Math.abs(vSlope));
@@ -194,7 +194,8 @@ public class GestureRecognizer implements EOGProcessor {
             return false;
         }
         gestureValue = String.format("%s %d", direction.toString(), amplitude);
-        eventObserver.onEyeEvent(new EyeEvent(direction, Math.abs(amplitude)));
+        eventObserver.onEyeEvent(new EyeEvent(
+                EyeEvent.Type.GESTURE, direction, Math.abs(amplitude)));
         return true;
     }
 }

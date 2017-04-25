@@ -43,8 +43,8 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        leftFruit = (ImageView) view.findViewById(R.id.left);
-        rightFruit = (ImageView) view.findViewById(R.id.right);
+        leftFruit = (ImageView) view.findViewById(R.id.leftImage);
+        rightFruit = (ImageView) view.findViewById(R.id.rightImage);
 
         if (settings.isDayDream()) {
             view.findViewById(R.id.left).setPadding(
@@ -58,6 +58,7 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
         }
+        resetGaze();
     }
 
     public void onEyeEvent(final EyeEvent event) {
@@ -68,19 +69,36 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                switch (event.type) {
-                    case LEFT:
-                        leftFruit.setImageResource(R.drawable.apple_left);
-                        rightFruit.setImageResource(R.drawable.apple_left);
-                        MediaPlayer.create(getContext(), R.raw.page_flip).start();
-                        resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                        break;
-                    case RIGHT:
-                        leftFruit.setImageResource(R.drawable.apple_right);
-                        rightFruit.setImageResource(R.drawable.apple_right);
-                        MediaPlayer.create(getContext(), R.raw.page_flip).start();
-                        resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                        break;
+                if (event.type == EyeEvent.Type.GESTURE) {
+                    switch (event.direction) {
+                        case LEFT:
+                            leftFruit.setImageResource(R.drawable.apple_left);
+                            rightFruit.setImageResource(R.drawable.apple_left);
+                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
+                            resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                            resetGaze();
+                            break;
+                        case RIGHT:
+                            leftFruit.setImageResource(R.drawable.apple_right);
+                            rightFruit.setImageResource(R.drawable.apple_right);
+                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
+                            resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                            resetGaze();
+                            break;
+                    }
+                } else if (event.type == EyeEvent.Type.GAZE) {
+                    switch (event.direction) {
+                        case LEFT:
+                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
+//                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
+                            resetGaze(100);
+                            break;
+                        case RIGHT:
+                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
+//                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
+                            resetGaze(100);
+                            break;
+                    }
                 }
             }
         });
@@ -95,6 +113,34 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                     public void run() {
                         leftFruit.setImageResource(R.drawable.apple);
                         rightFruit.setImageResource(R.drawable.apple);
+                    }
+                });
+            }
+        }, delay);
+    }
+
+    private void setGaze(int knives[]) {
+        for (int id : knives) {
+            getView().findViewById(id).setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void resetGaze() {
+        int knives[] = new int[] {R.id.leftLeftKnife, R.id.leftRightKnife, R.id.rightLeftKnife,
+                R.id.rightRightKnife};
+        for (int id : knives) {
+            getView().findViewById(id).setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void resetGaze(int delay) {
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        resetGaze();
                     }
                 });
             }

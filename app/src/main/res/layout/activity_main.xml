@@ -7,15 +7,12 @@
     android:background="@android:color/black"
     tools:context="care.dovetail.tracker.MainActivity" >
 
-    <!-- include layout="@layout/gestures"/-->
     <FrameLayout
         android:id="@+id/demo"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
     </FrameLayout>
-
-    <!-- include layout="@layout/eye_tracking"/-->
 
     <include layout="@layout/debug_widgets"/>
 

@@ -1,28 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/gestures"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:showIn="@layout/activity_main">
+    android:paddingBottom="@dimen/activity_vertical_margin">
 
-    <ImageView
+    <FrameLayout
         android:id="@+id/left"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:src="@drawable/apple"/>
+        android:layout_marginRight="@dimen/activity_horizontal_margin">
 
-    <ImageView
+        <ImageView
+            android:id="@+id/leftLeftKnife"
+            android:layout_width="@dimen/knife_width"
+            android:layout_height="@dimen/knife_height"
+            android:layout_gravity="center_vertical|start"
+            android:src="@drawable/knife"/>
+
+        <ImageView
+            android:id="@+id/leftImage"
+            android:layout_width="@dimen/fruit_size"
+            android:layout_height="@dimen/fruit_size"
+            android:layout_gravity="center"
+            android:src="@drawable/apple"/>
+
+        <ImageView
+            android:id="@+id/leftRightKnife"
+            android:layout_width="@dimen/knife_width"
+            android:layout_height="@dimen/knife_height"
+            android:layout_gravity="center_vertical|end"
+            android:src="@drawable/knife"/>
+
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/right"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:src="@drawable/apple"/>
+        android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+        <ImageView
+            android:id="@+id/rightLeftKnife"
+            android:layout_width="@dimen/knife_width"
+            android:layout_height="@dimen/knife_height"
+            android:layout_gravity="center_vertical|start"
+            android:src="@drawable/knife"/>
+
+        <ImageView
+            android:id="@+id/rightImage"
+            android:layout_width="@dimen/fruit_size"
+            android:layout_height="@dimen/fruit_size"
+            android:layout_gravity="center"
+            android:src="@drawable/apple"/>
+
+        <ImageView
+            android:id="@+id/rightRightKnife"
+            android:layout_width="@dimen/knife_width"
+            android:layout_height="@dimen/knife_height"
+            android:layout_gravity="center_vertical|end"
+            android:src="@drawable/knife"/>
+
+    </FrameLayout>
 
 </LinearLayout>

@@ -1,11 +1,13 @@
 package care.dovetail.tracker;
 
+import static care.dovetail.tracker.EyeEvent.Direction.NONE;
+
 /**
  * Created by abhi on 4/24/17.
  */
 
 public class EyeEvent {
-    public enum Type {
+    public enum Direction {
         LEFT,
         RIGHT,
         UP,
@@ -14,6 +16,12 @@ public class EyeEvent {
         UP_RIGHT,
         DOWN_LEFT,
         DOWN_RIGHT,
+        NONE
+    }
+
+    public enum Type {
+        GESTURE,
+        GAZE,
         SMALL_BLINK,
         LARGE_BLINK,
         WHACKAMOLE_POSITION,
@@ -25,24 +33,26 @@ public class EyeEvent {
     }
 
     public final Type type;
+    public final Direction direction;
     public final int amplitude;
     public final int column;
     public final int row;
 
     public EyeEvent(Type type) {
-        this(type, 0, -1, -1);
+        this(type, NONE, 0, -1, -1);
     }
 
-    public EyeEvent(Type type, int amplitude) {
-        this(type, amplitude, -1, -1);
+    public EyeEvent(Type type, Direction direction, int amplitude) {
+        this(type, direction, amplitude, -1, -1);
     }
 
     public EyeEvent(Type type, int column, int row) {
-        this(type, 0, column, row);
+        this(type, NONE, 0, column, row);
     }
 
-    private EyeEvent(Type type, int amplitude, int column, int row) {
+    private EyeEvent(Type type, Direction direction, int amplitude, int column, int row) {
         this.type = type;
+        this.direction = direction;
         this.amplitude = amplitude;
         this.column = column;
         this.row = row;
