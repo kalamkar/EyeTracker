@@ -11,7 +11,7 @@ import care.dovetail.tracker.processing.EOGProcessor;
  * Created by abhi on 4/19/17.
  */
 
-public class GestureRecognizer implements EOGProcessor {
+public class GestureRecognitionProcessor implements EOGProcessor {
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
 
@@ -43,7 +43,7 @@ public class GestureRecognizer implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public GestureRecognizer(EyeEvent.Observer eventObserver, int threshold) {
+    public GestureRecognitionProcessor(EyeEvent.Observer eventObserver, int threshold) {
         this.eventObserver = eventObserver;
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
