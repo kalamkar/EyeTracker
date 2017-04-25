@@ -3,6 +3,7 @@ package care.dovetail.tracker.processing;
 import android.util.Pair;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.Stats;
 
 /**

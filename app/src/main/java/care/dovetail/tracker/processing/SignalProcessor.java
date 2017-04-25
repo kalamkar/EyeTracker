@@ -6,6 +6,7 @@ import android.util.Pair;
 import java.util.Arrays;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.Stats;
 
 /**

@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
-import care.dovetail.tracker.processing.EOGProcessor;
 
 /**
  * Created by abhi on 4/10/17.

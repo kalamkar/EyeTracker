@@ -1,4 +1,4 @@
-package care.dovetail.tracker.processing;
+package care.dovetail.tracker;
 
 import android.util.Pair;
 
