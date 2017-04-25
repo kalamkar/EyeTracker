@@ -180,10 +180,15 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
-            Pair<Integer, Integer> sector = signals.isGoodSignal()
-                    ? signals.getSector() : Pair.create(-1, -1);
+            Pair<Integer, Integer> sector = signals.getSector();
             onEyeEvent(new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
 
+            if (signals.isGoodSignal()) {
+                showDebugNumbers();
+            } else {
+                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
+                showQualityProgress();
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -240,11 +245,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         } else if (Feature.Type.BAD_CONTACT == feature.type && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
-        } else if (Feature.Type.BAD_SIGNAL == feature.type) {
-            ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
-            showQualityProgress();
-        } else if (Feature.Type.GOOD_SIGNAL == feature.type) {
-            showDebugNumbers();
         }
     }
 

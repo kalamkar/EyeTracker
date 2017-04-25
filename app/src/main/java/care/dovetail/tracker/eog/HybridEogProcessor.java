@@ -150,7 +150,7 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> getSector() {
-        return sector;
+        return isGoodSignal() ? sector : Pair.create(-1, -1);
     }
 
     @Override
@@ -162,12 +162,12 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public boolean isGoodSignal() {
-        return isStableHorizontal() && isStableVertical() ;
+        return getSignalQuality() > 95;
     }
 
     @Override
     public int getSignalQuality() {
-        return 100 - Math.min(100000, Math.max(hStats.stdDev, vStats.stdDev)) / 1000;
+        return 100 - Math.min(100, Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 10000));
     }
 
     @Override
