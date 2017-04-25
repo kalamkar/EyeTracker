@@ -3,9 +3,7 @@ package care.dovetail.tracker;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.SensorManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v4.app.Fragment;
@@ -17,6 +15,8 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,7 +34,7 @@ import care.dovetail.tracker.ui.PositionFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
-        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver {
+        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
@@ -54,7 +54,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private Timer sectorUpdateTimer;
     private Timer moleUpdateTimer;
 
-    private Ringtone ringtone;
+    private Map<EyeEvent.Type, MediaPlayer> players = new HashMap<>();
 
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
 
@@ -88,15 +88,18 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         hideBars();
         updateUIFromSettings();
         startBluetooth();
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
+        players.put(EyeEvent.Type.GESTURE, MediaPlayer.create(this, R.raw.slice));
+        players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
         accelerometer.start();
     }
 
     @Override
     protected void onStop() {
         stopBluetooth();
-        ringtone.stop();
+        for (MediaPlayer player : players.values()) {
+            player.release();
+        }
+        players.clear();
         accelerometer.stop();
         super.onStop();
     }
@@ -179,8 +182,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         public void run() {
             Pair<Integer, Integer> sector = signals.isGoodSignal()
                     ? signals.getSector() : Pair.create(-1, -1);
-            ((EyeEvent.Observer) demo).onEyeEvent(
-                    new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
+            onEyeEvent(new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
 
             runOnUiThread(new Runnable() {
                 @Override
@@ -209,16 +211,32 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             }
             moleSector = Pair.create(Stats.random(0, Config.MOLE_NUM_STEPS),
                     Stats.random(0, Config.MOLE_NUM_STEPS));
-            ((EyeEvent.Observer) demo).onEyeEvent(new EyeEvent(
+            onEyeEvent(new EyeEvent(
                     EyeEvent.Type.WHACKAMOLE_POSITION, moleSector.first, moleSector.second));
         }
+    }
+
+    @Override
+    public void onEyeEvent(EyeEvent event) {
+        MediaPlayer player = players.get(event.type);
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.start();
+        }
+        ((EyeEvent.Observer) demo).onEyeEvent(event);
     }
 
     @Override
     public void onFeature(final Feature feature) {
 //        Log.d(TAG, String.format("Got feature %s", feature.type.toString()));
         if (Feature.Type.BLINK == feature.type) {
-            ringtone.play();
+            MediaPlayer player = players.get(EyeEvent.Type.LARGE_BLINK);
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.start();
         } else if (Feature.Type.BAD_CONTACT == feature.type && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
@@ -267,8 +285,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             demo = new PositionFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
         }
-        signals = new HybridEogProcessor((EyeEvent.Observer) demo, settings.getNumSteps(),
-                settings.getThreshold());
+        signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();

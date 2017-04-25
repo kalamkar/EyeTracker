@@ -2,7 +2,6 @@ package care.dovetail.tracker.ui;
 
 import android.app.Activity;
 import android.content.Context;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -74,14 +73,12 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                         case LEFT:
                             leftFruit.setImageResource(R.drawable.apple_left);
                             rightFruit.setImageResource(R.drawable.apple_left);
-                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                             resetGaze();
                             break;
                         case RIGHT:
                             leftFruit.setImageResource(R.drawable.apple_right);
                             rightFruit.setImageResource(R.drawable.apple_right);
-                            MediaPlayer.create(getContext(), R.raw.page_flip).start();
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                             resetGaze();
                             break;
