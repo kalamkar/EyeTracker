@@ -47,10 +47,7 @@ public class HybridEogProcessor implements EOGProcessor {
     private final Calibration hCalibration;
     private final Calibration vCalibration;
 
-    private final StepSlopeGestureFilter hGesture;
-    private final StepSlopeGestureFilter vGesture;
-
-    private int skipWindow = 0;
+    private final GestureRecognizer gestures;
 
     private long updateCount = 0;
     private long processingMillis;
@@ -84,10 +81,7 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hCalibration);
         filters.add(vCalibration);
 
-        hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
-        vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
-        filters.add(hGesture);
-        filters.add(vGesture);
+        gestures = new StepSlopeGestureRecognizer(gestureThreshold);
 
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
@@ -121,15 +115,6 @@ public class HybridEogProcessor implements EOGProcessor {
         hValue = hCurveFit.filter(hValue);
         vValue = vCurveFit.filter(vValue);
 
-        int hSlope = hGesture.filter(hValue);
-        int vSlope = vGesture.filter(vValue);
-
-        if (skipWindow <= 0 && isGoodSignal() && checkSlopes(hSlope, 0)) {
-            skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
-        } else if (skipWindow > 0){
-            skipWindow--;
-        }
-
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
         horizontal[horizontal.length - 1] = hValue;
 
@@ -139,6 +124,12 @@ public class HybridEogProcessor implements EOGProcessor {
         hCalibration.filter(hValue);
         vCalibration.filter(vValue);
         sector = Pair.create(hCalibration.level(), vCalibration.level());
+
+        gestures.update(hValue, vValue);
+        if (isGoodSignal() && gestures.hasEyeEvent()) {
+            EyeEvent event = gestures.getEyeEvent();
+            eventObserver.onEyeEvent(event);
+        }
 
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
@@ -198,42 +189,5 @@ public class HybridEogProcessor implements EOGProcessor {
     public Pair<Integer, Integer> verticalRange() {
         return Pair.create(vCalibration.min(), vCalibration.max());
         // return Pair.create(vStats.min, vStats.max);
-    }
-
-    private boolean checkSlopes(int hSlope, int vSlope) {
-        EyeEvent.Direction hDirection = hSlope > 0 ? EyeEvent.Direction.LEFT
-                : hSlope < 0 ? EyeEvent.Direction.RIGHT : null;
-        EyeEvent.Direction vDirection = vSlope > 0 ? EyeEvent.Direction.UP
-                : vSlope < 0 ? EyeEvent.Direction.DOWN : null;
-
-        EyeEvent.Direction direction;
-        int amplitude = 0;
-        if (hDirection != null && vDirection != null) {
-            if (vDirection == EyeEvent.Direction.UP) {
-                if (hDirection == EyeEvent.Direction.LEFT) {
-                    direction = EyeEvent.Direction.UP_LEFT;
-                } else {
-                    direction = EyeEvent.Direction.UP_RIGHT;
-                }
-            } else {
-                if (hDirection == EyeEvent.Direction.LEFT) {
-                    direction = EyeEvent.Direction.DOWN_LEFT;
-                } else {
-                    direction = EyeEvent.Direction.DOWN_RIGHT;
-                }
-            }
-            amplitude = Math.max(Math.abs(hSlope), Math.abs(vSlope));
-        } else if (hDirection != null) {
-            direction = hDirection;
-            amplitude = hSlope;
-        } else if (vDirection != null) {
-            direction = vDirection;
-            amplitude = vSlope;
-        } else {
-            return false;
-        }
-        eventObserver.onEyeEvent(new EyeEvent(
-                EyeEvent.Type.GESTURE, direction, Math.abs(amplitude)));
-        return true;
     }
 }
