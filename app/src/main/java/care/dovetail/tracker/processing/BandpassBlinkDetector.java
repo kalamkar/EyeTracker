@@ -9,6 +9,7 @@ import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 
 /**
@@ -20,8 +21,8 @@ public class BandpassBlinkDetector implements BlinkDetector {
     private static final String TAG = "BandpassBlinkDetector";
 
     private static final int SMALL_BLINK_HEIGHT = 5000;
-    private static final int MIN_BLINK_HEIGHT = 10000;
-    private static final int MAX_BLINK_HEIGHT = 30000;
+    private static final int MIN_BLINK_HEIGHT = 8000;
+    private static final int MAX_BLINK_HEIGHT = 20000;
 
     private static final int QUALITY_WINDOW = 200; // 4 seconds
 
@@ -35,7 +36,7 @@ public class BandpassBlinkDetector implements BlinkDetector {
     private final IirFilter blinkFilter = new IirFilter(IirFilterDesignExstrom.design(
             FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
 
-    private final List<Feature.FeatureObserver> observers = new ArrayList<>();
+    private final List<EyeEvent.Observer> observers = new ArrayList<>();
 
     private boolean goodSignal = false;
 
@@ -47,7 +48,7 @@ public class BandpassBlinkDetector implements BlinkDetector {
         blinkStats = new Stats(blinks, blinks.length - QUALITY_WINDOW, QUALITY_WINDOW);
 
         if (updateCount >= blinks.length && blinkStats.stdDev == 0) {
-            notifyFeature(new Feature(Feature.Type.BAD_CONTACT, 0, 0, new int[0]));
+            notifyEvent(new EyeEvent(EyeEvent.Type.BAD_CONTACT));
             return;
         }
 
@@ -55,21 +56,28 @@ public class BandpassBlinkDetector implements BlinkDetector {
             // Every 4 seconds check signal quality and send notification if signal is bad.
             if (blinkStats.stdDev > MIN_STD_DEV) {
                 goodSignal = false;
-                notifyFeature(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, new int[0]));
+//                notifyEvent(new Feature(Feature.Type.BAD_SIGNAL, 0, 0, new int[0]));
                 return;
             } else {
                 if (!goodSignal) {
                     // This is a transition from bad signal to good, notify observers
                     // We don't want to keep on notifying good signal though.
-                    notifyFeature(new Feature(Feature.Type.GOOD_SIGNAL, 0, 0, new int[0]));
+//                    notifyEvent(new Feature(Feature.Type.GOOD_SIGNAL, 0, 0, new int[0]));
                 }
                 goodSignal = true;
             }
         }
 
         if (updateCount % BLINK_WINDOW == 0 && blinkStats.stdDev < MIN_STD_DEV) {
-            notifyFeature(maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
-                    MAX_BLINK_HEIGHT));
+            Feature blink = maybeGetBlink(blinks, SMALL_BLINK_HEIGHT, MIN_BLINK_HEIGHT,
+                    MAX_BLINK_HEIGHT);
+            if (blink != null) {
+                if (blink.type == Feature.Type.SMALL_BLINK) {
+                    notifyEvent(new EyeEvent(EyeEvent.Type.SMALL_BLINK));
+                } else if (blink.type == Feature.Type.BLINK) {
+                    notifyEvent(new EyeEvent(EyeEvent.Type.LARGE_BLINK));
+                }
+            }
         }
     }
 
@@ -90,18 +98,15 @@ public class BandpassBlinkDetector implements BlinkDetector {
     }
 
     @Override
-    public void addFeatureObserver(Feature.FeatureObserver observer) {
+    public void addObserver(EyeEvent.Observer observer) {
         if (!observers.contains(observer)) {
             observers.add(observer);
         }
     }
 
-    private void notifyFeature(Feature feature) {
-        if (feature == null) {
-            return;
-        }
-        for (Feature.FeatureObserver observer : observers) {
-            observer.onFeature(feature);
+    private void notifyEvent(EyeEvent event) {
+        for (EyeEvent.Observer observer : observers) {
+            observer.onEyeEvent(event);
         }
     }
 

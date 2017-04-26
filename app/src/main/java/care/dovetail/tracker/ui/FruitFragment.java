@@ -27,6 +27,8 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     private ImageView leftFruit;
     private ImageView rightFruit;
 
+    private Timer gazeResetTimer;
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -88,12 +90,12 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
 //                        case LEFT:
 //                            resetGaze();
 //                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-//                            resetGaze(100);
+//                            resetGaze(1000);
 //                            break;
 //                        case RIGHT:
 //                            resetGaze();
 //                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
-//                            resetGaze(100);
+//                            resetGaze(1000);
 //                            break;
 //                    }
                 }
@@ -131,7 +133,11 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     }
 
     private void resetGaze(int delay) {
-        new Timer().schedule(new TimerTask() {
+        if (gazeResetTimer != null) {
+            gazeResetTimer.cancel();
+        }
+        gazeResetTimer = new Timer();
+        gazeResetTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 getActivity().runOnUiThread(new Runnable() {

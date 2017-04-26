@@ -25,7 +25,8 @@ public class EyeEvent {
         SMALL_BLINK,
         LARGE_BLINK,
         WHACKAMOLE_POSITION,
-        POSITION
+        POSITION,
+        BAD_CONTACT
     }
 
     public interface Observer {

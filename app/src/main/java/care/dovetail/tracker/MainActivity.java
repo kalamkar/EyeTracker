@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.hardware.SensorManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -26,14 +25,13 @@ import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BlinkDetector;
-import care.dovetail.tracker.processing.Feature;
 import care.dovetail.tracker.ui.ChartFragment;
 import care.dovetail.tracker.ui.FruitFragment;
 import care.dovetail.tracker.ui.PositionFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 
 public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
-        Feature.FeatureObserver, AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
+        AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
     private static final int GRAPH_UPDATE_MILLIS = 100;
@@ -185,7 +183,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             if (signals.isGoodSignal()) {
                 showDebugNumbers();
             } else {
-                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
+//                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
                 showQualityProgress();
             }
             runOnUiThread(new Runnable() {
@@ -229,22 +227,11 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             }
             player.start();
         }
-        ((EyeEvent.Observer) demo).onEyeEvent(event);
-    }
-
-    @Override
-    public void onFeature(final Feature feature) {
-//        Log.d(TAG, String.format("Got feature %s", feature.type.toString()));
-        if (Feature.Type.BLINK == feature.type) {
-            MediaPlayer player = players.get(EyeEvent.Type.LARGE_BLINK);
-            if (player.isPlaying()) {
-                player.stop();
-            }
-            player.start();
-        } else if (Feature.Type.BAD_CONTACT == feature.type && patchClient.isConnected()) {
+        if (EyeEvent.Type.BAD_CONTACT == event.type && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
         }
+        ((EyeEvent.Observer) demo).onEyeEvent(event);
     }
 
     @Override
@@ -276,7 +263,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     public void startBluetooth() {
         blinks = new BandpassBlinkDetector();
-        blinks.addFeatureObserver(this);
+        blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
             demo = new FruitFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();

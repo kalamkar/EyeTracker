@@ -192,13 +192,19 @@ public class HybridEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(hCalibration.min(), hCalibration.max());
-        // return Pair.create(hStats.min, hStats.max);
+        if (isGoodSignal()) {
+            return Pair.create(hCalibration.min(), hCalibration.max());
+        } else {
+            return Pair.create(hStats.min, hStats.max);
+        }
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(vCalibration.min(), vCalibration.max());
-        // return Pair.create(vStats.min, vStats.max);
+        if (isGoodSignal()) {
+            return Pair.create(vCalibration.min(), vCalibration.max());
+        } else {
+            return Pair.create(vStats.min, vStats.max);
+        }
     }
 }

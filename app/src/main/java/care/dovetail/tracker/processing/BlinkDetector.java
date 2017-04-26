@@ -2,6 +2,8 @@ package care.dovetail.tracker.processing;
 
 import android.util.Pair;
 
+import care.dovetail.tracker.EyeEvent;
+
 /**
  * Created by abhi on 3/22/17.
  */
@@ -32,7 +34,7 @@ public interface BlinkDetector {
      * Add blink feature observers.
      * @param observer
      */
-    void addFeatureObserver(Feature.FeatureObserver observer);
+    void addObserver(EyeEvent.Observer observer);
 
     int getQuality();
 }
