@@ -85,6 +85,11 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                             resetGaze();
                             break;
                     }
+                } else if (event.type == EyeEvent.Type.LARGE_BLINK) {
+                    leftFruit.setImageResource(R.drawable.apple_pieces);
+                    rightFruit.setImageResource(R.drawable.apple_pieces);
+                    resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                    resetGaze();
 //                } else if (event.type == EyeEvent.Type.GAZE) {
 //                    switch (event.direction) {
 //                        case LEFT:
