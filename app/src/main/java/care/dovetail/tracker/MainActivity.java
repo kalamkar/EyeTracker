@@ -267,11 +267,13 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         if (settings.getDemo() == 0) { // Gestures
             demo = new FruitFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+//            signals = new BandpassEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
+            signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
         } else if (settings.getDemo() == 1) { // Position
             demo = new PositionFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+            signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
         }
-        signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();
