@@ -24,6 +24,8 @@ import care.dovetail.tracker.Settings;
 public class FruitFragment extends Fragment implements EyeEvent.Observer {
     private Settings settings;
 
+    private boolean animationRunning = false;
+
     private ImageView leftFruit;
     private ImageView rightFruit;
 
@@ -70,6 +72,9 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (animationRunning) {
+                    return;
+                }
                 if (event.type == EyeEvent.Type.GESTURE) {
                     switch (event.direction) {
                         case LEFT:
@@ -77,30 +82,33 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                             rightFruit.setImageResource(R.drawable.apple_left);
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                             resetGaze();
+                            animationRunning = true;
                             break;
                         case RIGHT:
                             leftFruit.setImageResource(R.drawable.apple_right);
                             rightFruit.setImageResource(R.drawable.apple_right);
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                             resetGaze();
+                            animationRunning = true;
                             break;
                     }
                 } else if (event.type == EyeEvent.Type.LARGE_BLINK) {
-                    leftFruit.setImageResource(R.drawable.apple_pieces);
-                    rightFruit.setImageResource(R.drawable.apple_pieces);
-                    resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                    leftFruit.setImageResource(R.drawable.apple_hole);
+                    rightFruit.setImageResource(R.drawable.apple_hole);
+                    resetImage(Config.GAZE_VISIBILITY_MILLIS);
                     resetGaze();
+                    animationRunning = true;
 //                } else if (event.type == EyeEvent.Type.GAZE) {
 //                    switch (event.direction) {
 //                        case LEFT:
 //                            resetGaze();
 //                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-//                            resetGaze(1000);
+//                            resetGaze(Config.GAZE_VISIBILITY_MILLIS);
 //                            break;
 //                        case RIGHT:
 //                            resetGaze();
 //                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
-//                            resetGaze(1000);
+//                            resetGaze(Config.GAZE_VISIBILITY_MILLIS);
 //                            break;
 //                    }
                 }
@@ -117,6 +125,7 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                     public void run() {
                         leftFruit.setImageResource(R.drawable.apple);
                         rightFruit.setImageResource(R.drawable.apple);
+                        animationRunning = false;
                     }
                 });
             }
