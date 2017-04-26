@@ -9,8 +9,15 @@ import care.dovetail.tracker.Stats;
  */
 
 public class BandpassGestureRecognizer implements GestureRecognizer {
-    private final int hWindow[] = new int[5];
-    private final int vWindow[] = new int[5];
+    private static final int GESTURE_WINDOW_SIZE = 5;
+    private static final int GAZE_WINDOW_SIZE = 40;
+
+    private static final int MIN_GAZE_STDDEV = 100;
+
+    private final int gestureThreshold;
+
+    private final int hWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
+    private final int vWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
 
     private EyeEvent event;
     private int skipWindow = 0;
@@ -18,6 +25,7 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
     int hSlope;
 
     public BandpassGestureRecognizer(int gestureThreshold) {
+        this.gestureThreshold = gestureThreshold;
     }
 
     @Override
@@ -28,19 +36,30 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
         System.arraycopy(vWindow, 1, vWindow, 0, vWindow.length - 1);
         vWindow[vWindow.length - 1] = vertical;
 
-        hSlope = (int) Stats.calculateSlope(hWindow);
-        int vSlope = (int) Stats.calculateSlope(vWindow);
-
-        hSlope = hSlope > 200 ? hSlope : 0;
-
         if (skipWindow > 0) {
             skipWindow--;
             event = null;
             return;
         }
 
-        event = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
-        if (event != null) {
+        Stats hGazeStats = new Stats(hWindow, 0, GAZE_WINDOW_SIZE);
+//        Stats vGazeStats = new Stats(vWindow, 0, GAZE_WINDOW_SIZE);
+
+        if (hGazeStats.stdDev < MIN_GAZE_STDDEV) {
+            event = new EyeEvent(EyeEvent.Type.GAZE);
+        }
+
+        Stats hGestureStats = new Stats(hWindow, GAZE_WINDOW_SIZE, GESTURE_WINDOW_SIZE);
+//        Stats vGestureStats = new Stats(vWindow, GAZE_WINDOW_SIZE, GESTURE_WINDOW_SIZE);
+
+        hSlope = hGestureStats.max - hGestureStats.min;
+//        int vSlope = vGestureStats.max - vGestureStats.min;
+
+        hSlope = hSlope > gestureThreshold ? hSlope : 0;
+
+        EyeEvent gestureEvent = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
+        if (gestureEvent != null) {
+            event = gestureEvent;
             skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         }
     }

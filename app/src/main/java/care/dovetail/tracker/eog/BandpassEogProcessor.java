@@ -114,11 +114,13 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(hStats.min, hStats.max);
+        // return Pair.create(hStats.min, hStats.max);
+        return Pair.create(-10000, 10000);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(vStats.min, vStats.max);
+        // return Pair.create(vStats.min, vStats.max);
+        return Pair.create(-10000, 10000);
     }
 }
