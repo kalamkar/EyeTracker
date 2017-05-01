@@ -1,6 +1,7 @@
 package care.dovetail.tracker.eog;
 
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
+import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 
 import care.dovetail.tracker.Stats;
 
@@ -16,7 +17,8 @@ public class SlopeFeaturePassthrough implements Filter {
 
     private long countSinceUpdate = 0;
 
-    private int threshold;
+    private int lowThreshold;
+    private int highThreshold;
 
     private int latestFeatureValue = 0;
 
@@ -26,7 +28,8 @@ public class SlopeFeaturePassthrough implements Filter {
         this.thresholdWindow = new double[thresholdUpdateInterval];
         this.thresholdMultiplier = thresholdMultiplier;
 
-        threshold = (int) (1000 * thresholdMultiplier);
+        lowThreshold = 0;
+        highThreshold = 0;
     }
 
     @Override
@@ -38,14 +41,16 @@ public class SlopeFeaturePassthrough implements Filter {
         System.arraycopy(thresholdWindow, 1, thresholdWindow, 0, thresholdWindow.length - 1);
         thresholdWindow[thresholdWindow.length - 1] = slope;
         if (countSinceUpdate == thresholdWindow.length) {
-            double stddev = new StandardDeviation().evaluate(thresholdWindow);
-            threshold = (int) (stddev * thresholdMultiplier);
+            int stddev = (int) new StandardDeviation().evaluate(thresholdWindow);
+            int median = (int) new Percentile().evaluate(thresholdWindow, 50);
+            lowThreshold = median > 0 ? 0 : median - stddev;
+            highThreshold = median < 0 ? 0 : median + stddev;
             countSinceUpdate = 0;
         } else {
             countSinceUpdate++;
         }
 
-        if (Math.abs(slope) > Math.abs(threshold)) {
+        if (slope < lowThreshold || slope > highThreshold) {
             latestFeatureValue = value;
         }
 
