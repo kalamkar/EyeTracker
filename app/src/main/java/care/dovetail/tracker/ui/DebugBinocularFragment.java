@@ -152,6 +152,9 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
                 rightChart.updateChannel3(blinks.blinks(), blinks.blinkRange());
             }
 
+            if (getActivity() == null) {
+                return;
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

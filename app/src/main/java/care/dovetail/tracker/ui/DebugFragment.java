@@ -121,6 +121,9 @@ public class DebugFragment extends Fragment implements DebugUi {
                 chart.updateChannel3(blinks.blinks(), blinks.blinkRange());
             }
 
+            if (getActivity() == null) {
+                return;
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
