@@ -16,6 +16,7 @@ public class EyeEvent {
         UP_RIGHT,
         DOWN_LEFT,
         DOWN_RIGHT,
+        CENTER,
         NONE
     }
 
