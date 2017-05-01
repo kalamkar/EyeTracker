@@ -38,7 +38,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public BandpassEogProcessor(EyeEvent.Observer eventObserver, int numSteps, int gestureThreshold) {
+    public BandpassEogProcessor(EyeEvent.Observer eventObserver, int gestureThreshold) {
         this.eventObserver = eventObserver;
         gestures = new BandpassGestureRecognizer(gestureThreshold);
         firstUpdateTimeMillis = System.currentTimeMillis();
@@ -46,6 +46,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public void update(int hRaw, int vRaw) {
+        hRaw = 0;  // Hack: to disable horizontal channel.
         updateCount++;
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
@@ -84,7 +85,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public boolean isGoodSignal() {
-        return getSignalQuality() > 95;
+        return getSignalQuality() > 80;
     }
 
     @Override
@@ -114,13 +115,13 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        // return Pair.create(hStats.min, hStats.max);
-        return Pair.create(-10000, 10000);
+        return Pair.create(hStats.min, hStats.max);
+//        return Pair.create(-10000, 10000);
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        // return Pair.create(vStats.min, vStats.max);
-        return Pair.create(-10000, 10000);
+        return Pair.create(vStats.min, vStats.max);
+//        return Pair.create(-10000, 10000);
     }
 }
