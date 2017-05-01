@@ -11,8 +11,6 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,20 +19,23 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.tracker.eog.BandpassEogProcessor;
 import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.processing.BandpassBlinkDetector;
 import care.dovetail.tracker.processing.BlinkDetector;
-import care.dovetail.tracker.ui.ChartFragment;
+import care.dovetail.tracker.ui.DebugBinocularFragment;
+import care.dovetail.tracker.ui.DebugFragment;
+import care.dovetail.tracker.ui.DebugUi;
 import care.dovetail.tracker.ui.FruitFragment;
 import care.dovetail.tracker.ui.PositionFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
+import care.dovetail.tracker.ui.SpectaclesFragment;
 
 public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
         AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
-    private static final int GRAPH_UPDATE_MILLIS = 100;
     private static final int GAZE_UPDATE_MILLIS = 100;
     private static final int MOLE_UPDATE_MILLIS = 2000;
 
@@ -47,7 +48,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     private FileDataWriter writer = null;
 
-    private Timer chartUpdateTimer;
     private Timer sectorUpdateTimer;
     private Timer moleUpdateTimer;
 
@@ -56,6 +56,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
 
     private Fragment demo;
+    private DebugUi debug;
 
     private long lookupStartTimeMillis;
 
@@ -83,7 +84,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     protected void onStart() {
         super.onStart();
         hideBars();
-        updateUIFromSettings();
         startBluetooth();
         players.put(EyeEvent.Type.GESTURE, MediaPlayer.create(this, R.raw.slice));
         players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
@@ -101,26 +101,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         super.onStop();
     }
 
-    private void updateUIFromSettings() {
-        if (settings.isDayDream()) {
-            findViewById(R.id.leftDebug).setPadding(
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_left),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
-            findViewById(R.id.rightDebug).setPadding(
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_middle),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_top),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
-                    getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
-        }
-
-        findViewById(R.id.leftNumber).setVisibility(
-                settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
-        findViewById(R.id.rightNumber).setVisibility(
-                settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
-    }
-
     @Override
     public void onConnect(String name) {
         Log.i(TAG, String.format("Connected to %s", name));
@@ -134,44 +114,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         writer.close();
         writer = null;
         hideAll();
-    }
-
-    private class ChartUpdater extends TimerTask {
-        @Override
-        public void run() {
-            final ChartFragment leftChart =
-                    (ChartFragment) getFragmentManager().findFragmentById(R.id.leftChart);
-            final ChartFragment rightChart =
-                    (ChartFragment) getFragmentManager().findFragmentById(R.id.rightChart);
-            leftChart.clear();
-            rightChart.clear();
-
-            if (settings.shouldShowChart()) {
-                leftChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
-                leftChart.updateChannel2(signals.vertical(), signals.verticalRange());
-                rightChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
-                rightChart.updateChannel2(signals.vertical(), signals.verticalRange());
-            }
-
-            if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {
-                leftChart.updateChannel3(blinks.blinks(), blinks.blinkRange());
-                rightChart.updateChannel3(blinks.blinks(), blinks.blinkRange());
-            }
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (!leftChart.isResumed() || !rightChart.isResumed()) {
-                        return;
-                    }
-                    leftChart.updateUI();
-                    rightChart.updateUI();
-                    String numbers = signals.getDebugNumbers();
-                    ((TextView) findViewById(R.id.leftNumber)).setText(numbers);
-                    ((TextView) findViewById(R.id.rightNumber)).setText(numbers);
-                }
-            });
-        }
     }
 
     private class SectorUpdater extends TimerTask {
@@ -189,16 +131,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int quality = signals.getSignalQuality();
-                    ((ProgressBar) findViewById(R.id.leftProgress)).setProgress(quality);
-                    ((ProgressBar) findViewById(R.id.rightProgress)).setProgress(quality);
-
-                    boolean isStableSignal =
-                            signals.isStableHorizontal() && signals.isStableVertical();
-                    findViewById(R.id.leftWarning).setVisibility(
-                            isStableSignal ?  View.INVISIBLE : View.VISIBLE);
-                    findViewById(R.id.rightWarning).setVisibility(
-                            isStableSignal ?  View.INVISIBLE : View.VISIBLE);
+                    debug.setProgress(signals.getSignalQuality());
+                    debug.showWarning(
+                            (!signals.isStableHorizontal()) || (!signals.isStableVertical()));
                 }
             });
         }
@@ -266,20 +201,27 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
             demo = new FruitFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 //            signals = new BandpassEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
             signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
+            debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Position
             demo = new PositionFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
             signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
+            debug = new DebugBinocularFragment();
+        } else if (settings.getDemo() == 2) { // Spectacles
+            demo = new SpectaclesFragment();
+            signals = new BandpassEogProcessor(this, settings.getThreshold());
+            debug = new DebugFragment();
         }
+        getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+
+        debug.setDataSource(signals, blinks);
+        getSupportFragmentManager()
+                .beginTransaction().replace(R.id.debug, (Fragment) debug).commit();
+
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();
-
-        chartUpdateTimer = new Timer();
-        chartUpdateTimer.schedule(new ChartUpdater(), 0, GRAPH_UPDATE_MILLIS);
 
         sectorUpdateTimer = new Timer();
         sectorUpdateTimer.schedule(new SectorUpdater(), 0, GAZE_UPDATE_MILLIS);
@@ -292,9 +234,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     public void stopBluetooth() {
         patchClient.close();
-        if (chartUpdateTimer != null) {
-            chartUpdateTimer.cancel();
-        }
         if (sectorUpdateTimer != null) {
             sectorUpdateTimer.cancel();
         }
@@ -315,37 +254,19 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     private void showQualityProgress() {
-         updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+         debug.updateStatusUI(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
     }
 
     private void showDebugNumbers() {
-        updateStatusUI(View.INVISIBLE, View.INVISIBLE,
+        debug.updateStatusUI(View.INVISIBLE, View.INVISIBLE,
                 settings.shouldShowNumbers() ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void showBluetoothSpinner() {
-        updateStatusUI(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
+        debug.updateStatusUI(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
     }
 
     private void hideAll() {
-        updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.INVISIBLE);
-    }
-
-    private void updateStatusUI(final int spinner, final int progress, final int numbers) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.leftBlue).setVisibility(spinner);
-                findViewById(R.id.rightBlue).setVisibility(spinner);
-
-                findViewById(R.id.leftProgress).setVisibility(progress);
-                findViewById(R.id.rightProgress).setVisibility(progress);
-                findViewById(R.id.leftProgressLabel).setVisibility(progress);
-                findViewById(R.id.rightProgressLabel).setVisibility(progress);
-
-                findViewById(R.id.leftNumber).setVisibility(numbers);
-                findViewById(R.id.rightNumber).setVisibility(numbers);
-            }
-        });
+        debug.updateStatusUI(View.INVISIBLE, View.INVISIBLE, View.INVISIBLE);
     }
 }

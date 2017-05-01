@@ -14,8 +14,12 @@
 
     </FrameLayout>
 
-    <include layout="@layout/debug_widgets"/>
+    <FrameLayout
+        android:id="@+id/debug"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
+    </FrameLayout>
 
     <ImageView
         android:layout_width="200dp"

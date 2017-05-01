@@ -21,6 +21,7 @@
     <string-array name="demos">
         <item>Gestures</item>
         <item>Position</item>
+        <item>Spectacles</item>
     </string-array>
 
 </resources>
