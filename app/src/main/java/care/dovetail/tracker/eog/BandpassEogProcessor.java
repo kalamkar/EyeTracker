@@ -85,7 +85,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public boolean isGoodSignal() {
-        return getSignalQuality() > 80;
+        return getSignalQuality() > 95;
     }
 
     @Override
@@ -115,13 +115,19 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        return Pair.create(hStats.min, hStats.max);
-//        return Pair.create(-10000, 10000);
+        if (isGoodSignal()) {
+            return Pair.create(-10000, 10000);
+        } else {
+            return Pair.create(hStats.min, hStats.max);
+        }
     }
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        return Pair.create(vStats.min, vStats.max);
-//        return Pair.create(-10000, 10000);
+        if (isGoodSignal()) {
+            return Pair.create(-10000, 10000);
+        } else {
+            return Pair.create(vStats.min, vStats.max);
+        }
     }
 }
