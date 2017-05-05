@@ -75,7 +75,7 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                 if (animationRunning) {
                     return;
                 }
-                if (event.type == EyeEvent.Type.GESTURE) {
+                if (event.type == EyeEvent.Type.SACCADE) {
                     switch (event.direction) {
                         case LEFT:
                             leftFruit.setImageResource(R.drawable.apple_left);

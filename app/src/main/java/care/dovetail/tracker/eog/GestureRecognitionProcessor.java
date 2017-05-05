@@ -192,7 +192,7 @@ public class GestureRecognitionProcessor implements EOGProcessor {
         }
         gestureValue = String.format("%s %d", direction.toString(), amplitude);
         eventObserver.onEyeEvent(new EyeEvent(
-                EyeEvent.Type.GESTURE, direction, Math.abs(amplitude)));
+                EyeEvent.Type.SACCADE, direction, Math.abs(amplitude), 0));
         return true;
     }
 }

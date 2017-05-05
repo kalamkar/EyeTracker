@@ -89,6 +89,6 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
         } else {
             return null;
         }
-        return new EyeEvent(EyeEvent.Type.GESTURE, direction, Math.abs(amplitude));
+        return new EyeEvent(EyeEvent.Type.SACCADE, direction, Math.abs(amplitude), 0);
     }
 }

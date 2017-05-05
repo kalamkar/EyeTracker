@@ -137,7 +137,7 @@ public class HybridEogProcessor implements EOGProcessor {
                 boolean right = sector.first >= numSteps * 2 / 3;
                 EyeEvent.Direction direction =  left ? EyeEvent.Direction.LEFT
                         : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
-                event = new EyeEvent(EyeEvent.Type.GAZE, direction, 0);
+                event = new EyeEvent(EyeEvent.Type.GAZE, direction, 0, 0);
             }
             eventObserver.onEyeEvent(event);
         }

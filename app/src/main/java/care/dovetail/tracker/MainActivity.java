@@ -85,7 +85,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         super.onStart();
         hideBars();
         startBluetooth();
-        players.put(EyeEvent.Type.GESTURE, MediaPlayer.create(this, R.raw.slice));
+        players.put(EyeEvent.Type.SACCADE, MediaPlayer.create(this, R.raw.slice));
         players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
         accelerometer.start();
     }
