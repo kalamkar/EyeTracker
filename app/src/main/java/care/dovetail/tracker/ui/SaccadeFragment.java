@@ -8,6 +8,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
+import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
@@ -21,6 +25,8 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
 
     private SaccadeView leftContent;
     private SaccadeView rightContent;
+
+    private Timer resetTimer;
 
     @Override
     public void onAttach(Context context) {
@@ -66,9 +72,29 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
                     case SACCADE:
                         leftContent.show(event.direction, event.amplitude);
                         rightContent.show(event.direction, event.amplitude);
+                        reset(Config.GESTURE_VISIBILITY_MILLIS);
                         break;
                 }
             }
         });
+    }
+
+    private void reset(int delay) {
+        if (resetTimer != null) {
+            resetTimer.cancel();
+        }
+        resetTimer = new Timer();
+        resetTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        leftContent.clear();
+                        rightContent.clear();
+                    }
+                });
+            }
+        }, delay);
     }
 }

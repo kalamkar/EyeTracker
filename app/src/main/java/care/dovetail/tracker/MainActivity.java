@@ -29,6 +29,7 @@ import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
 import care.dovetail.tracker.ui.FruitFragment;
 import care.dovetail.tracker.ui.PositionFragment;
+import care.dovetail.tracker.ui.SaccadeFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 import care.dovetail.tracker.ui.SpectaclesFragment;
 
@@ -200,15 +201,18 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         blinks = new BandpassBlinkDetector();
         blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
+            demo = new SaccadeFragment();
+            signals = new BandpassEogProcessor(this, settings.getThreshold());
+            debug = new DebugBinocularFragment();
+        } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-//            signals = new BandpassEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
             signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
-        } else if (settings.getDemo() == 1) { // Position
+        } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
             signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
-        } else if (settings.getDemo() == 2) { // Spectacles
+        } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
             signals = new BandpassEogProcessor(this, settings.getThreshold());
             debug = new DebugFragment();

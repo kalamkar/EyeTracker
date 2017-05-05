@@ -37,28 +37,38 @@ public class SaccadeView extends View {
     }
 
     public void show(EyeEvent.Direction direction, int amplitude) {
-        if (canvas == null) {
-            return;
-        }
         clearAll(bitmap.getWidth(), bitmap.getHeight());
         switch (direction) {
             case UP_LEFT:
+                canvas.drawLine(width / 2, height / 2, MARGIN, MARGIN, paint);
+                break;
             case DOWN_RIGHT:
-                drawDiagonal();
+                canvas.drawLine(width / 2, height / 2, width - MARGIN, height - MARGIN, paint);
                 break;
             case UP_RIGHT:
+                canvas.drawLine(width / 2, height / 2, width - MARGIN, MARGIN, paint);
+                break;
             case DOWN_LEFT:
-                drawDiagonalReverse();
+                canvas.drawLine(width / 2, height / 2, MARGIN, height - MARGIN, paint);
                 break;
             case LEFT:
+                canvas.drawLine(width / 2, height / 2, MARGIN, height / 2, paint);
+                break;
             case RIGHT:
-                drawHorizontal();
+                canvas.drawLine(width / 2, height / 2, width - MARGIN, height / 2, paint);
                 break;
             case UP:
+                canvas.drawLine(width / 2, height / 2, width / 2, MARGIN, paint);
+                break;
             case DOWN:
-                drawVertical();
+                canvas.drawLine(width / 2, height / 2, width / 2, height - MARGIN, paint);
                 break;
         }
+        invalidate();
+    }
+
+    public void clear() {
+        clearAll(bitmap.getWidth(), bitmap.getHeight());
         invalidate();
     }
 
@@ -80,25 +90,5 @@ public class SaccadeView extends View {
         canvas = new Canvas();
         canvas.setBitmap(bitmap);
         canvas.drawColor(Color.TRANSPARENT);
-    }
-
-    private void drawDiagonal() {
-        canvas.drawLine(MARGIN, MARGIN, width - MARGIN, height - MARGIN, paint);
-    }
-
-    private void drawDiagonalReverse() {
-        canvas.drawLine(width - MARGIN, MARGIN, MARGIN, height - MARGIN, paint);
-    }
-
-    private void drawHorizontal() {
-        canvas.drawLine(MARGIN, height / 2, width - MARGIN, height / 2, paint);
-    }
-
-    private void drawVertical() {
-        canvas.drawLine(width / 2, MARGIN, width / 2, height - MARGIN, paint);
-    }
-
-    private void drawCircle() {
-        canvas.drawCircle(width / 2, height / 2, Math.min(width, height) / 2 - MARGIN, paint);
     }
 }
