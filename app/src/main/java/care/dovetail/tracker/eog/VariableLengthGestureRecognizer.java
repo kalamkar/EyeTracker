@@ -8,65 +8,36 @@ import care.dovetail.tracker.EyeEvent;
  */
 
 public class VariableLengthGestureRecognizer implements GestureRecognizer {
-    private int hPrevValue = 0;
-    private int vPrevValue = 0;
-
-    private int hDirection = 0;  // Up or Down, Direction of change of values, not eyes
-    private int vDirection = 0;  // Up or Down, Direction of change of values, not eyes
-
-    private int hLength = 0;
-    private int vLength = 0;
-
-    private int hLatestChangeValue = 0;
-    private int vLatestChangeValue = 0;
+    private final SaccadeSegmenter horizontal;
+    private final SaccadeSegmenter vertical;
 
     private EyeEvent event;
 
-    public VariableLengthGestureRecognizer() {
+    public VariableLengthGestureRecognizer(int gestureThreshold) {
+        horizontal = new SaccadeSegmenter(gestureThreshold);
+        vertical = new SaccadeSegmenter(gestureThreshold);
     }
 
     @Override
-    public void update(int horizontal, int vertical) {
-        int hNewDirection = horizontal - hPrevValue;
-        hNewDirection /= hNewDirection != 0 ? Math.abs(hNewDirection) : 1;
-        int vNewDirection = vertical - vPrevValue;
-        vNewDirection /= vNewDirection != 0 ? Math.abs(vNewDirection) : 1;
-
-        int length = 0;
-        if (hDirection != hNewDirection && hNewDirection != 0) {
-            length = hLength;
-            hLength = 0;
-            vLength++;
-            hDirection = hNewDirection;
-        } else if (vDirection != vNewDirection && vNewDirection != 0) {
-            length = vLength;
-            vLength = 0;
-            hLength++;
-            vDirection = vNewDirection;
-        } else {
-            hLength++;
-            vLength++;
-        }
-
-        if (length > 0) {
-            int hAmplitude = hPrevValue - hLatestChangeValue;
-            int vAmplitude = vPrevValue - vLatestChangeValue;
-
-            hLatestChangeValue = hPrevValue;
-            vLatestChangeValue = vPrevValue;
-
-            event = checkGestureSlopes(hAmplitude, vAmplitude, length);
+    public void update(int hValue, int vValue) {
+        horizontal.update(hValue);
+        vertical.update(vValue);
+        if (horizontal.hasSaccade()) {
+            event = new EyeEvent(EyeEvent.Type.SACCADE,
+                    horizontal.amplitude > 0 ? EyeEvent.Direction.LEFT : EyeEvent.Direction.RIGHT,
+                    horizontal.amplitude, (long) (horizontal.length * 1000 / Config.SAMPLING_FREQ));
+        } else if (vertical.hasSaccade()) {
+            event = new EyeEvent(EyeEvent.Type.SACCADE,
+                    vertical.amplitude > 0 ? EyeEvent.Direction.UP : EyeEvent.Direction.DOWN,
+                    vertical.amplitude, (long) (vertical.length * 1000 / Config.SAMPLING_FREQ));
         } else {
             event = null;
         }
-
-        hPrevValue = horizontal;
-        vPrevValue = vertical;
     }
 
     @Override
     public boolean hasEyeEvent() {
-        return event == null;
+        return event != null;
     }
 
     @Override
@@ -74,39 +45,53 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         return event;
     }
 
-    private static EyeEvent checkGestureSlopes(int hAmplitude, int vAmplitude, int length) {
-        EyeEvent.Direction hDirection = hAmplitude > 0 ? EyeEvent.Direction.LEFT
-                : hAmplitude < 0 ? EyeEvent.Direction.RIGHT : null;
-        EyeEvent.Direction vDirection = vAmplitude > 0 ? EyeEvent.Direction.UP
-                : vAmplitude < 0 ? EyeEvent.Direction.DOWN : null;
+    private static class SaccadeSegmenter {
+        private final int gestureThreshold;
 
-        EyeEvent.Direction direction;
-        int amplitude = 0;
-        if (hDirection != null && vDirection != null) {
-            if (vDirection == EyeEvent.Direction.UP) {
-                if (hDirection == EyeEvent.Direction.LEFT) {
-                    direction = EyeEvent.Direction.UP_LEFT;
-                } else {
-                    direction = EyeEvent.Direction.UP_RIGHT;
-                }
-            } else {
-                if (hDirection == EyeEvent.Direction.LEFT) {
-                    direction = EyeEvent.Direction.DOWN_LEFT;
-                } else {
-                    direction = EyeEvent.Direction.DOWN_RIGHT;
-                }
-            }
-            amplitude = Math.max(Math.abs(hAmplitude), Math.abs(vAmplitude));
-        } else if (hDirection != null) {
-            direction = hDirection;
-            amplitude = hAmplitude;
-        } else if (vDirection != null) {
-            direction = vDirection;
-            amplitude = vAmplitude;
-        } else {
-            return null;
+        private int prevValue = 0;
+        private int currentDirection = 0;  // Up or Down, Direction of change of values, not eyes
+        private int countSinceLatestSaccade = 0;
+        private int latestSaccadeEndValue = 0;
+
+        public int length = 0;
+        public int amplitude = 0;
+
+        public SaccadeSegmenter(int gestureThreshold) {
+            this.gestureThreshold = gestureThreshold;
         }
-        long durationMillis = (long) (length * 1000 / Config.SAMPLING_FREQ);
-        return new EyeEvent(EyeEvent.Type.SACCADE, direction, Math.abs(amplitude), durationMillis);
+
+        public void update(int value) {
+            int newDirection = value - prevValue;
+            newDirection /= newDirection != 0 ? Math.abs(newDirection) : 1;
+
+            if (currentDirection != newDirection && newDirection != 0) {
+                currentDirection = newDirection;
+
+                length = countSinceLatestSaccade;
+                countSinceLatestSaccade = 0;
+
+                amplitude = prevValue - latestSaccadeEndValue;
+                latestSaccadeEndValue = prevValue;
+            } else {
+                countSinceLatestSaccade++;
+                length = 0;
+                amplitude = 0;
+            }
+
+            prevValue = value;
+        }
+
+        public boolean hasSaccade() {
+            return length > 0 && amplitude != 0
+                    && (Math.abs(amplitude) * length > gestureThreshold);
+        }
+
+        public int getCurrentAmplitude() {
+            return prevValue - latestSaccadeEndValue;
+        }
+
+        public int getCurrentLength() {
+            return countSinceLatestSaccade;
+        }
     }
 }
