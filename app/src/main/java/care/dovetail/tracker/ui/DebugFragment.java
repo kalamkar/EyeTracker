@@ -115,6 +115,8 @@ public class DebugFragment extends Fragment implements DebugUi {
             if (settings.shouldShowChart()) {
                 chart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 chart.updateChannel2(signals.vertical(), signals.verticalRange());
+                chart.updateFeature1(signals.feature1(), signals.feature1Range());
+                chart.updateFeature2(signals.feature2(), signals.feature2Range());
             }
 
             if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {

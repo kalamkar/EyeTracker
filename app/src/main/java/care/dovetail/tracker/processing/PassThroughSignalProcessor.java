@@ -88,4 +88,24 @@ public class PassThroughSignalProcessor implements EOGProcessor {
     public Pair<Integer, Integer> verticalRange() {
         return Pair.create(vStats.min, vStats.max);
     }
+
+    @Override
+    public int[] feature1() {
+        return new int[]{};
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature1Range() {
+        return Pair.create(-1, 1);
+    }
+
+    @Override
+    public int[] feature2() {
+        return new int[]{};
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature2Range() {
+        return Pair.create(-1, 1);
+    }
 }

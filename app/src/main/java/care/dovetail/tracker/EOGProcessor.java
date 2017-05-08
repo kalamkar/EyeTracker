@@ -58,12 +58,6 @@ public interface EOGProcessor {
     int[] horizontal();
 
     /**
-     * Time series of processed values from horizontal channel to be displayed as chart.
-     * @return Array of ints
-     */
-    int[] vertical();
-
-    /**
      * Range of minimum and maximum values for chart from horizontal channel. This does NOT have to
      * be min and max from horizontal() values above.
      * @return minimum and maximum values in that order.
@@ -71,9 +65,41 @@ public interface EOGProcessor {
     Pair<Integer, Integer> horizontalRange();
 
     /**
+     * Time series of processed values from horizontal channel to be displayed as chart.
+     * @return Array of ints
+     */
+    int[] vertical();
+
+    /**
      * Range of minimum and maximum values for chart from vertical channel. This does NOT have to
      * be min and max from vertical() values above.
      * @return minimum and maximum values in that order.
      */
     Pair<Integer, Integer> verticalRange();
+
+    /**
+     * Time series of feature1 points to be displayed on the chart.
+     * @return Array of ints
+     */
+    int[] feature1();
+
+    /**
+     * Range of minimum and maximum values for chart of the feature1 points. This does NOT have to
+     * be min and max from feature1() values above.
+     * @return minimum and maximum values in that order.
+     */
+    Pair<Integer, Integer> feature1Range();
+
+    /**
+     * Time series of feature2 points to be displayed on the chart.
+     * @return Array of ints
+     */
+    int[] feature2();
+
+    /**
+     * Range of minimum and maximum values for chart of the feature2 points. This does NOT have to
+     * be min and max from feature2() values above.
+     * @return minimum and maximum values in that order.
+     */
+    Pair<Integer, Integer> feature2Range();
 }

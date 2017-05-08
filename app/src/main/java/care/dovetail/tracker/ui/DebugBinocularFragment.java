@@ -143,8 +143,12 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
             if (settings.shouldShowChart()) {
                 leftChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 leftChart.updateChannel2(signals.vertical(), signals.verticalRange());
+                leftChart.updateFeature1(signals.feature1(), signals.feature1Range());
+                leftChart.updateFeature1(signals.feature2(), signals.feature2Range());
                 rightChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 rightChart.updateChannel2(signals.vertical(), signals.verticalRange());
+                rightChart.updateFeature1(signals.feature1(), signals.feature1Range());
+                rightChart.updateFeature2(signals.feature2(), signals.feature2Range());
             }
 
             if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {

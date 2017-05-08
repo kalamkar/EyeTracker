@@ -57,10 +57,10 @@ public class ChartFragment extends Fragment {
         channel3 = chartView.makeLineChart(lightRed, 1);
         channel3.setXRange(0, Config.GRAPH_LENGTH);
 
-        feature1 = chartView.makePointsChart(orange, 5);
+        feature1 = chartView.makePointsChart(orange, 3);
         feature1.setXRange(0, Config.GRAPH_LENGTH);
 
-        feature2 = chartView.makePointsChart(purple, 5);
+        feature2 = chartView.makePointsChart(purple, 3);
         feature2.setXRange(0, Config.GRAPH_LENGTH);
     }
 

@@ -215,4 +215,24 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
         // Inverse the level
         return (numSteps - 1) - Math.min(numSteps - 1, level);
     }
+
+    @Override
+    public int[] feature1() {
+        return new int[]{};
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature1Range() {
+        return Pair.create(-1, 1);
+    }
+
+    @Override
+    public int[] feature2() {
+        return new int[]{};
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature2Range() {
+        return Pair.create(-1, 1);
+    }
 }

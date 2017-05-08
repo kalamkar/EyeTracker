@@ -24,6 +24,8 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
+    protected final int feature1[] = new int[Config.GRAPH_LENGTH];
+    protected final int feature2[] = new int[Config.GRAPH_LENGTH];
 
     private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
@@ -38,15 +40,16 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
+    private EyeEvent event;
+
     public BandpassEogProcessor(EyeEvent.Observer eventObserver, int gestureThreshold) {
         this.eventObserver = eventObserver;
-        gestures = new BandpassGestureRecognizer(gestureThreshold);
+        gestures = new VariableLengthGestureRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
     @Override
     public void update(int hRaw, int vRaw) {
-        hRaw = 0;  // Hack: to disable horizontal channel.
         updateCount++;
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
@@ -60,13 +63,27 @@ public class BandpassEogProcessor implements EOGProcessor {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = vValue;
 
-        gestures.update(hValue, vValue);
-        if (isGoodSignal() && gestures.hasEyeEvent()) {
-            eventObserver.onEyeEvent(gestures.getEyeEvent());
-        }
-
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
+
+        System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
+        feature1[feature1.length - 1] = 0;
+        System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
+        feature2[feature2.length - 1] = 0;
+
+        gestures.update(hValue, vValue);
+        if (isGoodSignal() && gestures.hasEyeEvent()) {
+            EyeEvent evt = gestures.getEyeEvent();
+            if (Math.abs(evt.amplitude) > hStats.stdDev * 2) {
+                event = evt;
+                eventObserver.onEyeEvent(event);
+
+                feature1[feature1.length - 1] = event.amplitude;
+                int start = feature2.length -
+                        (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                feature2[start >= 0 ? start : 0] = 1;
+            }
+        }
 
         processingMillis = System.currentTimeMillis() - startTime;
     }
@@ -78,9 +95,12 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-        int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
+//        int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
         int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
-        return updateCount > 0 ? String.format("%d\n%dk", seconds, dev) : "";
+        String gesture = event != null ? event.direction.toString() : "";
+        int amp = event != null ? event.amplitude : 0;
+        long dur = event != null ? event.durationMillis : 0;
+        return updateCount > 0 ? String.format("%s,%dk\n%d,%d", gesture, dev, amp, dur) : "";
     }
 
     @Override
@@ -109,23 +129,51 @@ public class BandpassEogProcessor implements EOGProcessor {
     }
 
     @Override
-    public int[] vertical() {
-        return vertical;
-    }
-
-    @Override
     public Pair<Integer, Integer> horizontalRange() {
         if (isGoodSignal()) {
-            return Pair.create(-10000, 10000);
+            return Pair.create(-5000, 5000);
         } else {
             return Pair.create(hStats.min, hStats.max);
         }
     }
 
     @Override
+    public int[] vertical() {
+        return vertical;
+    }
+
+    @Override
     public Pair<Integer, Integer> verticalRange() {
         if (isGoodSignal()) {
-            return Pair.create(-10000, 10000);
+            return Pair.create(-5000, 5000);
+        } else {
+            return Pair.create(vStats.min, vStats.max);
+        }
+    }
+
+    @Override
+    public int[] feature1() {
+        return feature1;
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature1Range() {
+        if (isGoodSignal()) {
+            return Pair.create(-5000, 5000);
+        } else {
+            return Pair.create(vStats.min, vStats.max);
+        }
+    }
+
+    @Override
+    public int[] feature2() {
+        return feature2;
+    }
+
+    @Override
+    public Pair<Integer, Integer> feature2Range() {
+        if (isGoodSignal()) {
+            return Pair.create(-5000, 5000);
         } else {
             return Pair.create(vStats.min, vStats.max);
         }
