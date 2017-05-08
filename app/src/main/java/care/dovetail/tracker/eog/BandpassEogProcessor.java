@@ -72,17 +72,15 @@ public class BandpassEogProcessor implements EOGProcessor {
         feature2[feature2.length - 1] = 0;
 
         gestures.update(hValue, vValue);
-        if (isGoodSignal() && gestures.hasEyeEvent()) {
-            EyeEvent evt = gestures.getEyeEvent();
-            if (Math.abs(evt.amplitude) > hStats.stdDev * 2) {
-                event = evt;
-                eventObserver.onEyeEvent(event);
+        if (isGoodSignal() && gestures.hasEyeEvent()
+                && eventObserver.getCriteria().isMatching(gestures.getEyeEvent())) {
+            event = gestures.getEyeEvent();
+            eventObserver.onEyeEvent(event);
 
-                feature1[feature1.length - 1] = event.amplitude;
-                int start = feature2.length -
-                        (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
-                feature2[start >= 0 ? start : 0] = 1;
-            }
+            feature1[feature1.length - 1] = event.amplitude;
+            int start = feature2.length -
+                    (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+            feature2[start >= 0 ? start : 0] = 1;
         }
 
         processingMillis = System.currentTimeMillis() - startTime;

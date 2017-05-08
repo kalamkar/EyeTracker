@@ -78,6 +78,11 @@ public class PositionFragment extends Fragment implements EyeEvent.Observer {
         }
     }
 
+    @Override
+    public EyeEvent.Criteria getCriteria() {
+        return new EyeEvent.AllCriteria();
+    }
+
     public void onEyeEvent(final EyeEvent event) {
         Activity activity = getActivity();
         if (activity == null) {

@@ -155,6 +155,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     @Override
+    public EyeEvent.Criteria getCriteria() {
+        return new EyeEvent.AnyCriteria()
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, 1000));
+    }
+
+    @Override
     public void onEyeEvent(EyeEvent event) {
         MediaPlayer player = players.get(event.type);
         if (player != null) {

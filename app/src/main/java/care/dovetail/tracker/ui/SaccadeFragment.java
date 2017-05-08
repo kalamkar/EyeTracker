@@ -60,6 +60,13 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
         }
     }
 
+    @Override
+    public EyeEvent.Criteria getCriteria() {
+        return new EyeEvent.AnyCriteria()
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 2000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 2000));
+    }
+
     public void onEyeEvent(final EyeEvent event) {
         Activity activity = getActivity();
         if (activity == null) {
