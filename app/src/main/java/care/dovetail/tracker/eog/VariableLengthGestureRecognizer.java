@@ -13,9 +13,6 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
 
-    private int hSkipWindow = 0;
-    private int vSkipWindow = 0;
-
     private EyeEvent event;
 
     @Override
@@ -23,31 +20,23 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         horizontal.update(hValue);
         vertical.update(vValue);
 
-        if (horizontal.hasSaccade() && hSkipWindow == 0) {
+        if (horizontal.hasSaccade()) {
             long hMillis = (long) (horizontal.length * 1000 / Config.SAMPLING_FREQ);
             event = new EyeEvent(EyeEvent.Type.SACCADE,
                     horizontal.amplitude > 0 ? EyeEvent.Direction.LEFT : EyeEvent.Direction.RIGHT,
                     horizontal.amplitude, hMillis);
-            if (hMillis < MAX_SACCADE_MILLIS) {
-                hSkipWindow = horizontal.length;
-            }
             return;
         }
 
-        if (vertical.hasSaccade() && vSkipWindow == 0) {
+        if (vertical.hasSaccade()) {
             long vMillis = (long) (vertical.length * 1000 / Config.SAMPLING_FREQ);
             event = new EyeEvent(EyeEvent.Type.SACCADE,
                     vertical.amplitude > 0 ? EyeEvent.Direction.UP : EyeEvent.Direction.DOWN,
                     vertical.amplitude, vMillis);
-            if (vMillis < MAX_SACCADE_MILLIS) {
-                vSkipWindow = vertical.length;
-            }
             return;
         }
 
         event = null;
-        hSkipWindow = hSkipWindow > 0 ? hSkipWindow - 1 : 0;
-        vSkipWindow = vSkipWindow > 0 ? vSkipWindow - 1 : 0;
     }
 
     @Override
