@@ -11,7 +11,7 @@ import care.dovetail.tracker.EyeEvent;
  */
 
 public class VariableLengthGestureRecognizer implements GestureRecognizer {
-    private static final int GAZE_THRESHOLD = 500;
+    private static final int GAZE_THRESHOLD = 800;
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
 
@@ -69,6 +69,8 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         private int countSinceLatestSaccade = 0;
         private int latestSaccadeEndValue = 0;
 
+        private int skipWindow = 0;
+
         private int saccadeLength = 0;
         private int saccadeAmplitude = 0;
 
@@ -76,33 +78,30 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
             int newDirection = value - prevValue;
             newDirection /= newDirection != 0 ? Math.abs(newDirection) : 1;
 
-            if (currentDirection != newDirection && newDirection != 0) {
+            if (currentDirection != newDirection && newDirection != 0 && skipWindow == 0) {
                 currentDirection = newDirection;
 
                 saccadeLength = countSinceLatestSaccade;
-                countSinceLatestSaccade = 0;
-
                 saccadeAmplitude = prevValue - latestSaccadeEndValue;
-                latestSaccadeEndValue = prevValue;
+
+                skipWindow = saccadeLength;
             } else {
                 countSinceLatestSaccade++;
                 saccadeLength = 0;
                 saccadeAmplitude = 0;
             }
 
+            if (skipWindow > 0) {
+                if (--skipWindow == 0) {
+                    latestSaccadeEndValue = value;
+                    countSinceLatestSaccade = 0;
+                }
+            }
             prevValue = value;
         }
 
         public boolean hasSaccade() {
             return saccadeLength > 0 && saccadeAmplitude != 0;
-        }
-
-        public int getCurrentAmplitude() {
-            return prevValue - latestSaccadeEndValue;
-        }
-
-        public int getCurrentLength() {
-            return countSinceLatestSaccade;
         }
     }
 }
