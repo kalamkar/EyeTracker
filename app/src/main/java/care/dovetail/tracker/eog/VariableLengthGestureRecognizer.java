@@ -67,9 +67,7 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         private int prevValue = 0;
         private int currentDirection = 0;  // Up or Down, Direction of change of values, not eyes
         private int countSinceLatestSaccade = 0;
-        private int latestSaccadeEndValue = 0;
 
-        private int skipWindow = 0;
 
         private int saccadeLength = 0;
         private int saccadeAmplitude = 0;
@@ -78,25 +76,19 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
             int newDirection = value - prevValue;
             newDirection /= newDirection != 0 ? Math.abs(newDirection) : 1;
 
-            if (currentDirection != newDirection && newDirection != 0 && skipWindow == 0) {
+            if (currentDirection != newDirection && newDirection != 0) {
                 currentDirection = newDirection;
 
                 saccadeLength = countSinceLatestSaccade;
-                saccadeAmplitude = prevValue - latestSaccadeEndValue;
+                saccadeAmplitude = prevValue - 0; // TODO(abhi): Get more accurate baseline
 
-                skipWindow = saccadeLength;
+                countSinceLatestSaccade = 0;
             } else {
                 countSinceLatestSaccade++;
                 saccadeLength = 0;
                 saccadeAmplitude = 0;
             }
 
-            if (skipWindow > 0) {
-                if (--skipWindow == 0) {
-                    latestSaccadeEndValue = value;
-                    countSinceLatestSaccade = 0;
-                }
-            }
             prevValue = value;
         }
 
