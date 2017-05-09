@@ -1,5 +1,8 @@
 package care.dovetail.tracker.eog;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 
@@ -8,45 +11,56 @@ import care.dovetail.tracker.EyeEvent;
  */
 
 public class VariableLengthGestureRecognizer implements GestureRecognizer {
-    private static final int MAX_SACCADE_MILLIS = 300;
-
+    private static final int GAZE_THRESHOLD = 500;
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
 
-    private EyeEvent event;
+    private Set<EyeEvent> events = new HashSet<>();
+
+    private int countSinceStableGaze = 0;
 
     @Override
     public void update(int hValue, int vValue) {
         horizontal.update(hValue);
         vertical.update(vValue);
 
+        events.clear();
         if (horizontal.hasSaccade()) {
-            long hMillis = (long) (horizontal.length * 1000 / Config.SAMPLING_FREQ);
-            event = new EyeEvent(EyeEvent.Type.SACCADE,
-                    horizontal.amplitude > 0 ? EyeEvent.Direction.LEFT : EyeEvent.Direction.RIGHT,
-                    horizontal.amplitude, hMillis);
-            return;
+            long hMillis = (long) (horizontal.saccadeLength * 1000 / Config.SAMPLING_FREQ);
+            events.add(new EyeEvent(EyeEvent.Type.SACCADE,
+                    horizontal.saccadeAmplitude > 0
+                            ? EyeEvent.Direction.LEFT : EyeEvent.Direction.RIGHT,
+                    horizontal.saccadeAmplitude, hMillis));
         }
 
         if (vertical.hasSaccade()) {
-            long vMillis = (long) (vertical.length * 1000 / Config.SAMPLING_FREQ);
-            event = new EyeEvent(EyeEvent.Type.SACCADE,
-                    vertical.amplitude > 0 ? EyeEvent.Direction.UP : EyeEvent.Direction.DOWN,
-                    vertical.amplitude, vMillis);
-            return;
+            long vMillis = (long) (vertical.saccadeLength * 1000 / Config.SAMPLING_FREQ);
+            events.add(new EyeEvent(EyeEvent.Type.SACCADE,
+                    vertical.saccadeAmplitude > 0 ? EyeEvent.Direction.UP : EyeEvent.Direction.DOWN,
+                    vertical.saccadeAmplitude, vMillis));
         }
 
-        event = null;
+        if (Math.abs(Math.max(horizontal.saccadeAmplitude, vertical.saccadeAmplitude))
+                > GAZE_THRESHOLD) {
+            countSinceStableGaze = 0;
+        } else {
+            countSinceStableGaze++;
+        }
+        long durationMillis = (long) (countSinceStableGaze * 1000 / Config.SAMPLING_FREQ);
+        // Send gaze events only at 100 millis interval
+        if (durationMillis > 0 && durationMillis % 100 == 0) {
+            events.add(new EyeEvent(EyeEvent.Type.GAZE, GAZE_THRESHOLD, durationMillis));
+        }
     }
 
     @Override
     public boolean hasEyeEvent() {
-        return event != null;
+        return !events.isEmpty();
     }
 
     @Override
-    public EyeEvent getEyeEvent() {
-        return event;
+    public Set<EyeEvent> getEyeEvents() {
+        return events;
     }
 
     private static class SaccadeSegmenter {
@@ -55,8 +69,8 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         private int countSinceLatestSaccade = 0;
         private int latestSaccadeEndValue = 0;
 
-        private int length = 0;
-        private int amplitude = 0;
+        private int saccadeLength = 0;
+        private int saccadeAmplitude = 0;
 
         public void update(int value) {
             int newDirection = value - prevValue;
@@ -65,22 +79,22 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
             if (currentDirection != newDirection && newDirection != 0) {
                 currentDirection = newDirection;
 
-                length = countSinceLatestSaccade;
+                saccadeLength = countSinceLatestSaccade;
                 countSinceLatestSaccade = 0;
 
-                amplitude = prevValue - latestSaccadeEndValue;
+                saccadeAmplitude = prevValue - latestSaccadeEndValue;
                 latestSaccadeEndValue = prevValue;
             } else {
                 countSinceLatestSaccade++;
-                length = 0;
-                amplitude = 0;
+                saccadeLength = 0;
+                saccadeAmplitude = 0;
             }
 
             prevValue = value;
         }
 
         public boolean hasSaccade() {
-            return length > 0 && amplitude != 0;
+            return saccadeLength > 0 && saccadeAmplitude != 0;
         }
 
         public int getCurrentAmplitude() {

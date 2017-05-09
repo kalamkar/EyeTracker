@@ -1,5 +1,8 @@
 package care.dovetail.tracker.eog;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
@@ -19,7 +22,7 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
     private final int hWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
     private final int vWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
 
-    private EyeEvent event;
+    private Set<EyeEvent> events = new HashSet<>();
     private int skipWindow = 0;
 
     int hSlope;
@@ -38,7 +41,7 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
 
         if (skipWindow > 0) {
             skipWindow--;
-            event = null;
+            events.clear();
             return;
         }
 
@@ -46,7 +49,7 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
 //        Stats vGazeStats = new Stats(vWindow, 0, GAZE_WINDOW_SIZE);
 
         if (hGazeStats.stdDev < MIN_GAZE_STDDEV) {
-            event = new EyeEvent(EyeEvent.Type.GAZE);
+            events.add(new EyeEvent(EyeEvent.Type.GAZE));
         }
 
         Stats hGestureStats = new Stats(hWindow, GAZE_WINDOW_SIZE, GESTURE_WINDOW_SIZE);
@@ -59,19 +62,19 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
 
         EyeEvent gestureEvent = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
         if (gestureEvent != null) {
-            event = gestureEvent;
+            events.add(gestureEvent);
             skipWindow = (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         }
     }
 
     @Override
     public boolean hasEyeEvent() {
-        return event != null;
+        return !events.isEmpty();
     }
 
     @Override
-    public EyeEvent getEyeEvent() {
-        return event;
+    public Set<EyeEvent> getEyeEvents() {
+        return events;
     }
 
     private static EyeEvent checkGestureSlopes(int hSlope, int vSlope) {

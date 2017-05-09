@@ -40,8 +40,6 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    private EyeEvent event;
-
     public BandpassEogProcessor(EyeEvent.Observer eventObserver, int gestureThreshold) {
         this.eventObserver = eventObserver;
         gestures = new VariableLengthGestureRecognizer();
@@ -72,15 +70,17 @@ public class BandpassEogProcessor implements EOGProcessor {
         feature2[feature2.length - 1] = 0;
 
         gestures.update(hValue, vValue);
-        if (isGoodSignal() && gestures.hasEyeEvent()
-                && eventObserver.getCriteria().isMatching(gestures.getEyeEvent())) {
-            event = gestures.getEyeEvent();
-            eventObserver.onEyeEvent(event);
+        if (isGoodSignal() && gestures.hasEyeEvent()) {
+            for (EyeEvent event : gestures.getEyeEvents()) {
+                if (eventObserver.getCriteria().isMatching(event)) {
+                    eventObserver.onEyeEvent(event);
 
-            feature1[feature1.length - 1] = event.amplitude;
-            int start = feature2.length -
-                    (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
-            feature2[start >= 0 ? start : 0] = 1;
+                    feature1[feature1.length - 1] = event.amplitude;
+                    int start = feature2.length -
+                            (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                    feature2[start >= 0 ? start : 0] = 1;
+                }
+            }
         }
 
         processingMillis = System.currentTimeMillis() - startTime;
@@ -93,12 +93,10 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public String getDebugNumbers() {
-//        int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
+        int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
         int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
-        String gesture = event != null ? event.direction.toString() : "";
-        int amp = event != null ? event.amplitude : 0;
-        long dur = event != null ? event.durationMillis : 0;
-        return updateCount > 0 ? String.format("%s,%dk\n%d,%d", gesture, dev, amp, dur) : "";
+        dev = dev == 0 ? Math.max(hStats.stdDev, vStats.stdDev) : dev;
+        return updateCount > 0 ? String.format("%d\n%dk", seconds, dev) : "";
     }
 
     @Override

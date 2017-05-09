@@ -1,5 +1,7 @@
 package care.dovetail.tracker.eog;
 
+import java.util.Set;
+
 import care.dovetail.tracker.EyeEvent;
 
 /**
@@ -9,5 +11,5 @@ import care.dovetail.tracker.EyeEvent;
 public interface GestureRecognizer {
     void update(int horizontal, int vertical);
     boolean hasEyeEvent();
-    EyeEvent getEyeEvent();
+    Set<EyeEvent> getEyeEvents();
 }

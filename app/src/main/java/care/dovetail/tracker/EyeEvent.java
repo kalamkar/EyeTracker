@@ -126,6 +126,10 @@ public class EyeEvent {
         this(type, NONE, 0, 0, -1, -1);
     }
 
+    public EyeEvent(Type type, int amplitude, long durationMillis) {
+        this(type, NONE, amplitude, durationMillis, -1, -1);
+    }
+
     public EyeEvent(Type type, Direction direction, int amplitude, long durationMillis) {
         this(type, direction, amplitude, durationMillis, -1, -1);
     }

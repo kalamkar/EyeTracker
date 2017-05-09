@@ -1,5 +1,8 @@
 package care.dovetail.tracker.eog;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 
@@ -11,7 +14,7 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
     private final StepSlopeGestureFilter hGesture;
     private final StepSlopeGestureFilter vGesture;
 
-    private EyeEvent event;
+    private Set<EyeEvent> events = new HashSet<>();
     private int gestureSkipWindow = 0;
     private int gazeSkipWindow = 0;
 
@@ -27,12 +30,12 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
 
         if (gestureSkipWindow > 0) {
             gestureSkipWindow--;
-            event = null;
+            events.clear();
             return;
         }
 
         if (gazeSkipWindow <= 0 && hGesture.getGazeSize() > 40) {
-            event = new EyeEvent(EyeEvent.Type.GAZE);
+            events.add(new EyeEvent(EyeEvent.Type.GAZE));
             gazeSkipWindow = (int) (Config.SAMPLING_FREQ * (Config.GAZE_VISIBILITY_MILLIS / 1000));
         } else {
             gazeSkipWindow = gazeSkipWindow > 0 ? gazeSkipWindow - 1 : 0;
@@ -40,7 +43,7 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
 
         EyeEvent gestureEvent = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
         if (gestureEvent != null) {
-            event = gestureEvent;
+            events.add(gestureEvent);
             gazeSkipWindow = 0;
             gestureSkipWindow =
                     (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
@@ -49,12 +52,12 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
 
     @Override
     public boolean hasEyeEvent() {
-        return event != null;
+        return !events.isEmpty();
     }
 
     @Override
-    public EyeEvent getEyeEvent() {
-        return event;
+    public Set<EyeEvent> getEyeEvents() {
+        return events;
     }
 
     private static EyeEvent checkGestureSlopes(int hSlope, int vSlope) {
