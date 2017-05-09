@@ -158,9 +158,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     @Override
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 2000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 2000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.GAZE, 500L)); // 100ms
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.GAZE, 1000L)); // 1000ms
     }
 
     @Override

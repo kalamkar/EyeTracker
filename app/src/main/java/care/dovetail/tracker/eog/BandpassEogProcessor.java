@@ -108,17 +108,17 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public int getSignalQuality() {
-        return 100 - Math.min(100, Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 10000));
+        return 100 - Math.min(100, Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 5000));
     }
 
     @Override
     public boolean isStableHorizontal() {
-        return hStats.stdDev < 20000;
+        return hStats.stdDev < 10000;
     }
 
     @Override
     public boolean isStableVertical() {
-        return vStats.stdDev < 20000;
+        return vStats.stdDev < 10000;
     }
 
     @Override

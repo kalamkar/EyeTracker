@@ -75,9 +75,13 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
             public void run() {
                 switch (event.type) {
                     case GAZE:
+                        leftContent.show(event, true);
+                        rightContent.show(event, true);
+                        reset(Config.GESTURE_VISIBILITY_MILLIS);
+                        break;
                     case SACCADE:
-                        leftContent.show(event);
-                        rightContent.show(event);
+                        leftContent.show(event, false);
+                        rightContent.show(event, false);
                         reset(Config.GESTURE_VISIBILITY_MILLIS);
                         break;
                 }

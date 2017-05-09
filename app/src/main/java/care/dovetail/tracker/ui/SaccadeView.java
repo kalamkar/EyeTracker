@@ -36,10 +36,12 @@ public class SaccadeView extends View {
         paint.setStyle(Paint.Style.STROKE);
     }
 
-    public void show(EyeEvent event) {
-        clearAll(bitmap.getWidth(), bitmap.getHeight());
+    public void show(EyeEvent event, boolean clear) {
         if (event == null) {
             return;
+        }
+        if (clear) {
+            clearAll(bitmap.getWidth(), bitmap.getHeight());
         }
         if (event.type == EyeEvent.Type.SACCADE) {
             showSaccade(event.direction);
