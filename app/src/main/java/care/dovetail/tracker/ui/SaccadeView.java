@@ -36,8 +36,20 @@ public class SaccadeView extends View {
         paint.setStyle(Paint.Style.STROKE);
     }
 
-    public void show(EyeEvent.Direction direction, int amplitude) {
+    public void show(EyeEvent event) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
+        if (event == null) {
+            return;
+        }
+        if (event.type == EyeEvent.Type.SACCADE) {
+            showSaccade(event.direction);
+        } else if (event.type == EyeEvent.Type.GAZE) {
+            canvas.drawCircle(width / 2, height / 2, Math.min(width, height) / 4, paint);
+        }
+        invalidate();
+    }
+
+    private void showSaccade(EyeEvent.Direction direction) {
         switch (direction) {
             case UP_LEFT:
                 canvas.drawLine(width / 2, height / 2, MARGIN, MARGIN, paint);
@@ -64,7 +76,6 @@ public class SaccadeView extends View {
                 canvas.drawLine(width / 2, height / 2, width / 2, height - MARGIN, paint);
                 break;
         }
-        invalidate();
     }
 
     public void clear() {

@@ -80,8 +80,17 @@ public class EyeEvent {
         public final long minDurationMillis;
         public final long maxDurationMillis;
 
+        public Criterion(Type type, long minDurationMillis) {
+            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    minDurationMillis, Long.MAX_VALUE);
+        }
+
         public Criterion(Type type, int minAmplitude) {
             this(type, NONE, minAmplitude, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
+        }
+
+        public Criterion(Type type, int minAmplitude, int maxAmplitude) {
+            this(type, NONE, minAmplitude, maxAmplitude, Long.MIN_VALUE, Long.MAX_VALUE);
         }
 
         public Criterion(Type type, Direction direction, int minAmplitude) {
@@ -107,11 +116,12 @@ public class EyeEvent {
             if (direction != NONE && direction != event.direction) {
                 return false;
             }
-            if (minAmplitude > event.amplitude || maxAmplitude < event.amplitude) {
+            if (Math.abs(event.amplitude) < minAmplitude
+                    || Math.abs(event.amplitude) > maxAmplitude) {
                 return false;
             }
-            return !(minDurationMillis > event.durationMillis
-                    || maxDurationMillis < event.durationMillis);
+            return !(event.durationMillis < minDurationMillis
+                    || event.durationMillis > maxDurationMillis);
         }
     }
 

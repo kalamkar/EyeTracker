@@ -88,6 +88,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         startBluetooth();
         players.put(EyeEvent.Type.SACCADE, MediaPlayer.create(this, R.raw.slice));
         players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
+        players.put(EyeEvent.Type.GAZE, MediaPlayer.create(this, R.raw.beep));
         accelerometer.start();
     }
 
@@ -157,7 +158,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     @Override
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, 1000));
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 2000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 2000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.GAZE, 500L)); // 100ms
     }
 
     @Override
@@ -173,7 +176,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             stopBluetooth();
             startBluetooth();
         }
-        ((EyeEvent.Observer) demo).onEyeEvent(event);
+        if (((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
+            ((EyeEvent.Observer) demo).onEyeEvent(event);
+        }
     }
 
     @Override

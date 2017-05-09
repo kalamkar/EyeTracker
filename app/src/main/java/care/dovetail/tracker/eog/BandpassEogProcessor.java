@@ -75,10 +75,12 @@ public class BandpassEogProcessor implements EOGProcessor {
                 if (eventObserver.getCriteria().isMatching(event)) {
                     eventObserver.onEyeEvent(event);
 
-                    feature1[feature1.length - 1] = event.amplitude;
-                    int start = feature2.length -
-                            (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
-                    feature2[start >= 0 ? start : 0] = 1;
+                    if (event.type == EyeEvent.Type.SACCADE) {
+                        feature1[feature1.length - 1] = event.amplitude;
+                        int start = feature2.length - 1 -
+                                (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                        feature2[start >= 0 ? start : 0] = 1;
+                    }
                 }
             }
         }
@@ -94,9 +96,9 @@ public class BandpassEogProcessor implements EOGProcessor {
     @Override
     public String getDebugNumbers() {
         int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
-        int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
-        dev = dev == 0 ? Math.max(hStats.stdDev, vStats.stdDev) : dev;
-        return updateCount > 0 ? String.format("%d\n%dk", seconds, dev) : "";
+        int maxDev = Math.max(hStats.stdDev, vStats.stdDev);
+        String dev = maxDev > 1000 ? Integer.toString(maxDev/1000) + "k" : Integer.toString(maxDev);
+        return updateCount > 0 ? String.format("%d\n%s", seconds, dev) : "";
     }
 
     @Override

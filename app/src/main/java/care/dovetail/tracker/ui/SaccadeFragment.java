@@ -62,9 +62,7 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
 
     @Override
     public EyeEvent.Criteria getCriteria() {
-        return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 2000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 2000));
+        return new EyeEvent.AllCriteria();
     }
 
     public void onEyeEvent(final EyeEvent event) {
@@ -76,9 +74,10 @@ public class SaccadeFragment extends Fragment implements EyeEvent.Observer {
             @Override
             public void run() {
                 switch (event.type) {
+                    case GAZE:
                     case SACCADE:
-                        leftContent.show(event.direction, event.amplitude);
-                        rightContent.show(event.direction, event.amplitude);
+                        leftContent.show(event);
+                        rightContent.show(event);
                         reset(Config.GESTURE_VISIBILITY_MILLIS);
                         break;
                 }
