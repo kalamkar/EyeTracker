@@ -11,11 +11,11 @@ import care.dovetail.tracker.Stats;
 public class StepSlopeGestureFilter implements Filter {
 
     private final int window[];
-    private final int gazeSizesWindow[];
+    private final int fixationSizesWindow[];
     private final double thresholdWindow[];
     private final float thresholdMultiplier;
     private final int minThreshold;
-    private final int minGazeSize;
+    private final int minFixationSize;
 
     private int threshold = 0;
 
@@ -24,20 +24,21 @@ public class StepSlopeGestureFilter implements Filter {
 
 
     public StepSlopeGestureFilter(int windowSize, int thresholdWindowSize, float thresholdMultiplier,
-                                  int minThreshold, int minGazeSize) {
+                                  int minThreshold, int minFixationSize) {
         window = new int[windowSize];
-        gazeSizesWindow = new int[windowSize + 1];
+        fixationSizesWindow = new int[windowSize + 1];
         thresholdWindow = new double[thresholdWindowSize];
         this.thresholdMultiplier = thresholdMultiplier;
         this.minThreshold = minThreshold;
-        this.minGazeSize = minGazeSize;
+        this.minFixationSize = minFixationSize;
     }
 
     @Override
     public int filter(int value) {
-        System.arraycopy(gazeSizesWindow, 1, gazeSizesWindow, 0, gazeSizesWindow.length - 1);
-        gazeSizesWindow[gazeSizesWindow.length - 1] = window[window.length - 1] == value
-                ? gazeSizesWindow[gazeSizesWindow.length - 1] + 1 : 0;
+        System.arraycopy(fixationSizesWindow, 1,
+                fixationSizesWindow, 0, fixationSizesWindow.length - 1);
+        fixationSizesWindow[fixationSizesWindow.length - 1] = window[window.length - 1] == value
+                ? fixationSizesWindow[fixationSizesWindow.length - 1] + 1 : 0;
 
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
@@ -56,7 +57,7 @@ public class StepSlopeGestureFilter implements Filter {
         }
 
         return (Math.abs(slope) > Math.abs(threshold))
-                && (gazeSizesWindow[0] >= minGazeSize) ? Math.round(slope) : 0;
+                && (fixationSizesWindow[0] >= minFixationSize) ? Math.round(slope) : 0;
     }
 
     @Override
@@ -69,7 +70,7 @@ public class StepSlopeGestureFilter implements Filter {
     }
 
     public int getGazeSize() {
-        return gazeSizesWindow[0];
+        return fixationSizesWindow[0];
     }
 
     private static float calculateStepSlope(int window[]) {

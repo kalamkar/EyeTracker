@@ -11,7 +11,7 @@ import care.dovetail.tracker.EyeEvent;
  */
 
 public class VariableLengthGestureRecognizer implements GestureRecognizer {
-    private static final int GAZE_THRESHOLD = 800;
+    private static final int FIXATION_THRESHOLD = 800;
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
 
@@ -41,7 +41,7 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         }
 
         if (Math.abs(Math.max(horizontal.saccadeAmplitude, vertical.saccadeAmplitude))
-                > GAZE_THRESHOLD) {
+                > FIXATION_THRESHOLD) {
             countSinceStableGaze = 0;
         } else {
             countSinceStableGaze++;
@@ -49,7 +49,7 @@ public class VariableLengthGestureRecognizer implements GestureRecognizer {
         long durationMillis = (long) (countSinceStableGaze * 1000 / Config.SAMPLING_FREQ);
         // Send gaze events only at 100 millis interval
         if (durationMillis > 0 && durationMillis % 100 == 0) {
-            events.add(new EyeEvent(EyeEvent.Type.GAZE, GAZE_THRESHOLD, durationMillis));
+            events.add(new EyeEvent(EyeEvent.Type.FIXATION, FIXATION_THRESHOLD, durationMillis));
         }
     }
 

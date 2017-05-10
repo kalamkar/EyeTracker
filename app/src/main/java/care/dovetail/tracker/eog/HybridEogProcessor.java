@@ -133,12 +133,12 @@ public class HybridEogProcessor implements EOGProcessor {
         gestures.update(hValue, vValue);
         if (isGoodSignal() && gestures.hasEyeEvent()) {
             EyeEvent event = gestures.getEyeEvents().iterator().next();
-            if (event.type == EyeEvent.Type.GAZE) {
+            if (event.type == EyeEvent.Type.FIXATION) {
                 boolean left = sector.first <= numSteps / 3;
                 boolean right = sector.first >= numSteps * 2 / 3;
                 EyeEvent.Direction direction =  left ? EyeEvent.Direction.LEFT
                         : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
-                event = new EyeEvent(EyeEvent.Type.GAZE, direction, 0, 0);
+                event = new EyeEvent(EyeEvent.Type.FIXATION, direction, 0, 0);
             }
             for (EyeEvent.Observer observer : observers) {
                 observer.onEyeEvent(event);

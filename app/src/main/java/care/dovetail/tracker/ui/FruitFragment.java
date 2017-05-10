@@ -29,7 +29,7 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     private ImageView leftFruit;
     private ImageView rightFruit;
 
-    private Timer gazeResetTimer;
+    private Timer fixationResetTimer;
 
     @Override
     public void onAttach(Context context) {
@@ -61,7 +61,7 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_right),
                     getResources().getDimensionPixelOffset(R.dimen.daydream_padding_bottom));
         }
-        resetGaze();
+        resetFixation();
     }
 
     @Override
@@ -88,34 +88,34 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                             leftFruit.setImageResource(R.drawable.apple_left);
                             rightFruit.setImageResource(R.drawable.apple_left);
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                            resetGaze();
+                            resetFixation();
                             animationRunning = true;
                             break;
                         case RIGHT:
                             leftFruit.setImageResource(R.drawable.apple_right);
                             rightFruit.setImageResource(R.drawable.apple_right);
                             resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                            resetGaze();
+                            resetFixation();
                             animationRunning = true;
                             break;
                     }
                 } else if (event.type == EyeEvent.Type.LARGE_BLINK) {
                     leftFruit.setImageResource(R.drawable.apple_hole);
                     rightFruit.setImageResource(R.drawable.apple_hole);
-                    resetImage(Config.GAZE_VISIBILITY_MILLIS);
-                    resetGaze();
+                    resetImage(Config.FIXATION_VISIBILITY_MILLIS);
+                    resetFixation();
                     animationRunning = true;
-//                } else if (event.type == EyeEvent.Type.GAZE) {
+//                } else if (event.type == EyeEvent.Type.FIXATION) {
 //                    switch (event.direction) {
 //                        case LEFT:
-//                            resetGaze();
-//                            setGaze(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-//                            resetGaze(Config.GAZE_VISIBILITY_MILLIS);
+//                            resetFixation();
+//                            setFixation(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
+//                            resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
 //                            break;
 //                        case RIGHT:
-//                            resetGaze();
-//                            setGaze(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
-//                            resetGaze(Config.GAZE_VISIBILITY_MILLIS);
+//                            resetFixation();
+//                            setFixation(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
+//                            resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
 //                            break;
 //                    }
                 }
@@ -139,13 +139,13 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
         }, delay);
     }
 
-    private void setGaze(int knives[]) {
+    private void setFixation(int knives[]) {
         for (int id : knives) {
             getView().findViewById(id).setVisibility(View.VISIBLE);
         }
     }
 
-    private void resetGaze() {
+    private void resetFixation() {
         int knives[] = new int[] {R.id.leftLeftKnife, R.id.leftRightKnife, R.id.rightLeftKnife,
                 R.id.rightRightKnife};
         for (int id : knives) {
@@ -153,18 +153,18 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
         }
     }
 
-    private void resetGaze(int delay) {
-        if (gazeResetTimer != null) {
-            gazeResetTimer.cancel();
+    private void resetFixation(int delay) {
+        if (fixationResetTimer != null) {
+            fixationResetTimer.cancel();
         }
-        gazeResetTimer = new Timer();
-        gazeResetTimer.schedule(new TimerTask() {
+        fixationResetTimer = new Timer();
+        fixationResetTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        resetGaze();
+                        resetFixation();
                     }
                 });
             }

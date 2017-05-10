@@ -16,7 +16,7 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
 
     private Set<EyeEvent> events = new HashSet<>();
     private int gestureSkipWindow = 0;
-    private int gazeSkipWindow = 0;
+    private int fixationSkipWindow = 0;
 
     public StepSlopeGestureRecognizer(int gestureThreshold) {
         hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
@@ -34,17 +34,18 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
             return;
         }
 
-        if (gazeSkipWindow <= 0 && hGesture.getGazeSize() > 40) {
-            events.add(new EyeEvent(EyeEvent.Type.GAZE));
-            gazeSkipWindow = (int) (Config.SAMPLING_FREQ * (Config.GAZE_VISIBILITY_MILLIS / 1000));
+        if (fixationSkipWindow <= 0 && hGesture.getGazeSize() > 40) {
+            events.add(new EyeEvent(EyeEvent.Type.FIXATION));
+            fixationSkipWindow =
+                    (int) (Config.SAMPLING_FREQ * (Config.FIXATION_VISIBILITY_MILLIS / 1000));
         } else {
-            gazeSkipWindow = gazeSkipWindow > 0 ? gazeSkipWindow - 1 : 0;
+            fixationSkipWindow = fixationSkipWindow > 0 ? fixationSkipWindow - 1 : 0;
         }
 
         EyeEvent gestureEvent = checkGestureSlopes(hSlope, 0); // Ignoring vertical for now
         if (gestureEvent != null) {
             events.add(gestureEvent);
-            gazeSkipWindow = 0;
+            fixationSkipWindow = 0;
             gestureSkipWindow =
                     (int) (Config.SAMPLING_FREQ * (Config.GESTURE_VISIBILITY_MILLIS / 1000));
         }

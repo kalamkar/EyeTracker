@@ -12,15 +12,15 @@ import care.dovetail.tracker.Stats;
  */
 
 public class BandpassGestureRecognizer implements GestureRecognizer {
-    private static final int GESTURE_WINDOW_SIZE = 5;
-    private static final int GAZE_WINDOW_SIZE = 40;
+    private static final int SACCADE_WINDOW_SIZE = 5;
+    private static final int FIXATION_WINDOW_SIZE = 40;
 
     private static final int MIN_GAZE_STDDEV = 100;
 
     private final int gestureThreshold;
 
-    private final int hWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
-    private final int vWindow[] = new int[GESTURE_WINDOW_SIZE + GAZE_WINDOW_SIZE];
+    private final int hWindow[] = new int[SACCADE_WINDOW_SIZE + FIXATION_WINDOW_SIZE];
+    private final int vWindow[] = new int[SACCADE_WINDOW_SIZE + FIXATION_WINDOW_SIZE];
 
     private Set<EyeEvent> events = new HashSet<>();
     private int skipWindow = 0;
@@ -45,15 +45,15 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
             return;
         }
 
-        Stats hGazeStats = new Stats(hWindow, 0, GAZE_WINDOW_SIZE);
-//        Stats vGazeStats = new Stats(vWindow, 0, GAZE_WINDOW_SIZE);
+        Stats hGazeStats = new Stats(hWindow, 0, FIXATION_WINDOW_SIZE);
+//        Stats vGazeStats = new Stats(vWindow, 0, FIXATION_WINDOW_SIZE);
 
         if (hGazeStats.stdDev < MIN_GAZE_STDDEV) {
-            events.add(new EyeEvent(EyeEvent.Type.GAZE));
+            events.add(new EyeEvent(EyeEvent.Type.FIXATION));
         }
 
-        Stats hGestureStats = new Stats(hWindow, GAZE_WINDOW_SIZE, GESTURE_WINDOW_SIZE);
-//        Stats vGestureStats = new Stats(vWindow, GAZE_WINDOW_SIZE, GESTURE_WINDOW_SIZE);
+        Stats hGestureStats = new Stats(hWindow, FIXATION_WINDOW_SIZE, SACCADE_WINDOW_SIZE);
+//        Stats vGestureStats = new Stats(vWindow, FIXATION_WINDOW_SIZE, SACCADE_WINDOW_SIZE);
 
         hSlope = hGestureStats.max - hGestureStats.min;
 //        int vSlope = vGestureStats.max - vGestureStats.min;

@@ -25,7 +25,7 @@ public class EyeEvent {
 
     public enum Type {
         SACCADE,
-        GAZE,
+        FIXATION,
         SMALL_BLINK,
         LARGE_BLINK,
         WHACKAMOLE_POSITION,
