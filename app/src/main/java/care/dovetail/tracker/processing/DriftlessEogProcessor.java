@@ -2,8 +2,12 @@ package care.dovetail.tracker.processing;
 
 import android.util.Pair;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
+import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 
 /**
@@ -15,9 +19,10 @@ public class DriftlessEogProcessor implements EOGProcessor {
     private static final int DRIFT_WINDOW_SIZE = 100;
     private static final int DRIFT_UPDATE_INTERVAL = 100;
 
+    private final Set<EyeEvent.Observer> observers = new HashSet<>();
+
     protected final int hRaw[] = new int[DRIFT_WINDOW_SIZE];
     protected final int vRaw[] = new int[DRIFT_WINDOW_SIZE];
-
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
@@ -72,6 +77,11 @@ public class DriftlessEogProcessor implements EOGProcessor {
     @Override
     public Pair<Integer, Integer> getSector() {
         return Pair.create(-1, -1);
+    }
+
+    @Override
+    public void addObserver(EyeEvent.Observer observer) {
+        this.observers.add(observer);
     }
 
     @Override

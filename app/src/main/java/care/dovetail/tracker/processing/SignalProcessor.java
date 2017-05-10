@@ -4,9 +4,12 @@ import android.util.Log;
 import android.util.Pair;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
+import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 
 /**
@@ -21,6 +24,8 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
 
     private static final double QUALITY_UNIT = Math.sqrt(1000);
     private static final int MAX_NOISE_DEVIATION = 5;
+
+    private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
     protected final int numSteps;
 
@@ -129,6 +134,11 @@ public abstract class SignalProcessor implements EOGProcessor, Feature.FeatureOb
         int hValue = horizontal[horizontal.length - 1];
         int vValue = vertical[vertical.length - 1];
         return getSector(hValue, vValue);
+    }
+
+    @Override
+    public void addObserver(EyeEvent.Observer observer) {
+        this.observers.add(observer);
     }
 
     /**

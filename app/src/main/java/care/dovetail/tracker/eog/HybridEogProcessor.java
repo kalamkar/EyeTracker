@@ -3,7 +3,9 @@ package care.dovetail.tracker.eog;
 import android.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
@@ -27,7 +29,7 @@ public class HybridEogProcessor implements EOGProcessor {
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
 
-    private final EyeEvent.Observer eventObserver;
+    private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
     private final int numSteps;
 
@@ -56,8 +58,7 @@ public class HybridEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public HybridEogProcessor(EyeEvent.Observer eventObserver, int numSteps, int gestureThreshold) {
-        this.eventObserver = eventObserver;
+    public HybridEogProcessor(int numSteps, int gestureThreshold) {
         this.numSteps = numSteps;
 
         hDrift1 = new FixedWindowSlopeRemover(1024);
@@ -139,7 +140,9 @@ public class HybridEogProcessor implements EOGProcessor {
                         : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
                 event = new EyeEvent(EyeEvent.Type.GAZE, direction, 0, 0);
             }
-            eventObserver.onEyeEvent(event);
+            for (EyeEvent.Observer observer : observers) {
+                observer.onEyeEvent(event);
+            }
         }
 
         hStats = new Stats(horizontal);
@@ -151,6 +154,11 @@ public class HybridEogProcessor implements EOGProcessor {
     @Override
     public Pair<Integer, Integer> getSector() {
         return isGoodSignal() ? sector : Pair.create(-1, -1);
+    }
+
+    @Override
+    public void addObserver(EyeEvent.Observer observer) {
+        this.observers.add(observer);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package care.dovetail.tracker;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import static care.dovetail.tracker.EyeEvent.Direction.NONE;
 
@@ -39,9 +39,9 @@ public class EyeEvent {
     }
 
     public abstract static class Criteria {
-        protected final Set<Criterion> criterionSet = new HashSet<>();
+        protected final List<Criterion> criteria = new ArrayList<>();
         public Criteria add(Criterion criterion) {
-            criterionSet.add(criterion);
+            criteria.add(criterion);
             return this;
         }
 
@@ -50,7 +50,7 @@ public class EyeEvent {
 
     public static class AnyCriteria extends Criteria {
         public boolean isMatching(EyeEvent event) {
-            for (Criterion criterion : criterionSet) {
+            for (Criterion criterion : criteria) {
                 if (criterion != null && criterion.isMatching(event)) {
                     return true;
                 }
@@ -61,7 +61,7 @@ public class EyeEvent {
 
     public static class AllCriteria extends Criteria {
         public boolean isMatching(EyeEvent event) {
-            for (Criterion criterion : criterionSet) {
+            for (Criterion criterion : criteria) {
                 if (criterion != null && !criterion.isMatching(event)) {
                     return false;
                 }
@@ -136,6 +136,10 @@ public class EyeEvent {
         this(type, NONE, 0, 0, -1, -1);
     }
 
+    public EyeEvent(Type type, Direction direction) {
+        this(type, direction, 0, 0, -1, -1);
+    }
+
     public EyeEvent(Type type, int amplitude, long durationMillis) {
         this(type, NONE, amplitude, durationMillis, -1, -1);
     }
@@ -161,5 +165,18 @@ public class EyeEvent {
     @Override
     public String toString() {
         return String.format("%s %s", type, direction);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || !(object instanceof EyeEvent)) {
+            return false;
+        }
+
+        EyeEvent event = (EyeEvent) object;
+        if (type != event.type) {
+            return false;
+        }
+        return !(direction != NONE && direction != event.direction);
     }
 }

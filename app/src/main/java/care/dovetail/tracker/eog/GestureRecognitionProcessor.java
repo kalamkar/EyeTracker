@@ -2,6 +2,9 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.EyeEvent;
@@ -18,7 +21,7 @@ public class GestureRecognitionProcessor implements EOGProcessor {
     private Stats hStats = new Stats(new int[0]);
     private Stats vStats = new Stats(new int[0]);
 
-    private final EyeEvent.Observer eventObserver;
+    private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
     private final Filter hDrift1;
     private final Filter vDrift1;
@@ -43,8 +46,7 @@ public class GestureRecognitionProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public GestureRecognitionProcessor(EyeEvent.Observer eventObserver, int threshold) {
-        this.eventObserver = eventObserver;
+    public GestureRecognitionProcessor(int threshold) {
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
 
@@ -107,6 +109,11 @@ public class GestureRecognitionProcessor implements EOGProcessor {
     @Override
     public Pair<Integer, Integer> getSector() {
         return Pair.create(-1, -1);
+    }
+
+    @Override
+    public void addObserver(EyeEvent.Observer observer) {
+        this.observers.add(observer);
     }
 
     @Override
@@ -191,8 +198,10 @@ public class GestureRecognitionProcessor implements EOGProcessor {
             return false;
         }
         gestureValue = String.format("%s %d", direction.toString(), amplitude);
-        eventObserver.onEyeEvent(new EyeEvent(
-                EyeEvent.Type.SACCADE, direction, Math.abs(amplitude), 0));
+        for (EyeEvent.Observer observer : observers) {
+            observer.onEyeEvent(
+                    new EyeEvent(EyeEvent.Type.SACCADE, direction, Math.abs(amplitude), 0));
+        }
         return true;
     }
 

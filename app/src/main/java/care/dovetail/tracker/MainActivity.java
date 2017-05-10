@@ -213,21 +213,22 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
             demo = new SaccadeFragment();
-            signals = new BandpassEogProcessor(this, settings.getThreshold());
+            signals = new BandpassEogProcessor(settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-            signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
+            signals = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
-            signals = new HybridEogProcessor(this, settings.getNumSteps(), settings.getThreshold());
+            signals = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
-            signals = new BandpassEogProcessor(this, settings.getThreshold());
+            signals = new BandpassEogProcessor(settings.getThreshold());
             debug = new DebugFragment();
         }
+        signals.addObserver(this);
         getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 
         debug.setDataSource(signals, blinks);

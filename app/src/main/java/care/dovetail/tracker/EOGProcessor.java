@@ -22,6 +22,12 @@ public interface EOGProcessor {
     Pair<Integer, Integer> getSector();
 
     /**
+     * Add an EyEvent Observer to listen to any matching EyeEvents triggered by the EOG Processor.
+     * @param observer
+     */
+    void addObserver(EyeEvent.Observer observer);
+
+    /**
      *
      * @return String with numbers to be displayed on screen for debug purpose.
      */

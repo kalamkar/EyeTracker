@@ -2,6 +2,9 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignExstrom;
@@ -32,7 +35,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
 
-    private final EyeEvent.Observer eventObserver;
+    private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
     private final GestureRecognizer gestures;
 
@@ -40,8 +43,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public BandpassEogProcessor(EyeEvent.Observer eventObserver, int gestureThreshold) {
-        this.eventObserver = eventObserver;
+    public BandpassEogProcessor(int gestureThreshold) {
         gestures = new VariableLengthGestureRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
@@ -71,18 +73,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
         gestures.update(hValue, vValue);
         if (isGoodSignal() && gestures.hasEyeEvent()) {
-            for (EyeEvent event : gestures.getEyeEvents()) {
-                if (eventObserver.getCriteria().isMatching(event)) {
-                    eventObserver.onEyeEvent(event);
-
-                    if (event.type == EyeEvent.Type.SACCADE) {
-                        feature1[feature1.length - 1] = event.amplitude;
-                        int start = feature2.length - 1 -
-                                (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
-                        feature2[start >= 0 ? start : 0] = 1;
-                    }
-                }
-            }
+            notifyObservers();
         }
 
         processingMillis = System.currentTimeMillis() - startTime;
@@ -91,6 +82,11 @@ public class BandpassEogProcessor implements EOGProcessor {
     @Override
     public Pair<Integer, Integer> getSector() {
         return isGoodSignal() ? sector : Pair.create(-1, -1);
+    }
+
+    @Override
+    public void addObserver(EyeEvent.Observer observer) {
+        this.observers.add(observer);
     }
 
     @Override
@@ -174,6 +170,23 @@ public class BandpassEogProcessor implements EOGProcessor {
             return Pair.create(-5000, 5000);
         } else {
             return Pair.create(vStats.min, vStats.max);
+        }
+    }
+
+    private void notifyObservers() {
+        for (EyeEvent event : gestures.getEyeEvents()) {
+            for (EyeEvent.Observer observer : observers) {
+                if (observer.getCriteria().isMatching(event)) {
+                    observer.onEyeEvent(event);
+
+                    if (event.type == EyeEvent.Type.SACCADE) {
+                        feature1[feature1.length - 1] = event.amplitude;
+                        int start = feature2.length - 1 -
+                                (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                        feature2[start >= 0 ? start : 0] = 1;
+                    }
+                }
+            }
         }
     }
 }
