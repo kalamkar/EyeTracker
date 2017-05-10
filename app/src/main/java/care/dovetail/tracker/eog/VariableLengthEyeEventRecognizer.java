@@ -13,8 +13,11 @@ import care.dovetail.tracker.Stats;
 
 public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
     private static final int FIXATION_THRESHOLD = 800;
+
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
+
+    private final SignalChecker signalChecker = new SignalChecker();
 
     private Set<EyeEvent> events = new HashSet<>();
 
@@ -22,10 +25,17 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
 
     @Override
     public void update(int hValue, int vValue) {
+        events.clear();
+
+        signalChecker.update(hValue, vValue);
         horizontal.update(hValue);
         vertical.update(vValue);
 
-        events.clear();
+        long signalLossDuration = signalChecker.getSignalLossDurationMillis();
+        if (signalLossDuration > 0 && signalLossDuration % 100 == 0) {
+            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0, signalLossDuration));
+        }
+
         if (horizontal.hasSaccade()) {
             long hMillis = (long) (horizontal.saccadeLength * 1000 / Config.SAMPLING_FREQ);
             events.add(new EyeEvent(EyeEvent.Type.SACCADE,
@@ -102,6 +112,21 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
 
         public boolean hasSaccade() {
             return saccadeLength > 0 && saccadeAmplitude != 0;
+        }
+    }
+
+    private static class SignalChecker {
+        private int countSinceHSignalLoss = 0;
+        private int countSinceVSignalLoss = 0;
+
+        public void update(int hValue, int vValue) {
+            countSinceHSignalLoss = hValue == 0 ? countSinceHSignalLoss + 1 : 0;
+            countSinceVSignalLoss = vValue == 0 ? countSinceVSignalLoss + 1 : 0;
+        }
+
+        public long getSignalLossDurationMillis() {
+            int maxSignalLossCount = Math.max(countSinceHSignalLoss, countSinceVSignalLoss);
+            return (long) (maxSignalLossCount * 1000 / Config.SAMPLING_FREQ);
         }
     }
 }

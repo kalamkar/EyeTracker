@@ -15,7 +15,6 @@ import java.util.TimerTask;
 import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
-import care.dovetail.tracker.processing.BlinkDetector;
 
 /**
  * Created by abhi on 4/24/17.
@@ -28,8 +27,6 @@ public class DebugFragment extends Fragment implements DebugUi {
     private Timer chartUpdateTimer;
 
     private EOGProcessor signals;
-    private BlinkDetector blinks;
-
 
     @Override
     public void onAttach(Context context) {
@@ -63,9 +60,8 @@ public class DebugFragment extends Fragment implements DebugUi {
     }
 
     @Override
-    public void setDataSource(EOGProcessor signals, BlinkDetector blinks) {
+    public void setDataSource(EOGProcessor signals) {
         this.signals = signals;
-        this.blinks = blinks;
     }
 
     @Override
@@ -117,10 +113,6 @@ public class DebugFragment extends Fragment implements DebugUi {
                 chart.updateChannel2(signals.vertical(), signals.verticalRange());
                 chart.updateFeature1(signals.feature1(), signals.feature1Range());
                 chart.updateFeature2(signals.feature2(), signals.feature2Range());
-            }
-
-            if (settings.shouldShowBlinks() || !signals.isGoodSignal()) {
-                chart.updateChannel3(blinks.blinks(), blinks.blinkRange());
             }
 
             if (getActivity() == null) {

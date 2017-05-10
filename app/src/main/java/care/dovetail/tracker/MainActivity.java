@@ -3,7 +3,6 @@ package care.dovetail.tracker;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.SensorManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -12,8 +11,6 @@ import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,8 +19,6 @@ import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.eog.BandpassEogProcessor;
 import care.dovetail.tracker.eog.HybridEogProcessor;
 import care.dovetail.tracker.processing.AccelerationProcessor;
-import care.dovetail.tracker.processing.BandpassBlinkDetector;
-import care.dovetail.tracker.processing.BlinkDetector;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
@@ -44,15 +39,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     private final ShimmerClient patchClient = new ShimmerClient(this, this);
     private EOGProcessor eog;
-    private BlinkDetector blinks;
     private AccelerationProcessor accelerometer;
 
     private FileDataWriter writer = null;
 
     private Timer sectorUpdateTimer;
     private Timer moleUpdateTimer;
-
-    private Map<EyeEvent.Type, MediaPlayer> players = new HashMap<>();
 
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
 
@@ -86,17 +78,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         super.onStart();
         hideBars();
         startBluetooth();
-        players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
         accelerometer.start();
     }
 
     @Override
     protected void onStop() {
         stopBluetooth();
-        for (MediaPlayer player : players.values()) {
-            player.release();
-        }
-        players.clear();
         accelerometer.stop();
         super.onStop();
     }
@@ -125,7 +112,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             if (eog.isGoodSignal()) {
                 showDebugNumbers();
             } else {
-//                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
                 showQualityProgress();
             }
             runOnUiThread(new Runnable() {
@@ -155,18 +141,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     @Override
     public EyeEvent.Criteria getCriteria() {
-        return new EyeEvent.AllCriteria();
+        return new EyeEvent.AnyCriteria()
+                .add(new EyeEvent.Criterion(EyeEvent.Type.BAD_CONTACT, 5000L));
     }
 
     @Override
     public void onEyeEvent(EyeEvent event) {
-        MediaPlayer player = players.get(event.type);
-        if (player != null) {
-            if (player.isPlaying()) {
-                player.stop();
-            }
-            player.start();
-        }
         if (EyeEvent.Type.BAD_CONTACT == event.type && patchClient.isConnected()) {
             stopBluetooth();
             startBluetooth();
@@ -175,7 +155,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     @Override
     public void onNewValues(int channel1, int channel2) {
-        blinks.update(channel2);
         eog.update(channel1, channel2);
         if (writer != null) {
             Pair<Integer, Integer> estimate = eog.getSector();
@@ -201,8 +180,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     public void startBluetooth() {
-        blinks = new BandpassBlinkDetector();
-        blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
             demo = new GestureFragment();
             eog = new BandpassEogProcessor(settings.getThreshold());
@@ -228,9 +205,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 eog.addObserver(gesture);
             }
         }
+        eog.addObserver(this);
         getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 
-        debug.setDataSource(eog, blinks);
+        debug.setDataSource(eog);
         getSupportFragmentManager()
                 .beginTransaction().replace(R.id.debug, (Fragment) debug).commit();
 

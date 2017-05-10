@@ -50,6 +50,11 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         gestures.add(new Gesture("fixation")
                 .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
                 .addObserver(this));
+        gestures.add(new Gesture("blink")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 3000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 3000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 3000))
+                .addObserver(this));
     }
 
     @Override
@@ -90,6 +95,7 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         players.put("left", MediaPlayer.create(getContext(), R.raw.slice));
         players.put("right", MediaPlayer.create(getContext(), R.raw.slice));
         players.put("fixation", MediaPlayer.create(getContext(), R.raw.beep));
+        players.put("blink", MediaPlayer.create(getContext(), R.raw.beep));
     }
 
     @Override
@@ -111,10 +117,22 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         if (activity == null) {
             return;
         }
+        MediaPlayer player = players.get(gesture.name);
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.start();
+        }
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 switch (gesture.name) {
+                    case "blink":
+                        leftContent.showCircle(true);
+                        rightContent.showCircle(true);
+                        reset(Config.FIXATION_VISIBILITY_MILLIS);
+                        break;
                     case "fixation":
                         leftContent.showCircle(true);
                         rightContent.showCircle(true);
