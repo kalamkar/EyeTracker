@@ -10,7 +10,7 @@ import care.dovetail.tracker.EyeEvent;
  * Created by abhi on 4/25/17.
  */
 
-public class VariableLengthGestureRecognizer implements GestureRecognizer {
+public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
     private static final int FIXATION_THRESHOLD = 800;
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();

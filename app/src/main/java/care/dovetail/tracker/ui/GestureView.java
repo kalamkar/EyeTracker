@@ -40,7 +40,7 @@ public class GestureView extends View {
         if (clear) {
             clearAll(bitmap.getWidth(), bitmap.getHeight());
         }
-        showSaccade(direction);
+        show(direction);
         invalidate();
     }
 
@@ -53,7 +53,7 @@ public class GestureView extends View {
     }
 
 
-    private void showSaccade(EyeEvent.Direction direction) {
+    private void show(EyeEvent.Direction direction) {
         switch (direction) {
             case UP_LEFT:
                 canvas.drawLine(width / 2, height / 2, MARGIN, MARGIN, paint);

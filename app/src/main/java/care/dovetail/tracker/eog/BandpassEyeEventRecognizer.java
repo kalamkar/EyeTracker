@@ -11,7 +11,7 @@ import care.dovetail.tracker.Stats;
  * Created by abhi on 4/25/17.
  */
 
-public class BandpassGestureRecognizer implements GestureRecognizer {
+public class BandpassEyeEventRecognizer implements EyeEventRecognizer {
     private static final int SACCADE_WINDOW_SIZE = 5;
     private static final int FIXATION_WINDOW_SIZE = 40;
 
@@ -27,7 +27,7 @@ public class BandpassGestureRecognizer implements GestureRecognizer {
 
     int hSlope;
 
-    public BandpassGestureRecognizer(int gestureThreshold) {
+    public BandpassEyeEventRecognizer(int gestureThreshold) {
         this.gestureThreshold = gestureThreshold;
     }
 

@@ -52,13 +52,13 @@ public class HybridEogProcessor implements EOGProcessor {
     private final Calibration hCalibration;
     private final Calibration vCalibration;
 
-    private final GestureRecognizer gestures;
+    private final EyeEventRecognizer eventRecognizer;
 
     private long updateCount = 0;
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public HybridEogProcessor(int numSteps, int gestureThreshold) {
+    public HybridEogProcessor(int numSteps, int eventThreshold) {
         this.numSteps = numSteps;
 
         hDrift1 = new FixedWindowSlopeRemover(1024);
@@ -86,7 +86,7 @@ public class HybridEogProcessor implements EOGProcessor {
         filters.add(hCalibration);
         filters.add(vCalibration);
 
-        gestures = new StepSlopeGestureRecognizer(gestureThreshold);
+        eventRecognizer = new StepSlopeEyeEventRecognizer(eventThreshold);
 
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
@@ -130,9 +130,9 @@ public class HybridEogProcessor implements EOGProcessor {
         vCalibration.filter(vValue);
         sector = Pair.create(hCalibration.level(), vCalibration.level());
 
-        gestures.update(hValue, vValue);
-        if (isGoodSignal() && gestures.hasEyeEvent()) {
-            EyeEvent event = gestures.getEyeEvents().iterator().next();
+        eventRecognizer.update(hValue, vValue);
+        if (isGoodSignal() && eventRecognizer.hasEyeEvent()) {
+            EyeEvent event = eventRecognizer.getEyeEvents().iterator().next();
             if (event.type == EyeEvent.Type.FIXATION) {
                 boolean left = sector.first <= numSteps / 3;
                 boolean right = sector.first >= numSteps * 2 / 3;

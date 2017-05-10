@@ -37,14 +37,14 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
-    private final GestureRecognizer gestures;
+    private final EyeEventRecognizer eventRecognizer;
 
     private long updateCount = 0;
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public BandpassEogProcessor(int gestureThreshold) {
-        gestures = new VariableLengthGestureRecognizer();
+    public BandpassEogProcessor(int eventThreshold) {
+        eventRecognizer = new VariableLengthEyeEventRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
@@ -71,8 +71,8 @@ public class BandpassEogProcessor implements EOGProcessor {
         System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
         feature2[feature2.length - 1] = 0;
 
-        gestures.update(hValue, vValue);
-        if (isGoodSignal() && gestures.hasEyeEvent()) {
+        eventRecognizer.update(hValue, vValue);
+        if (isGoodSignal() && eventRecognizer.hasEyeEvent()) {
             notifyObservers();
         }
 
@@ -174,7 +174,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     }
 
     private void notifyObservers() {
-        for (EyeEvent event : gestures.getEyeEvents()) {
+        for (EyeEvent event : eventRecognizer.getEyeEvents()) {
             for (EyeEvent.Observer observer : observers) {
                 if (observer.getCriteria().isMatching(event)) {
                     observer.onEyeEvent(event);

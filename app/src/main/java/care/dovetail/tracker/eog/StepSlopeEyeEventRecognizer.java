@@ -10,7 +10,7 @@ import care.dovetail.tracker.EyeEvent;
  * Created by abhi on 4/25/17.
  */
 
-public class StepSlopeGestureRecognizer implements GestureRecognizer {
+public class StepSlopeEyeEventRecognizer implements EyeEventRecognizer {
     private final StepSlopeGestureFilter hGesture;
     private final StepSlopeGestureFilter vGesture;
 
@@ -18,7 +18,7 @@ public class StepSlopeGestureRecognizer implements GestureRecognizer {
     private int gestureSkipWindow = 0;
     private int fixationSkipWindow = 0;
 
-    public StepSlopeGestureRecognizer(int gestureThreshold) {
+    public StepSlopeEyeEventRecognizer(int gestureThreshold) {
         hGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
         vGesture = new StepSlopeGestureFilter(5, 512, 3.0f, gestureThreshold, 40);
     }
