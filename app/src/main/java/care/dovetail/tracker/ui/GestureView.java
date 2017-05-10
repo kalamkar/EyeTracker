@@ -52,6 +52,15 @@ public class GestureView extends View {
         invalidate();
     }
 
+    public void showSquare(boolean clear) {
+        if (clear) {
+            clearAll(bitmap.getWidth(), bitmap.getHeight());
+        }
+        int radius = (int) (Math.min(width, height) / 4);
+        canvas.drawRect(width / 2 - radius, height / 2 - radius,
+                width / 2 + radius, height / 2 + radius, paint);
+        invalidate();
+    }
 
     private void show(EyeEvent.Direction direction) {
         switch (direction) {

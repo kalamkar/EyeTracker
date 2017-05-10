@@ -129,8 +129,8 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
             public void run() {
                 switch (gesture.name) {
                     case "blink":
-                        leftContent.showCircle(true);
-                        rightContent.showCircle(true);
+                        leftContent.showSquare(true);
+                        rightContent.showSquare(true);
                         reset(Config.FIXATION_VISIBILITY_MILLIS);
                         break;
                     case "fixation":
