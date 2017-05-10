@@ -11,6 +11,8 @@ import care.dovetail.tracker.EyeEvent;
  */
 
 public class StepSlopeEyeEventRecognizer implements EyeEventRecognizer {
+    private final SignalChecker signalChecker = new SignalChecker();
+
     private final StepSlopeGestureFilter hGesture;
     private final StepSlopeGestureFilter vGesture;
 
@@ -25,12 +27,19 @@ public class StepSlopeEyeEventRecognizer implements EyeEventRecognizer {
 
     @Override
     public void update(int horizontal, int vertical) {
+        events.clear();
+
+        signalChecker.update(horizontal, vertical);
+        long signalLossDuration = signalChecker.getSignalLossDurationMillis();
+        if (signalLossDuration > 0 && signalLossDuration % 100 == 0) {
+            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0, signalLossDuration));
+        }
+
         int hSlope = hGesture.filter(horizontal);
         int vSlope = vGesture.filter(vertical);
 
         if (gestureSkipWindow > 0) {
             gestureSkipWindow--;
-            events.clear();
             return;
         }
 

@@ -182,7 +182,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     public void startBluetooth() {
         if (settings.getDemo() == 0) { // Gestures
             demo = new GestureFragment();
-            eog = new BandpassEogProcessor(settings.getThreshold());
+            eog = new BandpassEogProcessor();
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
@@ -194,7 +194,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
-            eog = new BandpassEogProcessor(settings.getThreshold());
+            eog = new BandpassEogProcessor();
             debug = new DebugFragment();
         }
 

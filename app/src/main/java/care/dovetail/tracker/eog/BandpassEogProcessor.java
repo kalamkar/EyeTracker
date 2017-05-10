@@ -43,7 +43,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public BandpassEogProcessor(int eventThreshold) {
+    public BandpassEogProcessor() {
         eventRecognizer = new VariableLengthEyeEventRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
