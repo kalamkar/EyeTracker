@@ -5,6 +5,7 @@ import java.util.Set;
 
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
+import care.dovetail.tracker.Stats;
 
 /**
  * Created by abhi on 4/25/17.
@@ -64,23 +65,30 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
     }
 
     private static class SaccadeSegmenter {
+        private final int window[] = new int[512];
+
         private int prevValue = 0;
         private int currentDirection = 0;  // Up or Down, Direction of change of values, not eyes
         private int countSinceLatestSaccade = 0;
-
 
         private int saccadeLength = 0;
         private int saccadeAmplitude = 0;
 
         public void update(int value) {
+            System.arraycopy(window, 1, window, 0, window.length - 1);
+            window[window.length - 1] = value;
+
             int newDirection = value - prevValue;
             newDirection /= newDirection != 0 ? Math.abs(newDirection) : 1;
 
             if (currentDirection != newDirection && newDirection != 0) {
                 currentDirection = newDirection;
 
+                // Calculate median baseline instead of using zero, Needed during bootup time
+                // when filters are adjusting for the drift and baseline is away from zero.
+                int median = Stats.calculateMedian(window, 0, window.length);
                 saccadeLength = countSinceLatestSaccade;
-                saccadeAmplitude = prevValue - 0; // TODO(abhi): Get more accurate baseline
+                saccadeAmplitude = prevValue - median;
 
                 countSinceLatestSaccade = 0;
             } else {
