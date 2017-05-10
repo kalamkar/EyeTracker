@@ -36,20 +36,22 @@ public class SaccadeView extends View {
         paint.setStyle(Paint.Style.STROKE);
     }
 
-    public void show(EyeEvent event, boolean clear) {
-        if (event == null) {
-            return;
-        }
+    public void showArrow(EyeEvent.Direction direction, boolean clear) {
         if (clear) {
             clearAll(bitmap.getWidth(), bitmap.getHeight());
         }
-        if (event.type == EyeEvent.Type.SACCADE) {
-            showSaccade(event.direction);
-        } else if (event.type == EyeEvent.Type.GAZE) {
-            canvas.drawCircle(width / 2, height / 2, Math.min(width, height) / 4, paint);
-        }
+        showSaccade(direction);
         invalidate();
     }
+
+    public void showCircle(boolean clear) {
+        if (clear) {
+            clearAll(bitmap.getWidth(), bitmap.getHeight());
+        }
+        canvas.drawCircle(width / 2, height / 2, Math.min(width, height) / 4, paint);
+        invalidate();
+    }
+
 
     private void showSaccade(EyeEvent.Direction direction) {
         switch (direction) {

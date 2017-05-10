@@ -43,7 +43,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private final Settings settings = new Settings(this);
 
     private final ShimmerClient patchClient = new ShimmerClient(this, this);
-    private EOGProcessor signals;
+    private EOGProcessor eog;
     private BlinkDetector blinks;
     private AccelerationProcessor accelerometer;
 
@@ -86,9 +86,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         super.onStart();
         hideBars();
         startBluetooth();
-        players.put(EyeEvent.Type.SACCADE, MediaPlayer.create(this, R.raw.slice));
         players.put(EyeEvent.Type.LARGE_BLINK, MediaPlayer.create(this, R.raw.beep));
-        players.put(EyeEvent.Type.GAZE, MediaPlayer.create(this, R.raw.beep));
         accelerometer.start();
     }
 
@@ -121,10 +119,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private class SectorUpdater extends TimerTask {
         @Override
         public void run() {
-            Pair<Integer, Integer> sector = signals.getSector();
+            Pair<Integer, Integer> sector = eog.getSector();
             onEyeEvent(new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
 
-            if (signals.isGoodSignal()) {
+            if (eog.isGoodSignal()) {
                 showDebugNumbers();
             } else {
 //                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(200);
@@ -133,9 +131,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    debug.setProgress(signals.getSignalQuality());
+                    debug.setProgress(eog.getSignalQuality());
                     debug.showWarning(
-                            (!signals.isStableHorizontal()) || (!signals.isStableVertical()));
+                            (!eog.isStableHorizontal()) || (!eog.isStableVertical()));
                 }
             });
         }
@@ -157,10 +155,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     @Override
     public EyeEvent.Criteria getCriteria() {
-        return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.GAZE, 1000L)); // 1000ms
+        return new EyeEvent.AllCriteria();
     }
 
     @Override
@@ -176,19 +171,16 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             stopBluetooth();
             startBluetooth();
         }
-        if (((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
-            ((EyeEvent.Observer) demo).onEyeEvent(event);
-        }
     }
 
     @Override
     public void onNewValues(int channel1, int channel2) {
         blinks.update(channel2);
-        signals.update(channel1, channel2);
+        eog.update(channel1, channel2);
         if (writer != null) {
-            Pair<Integer, Integer> estimate = signals.getSector();
-            int filtered1 = signals.horizontal()[Config.GRAPH_LENGTH-1];
-            int filtered2 = signals.vertical()[Config.GRAPH_LENGTH-1];
+            Pair<Integer, Integer> estimate = eog.getSector();
+            int filtered1 = eog.horizontal()[Config.GRAPH_LENGTH-1];
+            int filtered2 = eog.vertical()[Config.GRAPH_LENGTH-1];
             writer.write(channel1, channel2, filtered1, filtered2, estimate.first, estimate.second,
                     moleSector.first, moleSector.second);
         }
@@ -213,25 +205,32 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
             demo = new SaccadeFragment();
-            signals = new BandpassEogProcessor(settings.getThreshold());
+            eog = new BandpassEogProcessor(settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-            signals = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
+            eog = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
-            signals = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
+            eog = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
-            signals = new BandpassEogProcessor(settings.getThreshold());
+            eog = new BandpassEogProcessor(settings.getThreshold());
             debug = new DebugFragment();
         }
-        signals.addObserver(this);
+
+        if (demo instanceof EyeEvent.Observer) {
+            eog.addObserver((EyeEvent.Observer) demo);
+        } else if (demo instanceof Gesture.Observer) {
+            for (Gesture gesture : ((Gesture.Observer) demo).getGestures()) {
+                eog.addObserver(gesture);
+            }
+        }
         getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 
-        debug.setDataSource(signals, blinks);
+        debug.setDataSource(eog, blinks);
         getSupportFragmentManager()
                 .beginTransaction().replace(R.id.debug, (Fragment) debug).commit();
 

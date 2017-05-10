@@ -17,6 +17,7 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
     private final List<EyeEvent> triggeredEvents = new ArrayList<>();
 
     public interface Observer {
+        Set<Gesture> getGestures();
         void onGesture(Gesture gesture);
     }
 
@@ -24,8 +25,14 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
         this.name = name;
     }
 
-    public void addObserver(Observer observer) {
+    public Gesture addObserver(Observer observer) {
         this.observers.add(observer);
+        return this;
+    }
+
+    @Override
+    public Gesture add(EyeEvent.Criterion criterion) {
+        return (Gesture) super.add(criterion);
     }
 
     @Override
@@ -51,5 +58,10 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
                 observer.onGesture(this);
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
