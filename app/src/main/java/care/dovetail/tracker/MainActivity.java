@@ -28,8 +28,8 @@ import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
 import care.dovetail.tracker.ui.FruitFragment;
+import care.dovetail.tracker.ui.GestureFragment;
 import care.dovetail.tracker.ui.PositionFragment;
-import care.dovetail.tracker.ui.SaccadeFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 import care.dovetail.tracker.ui.SpectaclesFragment;
 
@@ -204,7 +204,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         blinks = new BandpassBlinkDetector();
         blinks.addObserver(this);
         if (settings.getDemo() == 0) { // Gestures
-            demo = new SaccadeFragment();
+            demo = new GestureFragment();
             eog = new BandpassEogProcessor(settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit

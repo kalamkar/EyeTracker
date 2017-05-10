@@ -26,19 +26,19 @@ import care.dovetail.tracker.Settings;
  * Created by abhi on 4/24/17.
  */
 
-public class SaccadeFragment extends Fragment implements Gesture.Observer {
+public class GestureFragment extends Fragment implements Gesture.Observer {
 
     private final Set<Gesture> gestures = new HashSet<>();
 
     private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
 
-    private SaccadeView leftContent;
-    private SaccadeView rightContent;
+    private GestureView leftContent;
+    private GestureView rightContent;
 
     private Timer resetTimer;
 
-    public SaccadeFragment() {
+    public GestureFragment() {
         gestures.add(new Gesture("left")
                 .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
@@ -61,14 +61,14 @@ public class SaccadeFragment extends Fragment implements Gesture.Observer {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_saccade, container, false);
+        return inflater.inflate(R.layout.fragment_gesture, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        leftContent = (SaccadeView) view.findViewById(R.id.leftContent);
-        rightContent = (SaccadeView) view.findViewById(R.id.rightContent);
+        leftContent = (GestureView) view.findViewById(R.id.leftContent);
+        rightContent = (GestureView) view.findViewById(R.id.rightContent);
 
         if (settings.isDayDream()) {
             view.findViewById(R.id.left).setPadding(

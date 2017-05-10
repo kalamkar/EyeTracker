@@ -14,7 +14,7 @@ import care.dovetail.tracker.EyeEvent;
  * Created by abhi on 9/28/16.
  */
 
-public class SaccadeView extends View {
+public class GestureView extends View {
 
     private static final int STROKE_WIDTH = 10;
     private static final float STROKE_ALPHA = 0.9f;
@@ -27,7 +27,7 @@ public class SaccadeView extends View {
     private float width;
     private float height;
 
-    public SaccadeView(Context context, AttributeSet attrs) {
+    public GestureView(Context context, AttributeSet attrs) {
         super(context, attrs);
         paint.setColor(Color.WHITE);
         paint.setAlpha((int) (255 * STROKE_ALPHA));
