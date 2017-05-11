@@ -8,9 +8,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -36,24 +38,39 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
     private GestureView leftContent;
     private GestureView rightContent;
 
+    private TextView leftText;
+    private TextView rightText;
+
     private Timer resetTimer;
 
     public GestureFragment() {
         gestures.add(new Gesture("left")
                 .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
                 .addObserver(this));
         gestures.add(new Gesture("right")
                 .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .addObserver(this));
+        gestures.add(new Gesture("up")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 1500))
+                .addObserver(this));
+        gestures.add(new Gesture("down")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 1500))
                 .addObserver(this));
         gestures.add(new Gesture("fixation")
                 .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
                 .addObserver(this));
         gestures.add(new Gesture("blink")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 3000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 3000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 3000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 4000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
     }
 
@@ -74,6 +91,8 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         super.onViewCreated(view, savedInstanceState);
         leftContent = (GestureView) view.findViewById(R.id.leftContent);
         rightContent = (GestureView) view.findViewById(R.id.rightContent);
+        leftText = (TextView) view.findViewById(R.id.leftText);
+        rightText = (TextView) view.findViewById(R.id.rightText);
 
         if (settings.isDayDream()) {
             view.findViewById(R.id.left).setPadding(
@@ -112,12 +131,12 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         return gestures;
     }
 
-    public void onGesture(final Gesture gesture) {
+    public void onGesture(final String gestureName, final List<EyeEvent> events) {
         Activity activity = getActivity();
         if (activity == null) {
             return;
         }
-        MediaPlayer player = players.get(gesture.name);
+        MediaPlayer player = players.get(gestureName);
         if (player != null) {
             if (player.isPlaying()) {
                 player.stop();
@@ -127,28 +146,52 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                switch (gesture.name) {
+                String debug = "";
+                switch (gestureName) {
                     case "blink":
                         leftContent.showSquare(true);
                         rightContent.showSquare(true);
-                        reset(Config.FIXATION_VISIBILITY_MILLIS);
+                        debug = String.format("%d\n%d\n%d", events.get(0).amplitude,
+                                events.get(1).amplitude, events.get(2).amplitude);
+                        reset(2000);
                         break;
                     case "fixation":
+                        debug = String.format("%d", events.get(0).durationMillis);
                         leftContent.showCircle(true);
                         rightContent.showCircle(true);
                         reset(Config.FIXATION_VISIBILITY_MILLIS);
                         break;
                     case "left":
+                        debug = String.format("%d\n%d", events.get(0).durationMillis,
+                                events.get(1).amplitude);
                         leftContent.showArrow(EyeEvent.Direction.LEFT, false);
                         rightContent.showArrow(EyeEvent.Direction.LEFT, false);
                         reset(Config.GESTURE_VISIBILITY_MILLIS);
                         break;
                     case "right":
+                        debug = String.format("%d\n%d", events.get(0).durationMillis,
+                                events.get(1).amplitude);
                         leftContent.showArrow(EyeEvent.Direction.RIGHT, false);
                         rightContent.showArrow(EyeEvent.Direction.RIGHT, false);
                         reset(Config.GESTURE_VISIBILITY_MILLIS);
                         break;
+                    case "up":
+                        debug = String.format("%d\n%d", events.get(0).durationMillis,
+                                events.get(1).amplitude);
+                        leftContent.showArrow(EyeEvent.Direction.UP, false);
+                        rightContent.showArrow(EyeEvent.Direction.UP, false);
+                        reset(Config.GESTURE_VISIBILITY_MILLIS);
+                        break;
+                    case "down":
+                        debug = String.format("%d\n%d", events.get(0).durationMillis,
+                                events.get(1).amplitude);
+                        leftContent.showArrow(EyeEvent.Direction.DOWN, false);
+                        rightContent.showArrow(EyeEvent.Direction.DOWN, false);
+                        reset(Config.GESTURE_VISIBILITY_MILLIS);
+                        break;
                 }
+                leftText.setText(debug);
+                rightText.setText(debug);
             }
         });
     }
@@ -166,6 +209,8 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                     public void run() {
                         leftContent.clear();
                         rightContent.clear();
+                        leftText.setText(null);
+                        rightText.setText(null);
                     }
                 });
             }

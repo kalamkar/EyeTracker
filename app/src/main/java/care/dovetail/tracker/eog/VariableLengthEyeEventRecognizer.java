@@ -79,7 +79,47 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
 
         private int prevValue = 0;
         private int currentDirection = 0;  // Up or Down, Direction of change of values, not eyes
-        private int countSinceLatestSaccade = 0;
+        private int countSinceLatestDirectionChange = 0;
+        private int valueAtLatestDirectionChange = 0;
+
+        private int saccadeLength = 0;
+        private int saccadeAmplitude = 0;
+
+        public void update(int value) {
+            System.arraycopy(window, 1, window, 0, window.length - 1);
+            window[window.length - 1] = value;
+
+            int newDirection = value - prevValue;
+            newDirection /= newDirection != 0 ? Math.abs(newDirection) : 1;
+
+            if (currentDirection != newDirection && newDirection != 0) {
+                currentDirection = newDirection;
+
+                saccadeLength = countSinceLatestDirectionChange;
+                saccadeAmplitude = prevValue - valueAtLatestDirectionChange;
+
+                countSinceLatestDirectionChange = 0;
+                valueAtLatestDirectionChange = prevValue;
+            } else {
+                countSinceLatestDirectionChange++;
+                saccadeLength = 0;
+                saccadeAmplitude = 0;
+            }
+
+            prevValue = value;
+        }
+
+        public boolean hasSaccade() {
+            return saccadeLength > 0 && saccadeAmplitude != 0;
+        }
+    }
+
+    private static class SaccadeRecognizer {
+        private final int window[] = new int[512];
+
+        private int prevValue = 0;
+        private int currentDirection = 0;  // Up or Down, Direction of change of values, not eyes
+        private int countSinceLatestDirectionChange = 0;
 
         private int saccadeLength = 0;
         private int saccadeAmplitude = 0;
@@ -97,12 +137,12 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
                 // Calculate median baseline instead of using zero, Needed during bootup time
                 // when filters are adjusting for the drift and baseline is away from zero.
                 int median = Stats.calculateMedian(window, 0, window.length);
-                saccadeLength = countSinceLatestSaccade;
+                saccadeLength = countSinceLatestDirectionChange;
                 saccadeAmplitude = prevValue - median;
 
-                countSinceLatestSaccade = 0;
+                countSinceLatestDirectionChange = 0;
             } else {
-                countSinceLatestSaccade++;
+                countSinceLatestDirectionChange++;
                 saccadeLength = 0;
                 saccadeAmplitude = 0;
             }

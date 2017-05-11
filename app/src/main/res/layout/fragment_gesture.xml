@@ -21,6 +21,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
+        <TextView
+            android:id="@+id/leftText"
+            android:layout_width="150dp"
+            android:layout_height="100dp"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textColor="@android:color/holo_blue_light"/>
+
     </FrameLayout>
 
     <FrameLayout
@@ -34,6 +42,14 @@
             android:id="@+id/rightContent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
+
+        <TextView
+            android:id="@+id/rightText"
+            android:layout_width="150dp"
+            android:layout_height="100dp"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textColor="@android:color/holo_blue_light"/>
 
     </FrameLayout>
 
