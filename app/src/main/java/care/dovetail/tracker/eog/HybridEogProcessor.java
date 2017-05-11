@@ -11,6 +11,14 @@ import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.calibration.Calibration;
+import care.dovetail.tracker.eog.calibration.FixedRangeCalibration;
+import care.dovetail.tracker.eog.events.EyeEventRecognizer;
+import care.dovetail.tracker.eog.events.StepSlopeEyeEventRecognizer;
+import care.dovetail.tracker.eog.filters.Filter;
+import care.dovetail.tracker.eog.filters.FixedWindowSlopeRemover;
+import care.dovetail.tracker.eog.filters.SlopeFeaturePassthrough;
+import care.dovetail.tracker.eog.filters.ValueChangeCurveFitDriftRemoval;
 
 /**
  * Created by abhi on 4/10/17.

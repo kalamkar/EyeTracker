@@ -1,6 +1,8 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
+
+import care.dovetail.tracker.eog.RawBlinkDetector;
 
 /**
  * Created by abhi on 4/11/17.

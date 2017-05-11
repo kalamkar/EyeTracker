@@ -1,8 +1,9 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
 import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.RawBlinkDetector;
 
 /**
  * Created by abhi on 4/10/17.

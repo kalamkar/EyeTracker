@@ -12,6 +12,8 @@ import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.events.EyeEventRecognizer;
+import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
 
 /**
  * Created by abhi on 4/10/17.

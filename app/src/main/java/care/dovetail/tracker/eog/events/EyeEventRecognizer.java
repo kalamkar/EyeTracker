@@ -1,4 +1,4 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.events;
 
 import java.util.Set;
 

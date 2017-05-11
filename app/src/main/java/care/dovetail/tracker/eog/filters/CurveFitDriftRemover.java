@@ -1,10 +1,11 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.eog.RawBlinkDetector;
 
 /**
  * Created by abhi on 4/10/17.

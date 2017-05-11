@@ -1,17 +1,20 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
 import care.dovetail.tracker.Config;
+import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.RawBlinkDetector;
 
 /**
  * Created by abhi on 4/10/17.
  */
 
-public class ValueChangeCurveFitDriftRemoval implements Filter {
-    private static final String TAG = "ValueChangeCurveFitDriftRemoval";
+public class SlopeTriggerCurveFitDriftRemoval implements Filter {
+    private static final String TAG = "SlopeTriggerCurveFitDriftRemoval";
 
     private static final int POLYNOMIAL_DEGREE = 2;
     private static final double DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY = 1.66667;
@@ -19,27 +22,52 @@ public class ValueChangeCurveFitDriftRemoval implements Filter {
             = (int) Math.round(Config.SAMPLING_FREQ / DRIFT_REMOVAL_DOWNSAMPLE_FREQUENCY);
 
     private final int window[];
+    private final int slopeWindow[];
+    private final double thresholdWindow[];
+
+    private final float thresholdMultiplier;
+
+    private int threshold = 10000;
 
     private int base = 0;
 
-    private int countSinceUpdate = 0;
+    private int countSinceThresholdUpdate = 0;
+    private int countSinceCurveUpdate = 0;
 
-    public ValueChangeCurveFitDriftRemoval(int windowSize) {
+    public SlopeTriggerCurveFitDriftRemoval(int slopeWindowSize, int windowSize,
+                                            float thresholdMultiplier, int thresholdUpdateInterval) {
         this.window = new int[windowSize];
+        this.slopeWindow = new int[slopeWindowSize];
+        this.thresholdWindow = new double[thresholdUpdateInterval];
+        this.thresholdMultiplier = thresholdMultiplier;
     }
 
     @Override
     public int filter(int value) {
+        System.arraycopy(slopeWindow, 1, slopeWindow, 0, slopeWindow.length - 1);
+        slopeWindow[slopeWindow.length - 1] = value;
+        float slope = Stats.calculateSlope(slopeWindow);
+
         System.arraycopy(window, 1, window, 0, window.length - 1);
         window[window.length - 1] = value;
 
-        if (window[window.length - 1] != window[window.length - 2] && countSinceUpdate > 5) {
-            PolynomialFunction function = getCurve(window, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
-            base = (int) function.value(window.length + 1);
-            countSinceUpdate = 0;
+        System.arraycopy(thresholdWindow, 1, thresholdWindow, 0, thresholdWindow.length - 1);
+        thresholdWindow[thresholdWindow.length - 1] = slope;
+        if (countSinceThresholdUpdate == thresholdWindow.length) {
+            double stddev = new StandardDeviation().evaluate(thresholdWindow);
+            threshold = (int) (stddev * thresholdMultiplier);
+            countSinceThresholdUpdate = 0;
+        } else {
+            countSinceThresholdUpdate++;
         }
 
-        countSinceUpdate++;
+        if (Math.abs(slope) > Math.abs(threshold) && countSinceCurveUpdate > 5) {
+            PolynomialFunction function = getCurve(window, DRIFT_REMOVAL_DOWN_SAMPLE_FACTOR);
+            base = (int) function.value(window.length + 1);
+            countSinceCurveUpdate = 0;
+        }
+
+        countSinceCurveUpdate++;
 
         return value - base;
     }

@@ -1,4 +1,4 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 

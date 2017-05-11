@@ -1,4 +1,4 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.events;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -6,6 +6,7 @@ import java.util.Set;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.SignalChecker;
 
 /**
  * Created by abhi on 4/25/17.

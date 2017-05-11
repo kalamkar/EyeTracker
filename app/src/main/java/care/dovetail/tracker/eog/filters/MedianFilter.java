@@ -1,6 +1,7 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.filters;
 
 import care.dovetail.tracker.Stats;
+import care.dovetail.tracker.eog.RawBlinkDetector;
 
 /**
  * Created by abhi on 4/16/17.

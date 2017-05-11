@@ -1,4 +1,4 @@
-package care.dovetail.tracker.eog;
+package care.dovetail.tracker.eog.calibration;
 
 /**
  * Created by abhi on 4/10/17.
