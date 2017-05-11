@@ -18,7 +18,6 @@ import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.eog.BandpassEogProcessor;
 import care.dovetail.tracker.eog.HybridEogProcessor;
-import care.dovetail.tracker.processing.AccelerationProcessor;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
