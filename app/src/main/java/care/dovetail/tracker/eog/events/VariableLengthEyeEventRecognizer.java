@@ -14,6 +14,8 @@ import care.dovetail.tracker.eog.SignalChecker;
 
 public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
     private static final int FIXATION_THRESHOLD = 800;
+    private static final int NUM_SAMPLES_PER_FIXATION_EVENT =
+            (int) (500 * Config.SAMPLING_FREQ / 1000); // 500millis
 
     private final SaccadeSegmenter horizontal = new SaccadeSegmenter();
     private final SaccadeSegmenter vertical = new SaccadeSegmenter();
@@ -22,7 +24,7 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
 
     private Set<EyeEvent> events = new HashSet<>();
 
-    private int countSinceStableGaze = 0;
+    private int countSinceFixation = 0;
 
     @Override
     public void update(int hValue, int vValue) {
@@ -54,13 +56,13 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
 
         if (Math.abs(Math.max(horizontal.saccadeAmplitude, vertical.saccadeAmplitude))
                 > FIXATION_THRESHOLD) {
-            countSinceStableGaze = 0;
+            countSinceFixation = 0;
         } else {
-            countSinceStableGaze++;
+            countSinceFixation++;
         }
-        long durationMillis = (long) (countSinceStableGaze * 1000 / Config.SAMPLING_FREQ);
-        // Send gaze events only at 100 millis interval
-        if (durationMillis > 0 && durationMillis % 100 == 0) {
+        // If there is fixation, send gaze events only at ~500 millis interval
+        if (countSinceFixation > 0 && countSinceFixation % NUM_SAMPLES_PER_FIXATION_EVENT == 0) {
+            long durationMillis = (long) (countSinceFixation * 1000 / Config.SAMPLING_FREQ);
             events.add(new EyeEvent(EyeEvent.Type.FIXATION, FIXATION_THRESHOLD, durationMillis));
         }
     }
@@ -75,6 +77,7 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
         return events;
     }
 
+    // Segment based saccade detection
     private static class SaccadeSegmenter {
         private final int window[] = new int[512];
 
@@ -115,6 +118,7 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
         }
     }
 
+    // Point based saccade detection
     private static class SaccadeRecognizer {
         private final int window[] = new int[512];
 

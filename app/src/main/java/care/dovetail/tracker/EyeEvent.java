@@ -166,17 +166,4 @@ public class EyeEvent {
     public String toString() {
         return String.format("%s %s", type, direction);
     }
-
-    @Override
-    public boolean equals(Object object) {
-        if (object == null || !(object instanceof EyeEvent)) {
-            return false;
-        }
-
-        EyeEvent event = (EyeEvent) object;
-        if (type != event.type) {
-            return false;
-        }
-        return !(direction != NONE && direction != event.direction);
-    }
 }
