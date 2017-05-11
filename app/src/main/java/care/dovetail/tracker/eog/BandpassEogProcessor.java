@@ -20,6 +20,8 @@ import care.dovetail.tracker.Stats;
 public class BandpassEogProcessor implements EOGProcessor {
     private static final String TAG = "BandpassEogProcessor";
 
+    private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
+
     private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
             FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
     private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
@@ -124,11 +126,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> horizontalRange() {
-        if (isGoodSignal()) {
-            return Pair.create(-5000, 5000);
-        } else {
-            return Pair.create(hStats.min, hStats.max);
-        }
+        return isGoodSignal() ? RANGE : Pair.create(hStats.min, hStats.max);
     }
 
     @Override
@@ -138,11 +136,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> verticalRange() {
-        if (isGoodSignal()) {
-            return Pair.create(-5000, 5000);
-        } else {
-            return Pair.create(vStats.min, vStats.max);
-        }
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     @Override
@@ -152,11 +146,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> feature1Range() {
-        if (isGoodSignal()) {
-            return Pair.create(-5000, 5000);
-        } else {
-            return Pair.create(vStats.min, vStats.max);
-        }
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     @Override
@@ -166,11 +156,7 @@ public class BandpassEogProcessor implements EOGProcessor {
 
     @Override
     public Pair<Integer, Integer> feature2Range() {
-        if (isGoodSignal()) {
-            return Pair.create(-5000, 5000);
-        } else {
-            return Pair.create(vStats.min, vStats.max);
-        }
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     private void notifyObservers() {

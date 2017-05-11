@@ -18,7 +18,7 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
 
     public interface Observer {
         Set<Gesture> getGestures();
-        void onGesture(Gesture gesture);
+        void onGesture(String name, List<EyeEvent> events);
     }
 
     public Gesture(String name) {
@@ -55,7 +55,8 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
         }
         if (matched) {
             for (Observer observer : observers) {
-                observer.onGesture(this);
+                List<EyeEvent> events = new ArrayList<>(triggeredEvents);
+                observer.onGesture(name, events);
             }
         }
     }
