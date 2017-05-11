@@ -2,6 +2,7 @@ package care.dovetail.tracker.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -9,11 +10,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
+import care.dovetail.tracker.Gesture;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
 
@@ -21,7 +28,10 @@ import care.dovetail.tracker.Settings;
  * Created by abhi on 4/24/17.
  */
 
-public class FruitFragment extends Fragment implements EyeEvent.Observer {
+public class FruitFragment extends Fragment implements Gesture.Observer {
+    private final Set<Gesture> gestures = new HashSet<>();
+
+    private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
 
     private boolean animationRunning = false;
@@ -30,6 +40,27 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     private ImageView rightFruit;
 
     private Timer fixationResetTimer;
+
+    public FruitFragment() {
+        gestures.add(new Gesture("left")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
+                .addObserver(this));
+        gestures.add(new Gesture("right")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .addObserver(this));
+        gestures.add(new Gesture("fixation")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .addObserver(this));
+        gestures.add(new Gesture("blink")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 4000))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
+                .addObserver(this));
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -65,16 +96,40 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
     }
 
     @Override
-    public EyeEvent.Criteria getCriteria() {
-        return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 2000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 2000));
+    public void onStart() {
+        super.onStart();
+        players.put("left", MediaPlayer.create(getContext(), R.raw.slice));
+        players.put("right", MediaPlayer.create(getContext(), R.raw.slice));
+        players.put("fixation", MediaPlayer.create(getContext(), R.raw.beep));
+        players.put("blink", MediaPlayer.create(getContext(), R.raw.beep));
     }
 
-    public void onEyeEvent(final EyeEvent event) {
+    @Override
+    public void onStop() {
+        for (MediaPlayer player : players.values()) {
+            player.release();
+        }
+        players.clear();
+        super.onStop();
+    }
+
+    @Override
+    public Set<Gesture> getGestures() {
+        return gestures;
+    }
+
+    @Override
+    public void onGesture(final String gestureName, final List<EyeEvent> events) {
         Activity activity = getActivity();
         if (activity == null) {
             return;
+        }
+        MediaPlayer player = players.get(gestureName);
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.start();
         }
         activity.runOnUiThread(new Runnable() {
             @Override
@@ -82,42 +137,34 @@ public class FruitFragment extends Fragment implements EyeEvent.Observer {
                 if (animationRunning) {
                     return;
                 }
-                if (event.type == EyeEvent.Type.SACCADE) {
-                    switch (event.direction) {
-                        case LEFT:
-                            leftFruit.setImageResource(R.drawable.apple_left);
-                            rightFruit.setImageResource(R.drawable.apple_left);
-                            resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                            resetFixation();
-                            animationRunning = true;
-                            break;
-                        case RIGHT:
-                            leftFruit.setImageResource(R.drawable.apple_right);
-                            rightFruit.setImageResource(R.drawable.apple_right);
-                            resetImage(Config.GESTURE_VISIBILITY_MILLIS);
-                            resetFixation();
-                            animationRunning = true;
-                            break;
-                    }
-                } else if (event.type == EyeEvent.Type.LARGE_BLINK) {
-                    leftFruit.setImageResource(R.drawable.apple_hole);
-                    rightFruit.setImageResource(R.drawable.apple_hole);
-                    resetImage(Config.FIXATION_VISIBILITY_MILLIS);
-                    resetFixation();
-                    animationRunning = true;
-//                } else if (event.type == EyeEvent.Type.FIXATION) {
-//                    switch (event.direction) {
-//                        case LEFT:
-//                            resetFixation();
-//                            setFixation(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-//                            resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
-//                            break;
-//                        case RIGHT:
-//                            resetFixation();
-//                            setFixation(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
-//                            resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
-//                            break;
-//                    }
+                switch (gestureName) {
+                    case "left":
+                        leftFruit.setImageResource(R.drawable.apple_left);
+                        rightFruit.setImageResource(R.drawable.apple_left);
+                        resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                        resetFixation();
+                        animationRunning = true;
+                        break;
+                    case "right":
+                        leftFruit.setImageResource(R.drawable.apple_right);
+                        rightFruit.setImageResource(R.drawable.apple_right);
+                        resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                        resetFixation();
+                        animationRunning = true;
+                        break;
+                    case "blink":
+                        leftFruit.setImageResource(R.drawable.apple_hole);
+                        rightFruit.setImageResource(R.drawable.apple_hole);
+                        resetImage(Config.FIXATION_VISIBILITY_MILLIS);
+                        resetFixation();
+                        animationRunning = true;
+                        break;
+                    case "fixation":
+                        resetFixation();
+                        setFixation(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
+                        setFixation(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
+                        resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
+                        break;
                 }
             }
         });

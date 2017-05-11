@@ -131,6 +131,7 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         return gestures;
     }
 
+    @Override
     public void onGesture(final String gestureName, final List<EyeEvent> events) {
         Activity activity = getActivity();
         if (activity == null) {
