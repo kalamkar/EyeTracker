@@ -36,6 +36,11 @@ public class GestureView extends View {
         paint.setStyle(Paint.Style.STROKE);
     }
 
+    public void clear() {
+        clearAll(bitmap.getWidth(), bitmap.getHeight());
+        invalidate();
+    }
+
     public void showArrow(EyeEvent.Direction direction, boolean clear) {
         if (clear) {
             clearAll(bitmap.getWidth(), bitmap.getHeight());
@@ -89,11 +94,6 @@ public class GestureView extends View {
                 canvas.drawLine(width / 2, height / 2, width / 2, height - MARGIN, paint);
                 break;
         }
-    }
-
-    public void clear() {
-        clearAll(bitmap.getWidth(), bitmap.getHeight());
-        invalidate();
     }
 
     @Override
