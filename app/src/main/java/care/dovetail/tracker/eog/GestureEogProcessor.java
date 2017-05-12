@@ -19,7 +19,7 @@ import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
  * Created by abhi on 4/10/17.
  */
 
-public class BandpassEogProcessor implements EOGProcessor {
+public class GestureEogProcessor implements EOGProcessor {
     private static final String TAG = "BandpassEogProcessor";
 
     private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
@@ -47,7 +47,7 @@ public class BandpassEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public BandpassEogProcessor() {
+    public GestureEogProcessor() {
         eventRecognizer = new VariableLengthEyeEventRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }

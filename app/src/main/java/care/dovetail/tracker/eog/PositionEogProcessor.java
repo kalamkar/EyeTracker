@@ -24,7 +24,7 @@ import care.dovetail.tracker.eog.filters.ValueChangeCurveFitDriftRemoval;
  * Created by abhi on 4/10/17.
  */
 
-public class HybridEogProcessor implements EOGProcessor {
+public class PositionEogProcessor implements EOGProcessor {
     private static final String TAG = "HybridEogProcessor";
 
     private static final int BLINK_WINDOW_LENGTH = 50;
@@ -66,7 +66,7 @@ public class HybridEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public HybridEogProcessor(int numSteps, int eventThreshold) {
+    public PositionEogProcessor(int numSteps, int eventThreshold) {
         this.numSteps = numSteps;
 
         hDrift1 = new FixedWindowSlopeRemover(1024);

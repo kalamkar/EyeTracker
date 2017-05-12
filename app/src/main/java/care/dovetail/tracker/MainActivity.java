@@ -16,8 +16,8 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.tracker.eog.BandpassEogProcessor;
-import care.dovetail.tracker.eog.HybridEogProcessor;
+import care.dovetail.tracker.eog.GestureEogProcessor;
+import care.dovetail.tracker.eog.PositionEogProcessor;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
@@ -181,20 +181,20 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     public void startBluetooth() {
         if (settings.getDemo() == 0) { // Gestures
             demo = new GestureFragment();
-            eog = new BandpassEogProcessor();
+            eog = new GestureEogProcessor();
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
 //            eog = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
-            eog = new BandpassEogProcessor();
+            eog = new GestureEogProcessor();
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
-            eog = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
+            eog = new PositionEogProcessor(settings.getNumSteps(), settings.getThreshold());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
-            eog = new BandpassEogProcessor();
+            eog = new GestureEogProcessor();
             debug = new DebugFragment();
         }
 
