@@ -39,8 +39,6 @@ public class PositionEogProcessor implements EOGProcessor {
 
     private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
-    private final int numSteps;
-
     private final List<Filter> filters = new ArrayList<>();
 
     private final Filter hDrift1;
@@ -67,8 +65,6 @@ public class PositionEogProcessor implements EOGProcessor {
     private long firstUpdateTimeMillis = 0;
 
     public PositionEogProcessor(int numSteps, int eventThreshold) {
-        this.numSteps = numSteps;
-
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
         filters.add(hDrift1);
@@ -242,14 +238,6 @@ public class PositionEogProcessor implements EOGProcessor {
     private void notifyObservers(EyeEvent event) {
         for (EyeEvent.Observer observer : observers) {
             if (observer.getCriteria().isMatching(event)) {
-                if (event.type == EyeEvent.Type.FIXATION) {
-                    boolean left = hCalibration.level() <= numSteps / 3;
-                    boolean right = hCalibration.level() >= numSteps * 2 / 3;
-                    EyeEvent.Direction direction =  left ? EyeEvent.Direction.LEFT
-                            : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
-                    event = new EyeEvent(EyeEvent.Type.FIXATION, direction, 0, 0);
-                }
-
                 observer.onEyeEvent(event);
             }
         }

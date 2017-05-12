@@ -51,8 +51,6 @@ public class CombinedEogProcessor implements EOGProcessor {
 
     private final Set<EyeEvent.Observer> observers = new HashSet<>();
 
-    private final int numSteps;
-
     private final List<Filter> filters = new ArrayList<>();
 
     private final Filter hDrift1;
@@ -79,8 +77,6 @@ public class CombinedEogProcessor implements EOGProcessor {
     private long firstUpdateTimeMillis = 0;
 
     public CombinedEogProcessor(int numSteps) {
-        this.numSteps = numSteps;
-
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
         filters.add(hDrift1);

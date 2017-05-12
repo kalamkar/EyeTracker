@@ -69,26 +69,21 @@ public class EyeEvent {
     }
 
     public static class Criterion {
-        public final Type type;
-        public final Direction direction;
+        private final Type type;
+        private final Direction direction;
 
-        public final int minAmplitude;
-        public final int maxAmplitude;
+        private final int minAmplitude;
+        private final int maxAmplitude;
 
-        public final long minDurationMillis;
-        public final long maxDurationMillis;
-
-        public final int maxColumn;
-        public final int maxRow;
+        private final long minDurationMillis;
+        private final long maxDurationMillis;
 
         public Criterion(Type type) {
-            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE,
-                    -1, -1);
+            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
         }
 
         private Criterion(Type type, Direction direction, int minAmplitude, int maxAmplitude,
-                          long minDurationMillis, long maxDurationMillis,
-                          int maxColumn, int maxRow) {
+                          long minDurationMillis, long maxDurationMillis) {
             this.type = type;
             this.direction = direction;
 
@@ -97,19 +92,11 @@ public class EyeEvent {
 
             this.minDurationMillis = minDurationMillis;
             this.maxDurationMillis = maxDurationMillis;
-
-            this.maxColumn = maxColumn;
-            this.maxRow = maxRow;
-        }
-
-        public static Criterion position(int maxColumn, int maxRow) {
-            return new Criterion(Type.POSITION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-                    Long.MIN_VALUE, Long.MAX_VALUE, maxColumn, maxRow);
         }
 
         public static Criterion fixation(long minDurationMillis) {
             return new Criterion(Type.FIXATION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-                    minDurationMillis, Long.MAX_VALUE, -1, -1);
+                    minDurationMillis, Long.MAX_VALUE);
         }
 
         public static Criterion saccade(Direction direction, int minAmplitude) {
@@ -118,12 +105,12 @@ public class EyeEvent {
 
         public static Criterion saccade(Direction direction, int minAmplitude, int maxAmplitude) {
             return new Criterion(Type.SACCADE, direction, minAmplitude, maxAmplitude,
-                    Long.MIN_VALUE, Long.MAX_VALUE, -1, -1);
+                    Long.MIN_VALUE, Long.MAX_VALUE);
         }
 
         public static Criterion badContact(long minDurationMillis) {
             return new Criterion(Type.POSITION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-                    minDurationMillis, Long.MAX_VALUE, -1, -1);
+                    minDurationMillis, Long.MAX_VALUE);
         }
 
         public boolean isMatching(EyeEvent event) {
