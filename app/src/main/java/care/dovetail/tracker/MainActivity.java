@@ -16,8 +16,9 @@ import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.tracker.eog.CombinedEogProcessor;
+import care.dovetail.tracker.eog.EOGProcessor;
 import care.dovetail.tracker.eog.GestureEogProcessor;
-import care.dovetail.tracker.eog.PositionEogProcessor;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
@@ -31,7 +32,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
-    private static final int GAZE_UPDATE_MILLIS = 100;
     private static final int MOLE_UPDATE_MILLIS = 2000;
 
     private final Settings settings = new Settings(this);
@@ -42,13 +42,14 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     private FileDataWriter writer = null;
 
-    private Timer sectorUpdateTimer;
     private Timer moleUpdateTimer;
 
     private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
 
     private Fragment demo;
     private DebugUi debug;
+
+    private EyeEvent latestPosition;
 
     private long lookupStartTimeMillis;
 
@@ -102,28 +103,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         hideAll();
     }
 
-    private class SectorUpdater extends TimerTask {
-        @Override
-        public void run() {
-            Pair<Integer, Integer> sector = eog.getSector();
-            onEyeEvent(new EyeEvent(EyeEvent.Type.POSITION, sector.first, sector.second));
-
-            if (eog.isGoodSignal()) {
-                showDebugNumbers();
-            } else {
-                showQualityProgress();
-            }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    debug.setProgress(eog.getSignalQuality());
-                    debug.showWarning(
-                            (!eog.isStableHorizontal()) || (!eog.isStableVertical()));
-                }
-            });
-        }
-    }
-
     private class MoleUpdater extends TimerTask {
         @Override
         public void run() {
@@ -141,25 +120,51 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     @Override
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
+                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.BAD_CONTACT, 5000L));
     }
 
     @Override
     public void onEyeEvent(EyeEvent event) {
-        if (EyeEvent.Type.BAD_CONTACT == event.type && patchClient.isConnected()) {
-            stopBluetooth();
-            startBluetooth();
+        switch (event.type) {
+            case BAD_CONTACT:
+                if (patchClient.isConnected()) {
+                    stopBluetooth();
+                    startBluetooth();
+                }
+                break;
+            case POSITION:
+                latestPosition = event;
+                if (demo instanceof EyeEvent.Observer && eog.isGoodSignal()
+                        && ((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
+                    ((EyeEvent.Observer) demo).onEyeEvent(event);
+                }
+                if (eog.isGoodSignal()) {
+                    showDebugNumbers();
+                } else {
+                    showQualityProgress();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        debug.setProgress(eog.getSignalQuality());
+                        debug.showWarning(
+                                (!eog.isStableHorizontal()) || (!eog.isStableVertical()));
+                    }
+                });
         }
+
     }
 
     @Override
     public void onNewValues(int channel1, int channel2) {
         eog.update(channel1, channel2);
         if (writer != null) {
-            Pair<Integer, Integer> estimate = eog.getSector();
+            int column = latestPosition != null ? latestPosition.column : -1;
+            int row = latestPosition != null ? latestPosition.row : -1;
             int filtered1 = eog.horizontal()[Config.GRAPH_LENGTH-1];
             int filtered2 = eog.vertical()[Config.GRAPH_LENGTH-1];
-            writer.write(channel1, channel2, filtered1, filtered2, estimate.first, estimate.second,
+            writer.write(channel1, channel2, filtered1, filtered2, column, row,
                     moleSector.first, moleSector.second);
         }
     }
@@ -185,12 +190,12 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-//            eog = new HybridEogProcessor(settings.getNumSteps(), settings.getThreshold());
             eog = new GestureEogProcessor();
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
-            eog = new PositionEogProcessor(settings.getNumSteps(), settings.getThreshold());
+//            eog = new PositionEogProcessor(settings.getNumSteps(), settings.getThreshold());
+            eog = new CombinedEogProcessor(settings.getNumSteps());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
@@ -216,9 +221,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();
 
-        sectorUpdateTimer = new Timer();
-        sectorUpdateTimer.schedule(new SectorUpdater(), 0, GAZE_UPDATE_MILLIS);
-
         if (settings.shouldWhackAMole()) {
             moleUpdateTimer = new Timer();
             moleUpdateTimer.schedule(new MoleUpdater(), 0, MOLE_UPDATE_MILLIS);
@@ -227,9 +229,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     public void stopBluetooth() {
         patchClient.close();
-        if (sectorUpdateTimer != null) {
-            sectorUpdateTimer.cancel();
-        }
         if (moleUpdateTimer != null) {
             moleUpdateTimer.cancel();
         }

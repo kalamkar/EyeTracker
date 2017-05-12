@@ -12,9 +12,9 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
+import care.dovetail.tracker.eog.EOGProcessor;
 
 /**
  * Created by abhi on 4/24/17.

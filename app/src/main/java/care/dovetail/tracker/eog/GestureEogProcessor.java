@@ -9,7 +9,6 @@ import biz.source_code.dsp.filter.FilterPassType;
 import biz.source_code.dsp.filter.IirFilter;
 import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.EOGProcessor;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.eog.events.EyeEventRecognizer;
@@ -20,7 +19,7 @@ import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
  */
 
 public class GestureEogProcessor implements EOGProcessor {
-    private static final String TAG = "BandpassEogProcessor";
+    private static final String TAG = "GestureEogProcessor";
 
     private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
 
@@ -33,8 +32,6 @@ public class GestureEogProcessor implements EOGProcessor {
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
     protected final int feature1[] = new int[Config.GRAPH_LENGTH];
     protected final int feature2[] = new int[Config.GRAPH_LENGTH];
-
-    private Pair<Integer, Integer> sector = Pair.create(-1, -1);
 
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
@@ -81,11 +78,6 @@ public class GestureEogProcessor implements EOGProcessor {
         }
 
         processingMillis = System.currentTimeMillis() - startTime;
-    }
-
-    @Override
-    public Pair<Integer, Integer> getSector() {
-        return isGoodSignal() ? sector : Pair.create(-1, -1);
     }
 
     @Override

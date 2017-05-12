@@ -80,6 +80,11 @@ public class EyeEvent {
         public final long minDurationMillis;
         public final long maxDurationMillis;
 
+
+        public Criterion(Type type) {
+            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
+        }
+
         public Criterion(Type type, long minDurationMillis) {
             this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
                     minDurationMillis, Long.MAX_VALUE);

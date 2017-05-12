@@ -8,13 +8,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import biz.source_code.dsp.filter.FilterPassType;
+import biz.source_code.dsp.filter.IirFilter;
+import biz.source_code.dsp.filter.IirFilterDesignExstrom;
 import care.dovetail.tracker.Config;
 import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.Stats;
 import care.dovetail.tracker.eog.calibration.Calibration;
 import care.dovetail.tracker.eog.calibration.FixedRangeCalibration;
 import care.dovetail.tracker.eog.events.EyeEventRecognizer;
-import care.dovetail.tracker.eog.events.StepSlopeEyeEventRecognizer;
+import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
 import care.dovetail.tracker.eog.filters.Filter;
 import care.dovetail.tracker.eog.filters.FixedWindowSlopeRemover;
 import care.dovetail.tracker.eog.filters.SlopeFeaturePassthrough;
@@ -24,15 +27,24 @@ import care.dovetail.tracker.eog.filters.ValueChangeCurveFitDriftRemoval;
  * Created by abhi on 4/10/17.
  */
 
-public class PositionEogProcessor implements EOGProcessor {
-    private static final String TAG = "PositionEogProcessor";
+public class CombinedEogProcessor implements EOGProcessor {
+    private static final String TAG = "CombinedEogProcessor";
 
     private static final int BLINK_WINDOW_LENGTH = 50;
 
     private static final int POSITION_NOTIFY_INTERVAL = (int) (200 * Config.SAMPLING_FREQ / 1000);
 
+    private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
+
+    private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
+            FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
+    private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
+            FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
+
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
+    protected final int feature1[] = new int[Config.GRAPH_LENGTH];
+    protected final int feature2[] = new int[Config.GRAPH_LENGTH];
 
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
@@ -66,7 +78,7 @@ public class PositionEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public PositionEogProcessor(int numSteps, int eventThreshold) {
+    public CombinedEogProcessor(int numSteps) {
         this.numSteps = numSteps;
 
         hDrift1 = new FixedWindowSlopeRemover(1024);
@@ -94,8 +106,7 @@ public class PositionEogProcessor implements EOGProcessor {
         filters.add(hCalibration);
         filters.add(vCalibration);
 
-        eventRecognizer = new StepSlopeEyeEventRecognizer(eventThreshold);
-
+        eventRecognizer = new VariableLengthEyeEventRecognizer();
         firstUpdateTimeMillis = System.currentTimeMillis();
     }
 
@@ -105,16 +116,18 @@ public class PositionEogProcessor implements EOGProcessor {
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
 
-        int hValue = hRaw;
-        int vValue = vRaw;
+        int hBandpassValue = (int) hFilter.step(hRaw);
+        int vBandpassValue = (int) vFilter.step(vRaw);
 
-        hValue = hDrift1.filter(hValue);
-        vValue = vDrift1.filter(vValue);
+        // ------------------------------ Position Code ------------------------------
 
-        hValue = hDrift2.filter(hValue);
-        vValue = vDrift2.filter(vValue);
+        int hCustomFilterValue = hDrift1.filter(hRaw);
+        int vCustomFilterValue = vDrift1.filter(vRaw);
 
-        if (blinkDetector.check(vValue)) {
+        hCustomFilterValue = hDrift2.filter(hCustomFilterValue);
+        vCustomFilterValue = vDrift2.filter(vCustomFilterValue);
+
+        if (blinkDetector.check(vCustomFilterValue)) {
             RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
             RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
             for (Filter filter : filters) {
@@ -122,32 +135,39 @@ public class PositionEogProcessor implements EOGProcessor {
             }
         }
 
-        hValue = hFeatures.filter(hValue);
-        vValue = vFeatures.filter(vValue);
+        hCustomFilterValue = hFeatures.filter(hCustomFilterValue);
+        vCustomFilterValue = vFeatures.filter(vCustomFilterValue);
 
-        hValue = hCurveFit.filter(hValue);
-        vValue = vCurveFit.filter(vValue);
+        hCustomFilterValue = hCurveFit.filter(hCustomFilterValue);
+        vCustomFilterValue = vCurveFit.filter(vCustomFilterValue);
 
-        System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
-        horizontal[horizontal.length - 1] = hValue;
-
-        System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
-        vertical[vertical.length - 1] = vValue;
-
-        hCalibration.filter(hValue);
-        vCalibration.filter(vValue);
+        hCalibration.filter(hCustomFilterValue);
+        vCalibration.filter(vCustomFilterValue);
         if (updateCount % POSITION_NOTIFY_INTERVAL == 0) {
             notifyObservers(new EyeEvent(
                     EyeEvent.Type.POSITION, hCalibration.level(), vCalibration.level()));
         }
 
-        eventRecognizer.update(hValue, vValue);
-        if (isGoodSignal() && eventRecognizer.hasEyeEvent()) {
-            notifyObservers(eventRecognizer.getEyeEvents());
-        }
+        // ---------------------------------------------------------------------------
+
+        System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
+        horizontal[horizontal.length - 1] = hBandpassValue;
+
+        System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
+        vertical[vertical.length - 1] = vBandpassValue;
 
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);
+
+        System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
+        feature1[feature1.length - 1] = 0;
+        System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
+        feature2[feature2.length - 1] = 0;
+
+        eventRecognizer.update(hBandpassValue, vBandpassValue);
+        if (isGoodSignal() && eventRecognizer.hasEyeEvent()) {
+            notifyObservers(eventRecognizer.getEyeEvents());
+        }
 
         processingMillis = System.currentTimeMillis() - startTime;
     }
@@ -160,8 +180,9 @@ public class PositionEogProcessor implements EOGProcessor {
     @Override
     public String getDebugNumbers() {
         int seconds = (int) ((System.currentTimeMillis() - firstUpdateTimeMillis) / 1000);
-        int dev = Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 1000);
-        return updateCount > 0 ? String.format("%d\n%dk", seconds, dev) : "";
+        int maxDev = Math.max(hStats.stdDev, vStats.stdDev);
+        String dev = maxDev > 1000 ? Integer.toString(maxDev/1000) + "k" : Integer.toString(maxDev);
+        return updateCount > 0 ? String.format("%d\n%s", seconds, dev) : "";
     }
 
     @Override
@@ -171,17 +192,17 @@ public class PositionEogProcessor implements EOGProcessor {
 
     @Override
     public int getSignalQuality() {
-        return 100 - Math.min(100, Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 10000));
+        return 100 - Math.min(100, Math.round(Math.max(hStats.stdDev, vStats.stdDev) / 5000));
     }
 
     @Override
     public boolean isStableHorizontal() {
-        return hStats.stdDev < 20000;
+        return hStats.stdDev < 10000;
     }
 
     @Override
     public boolean isStableVertical() {
-        return vStats.stdDev < 20000;
+        return vStats.stdDev < 10000;
     }
 
     @Override
@@ -190,46 +211,38 @@ public class PositionEogProcessor implements EOGProcessor {
     }
 
     @Override
+    public Pair<Integer, Integer> horizontalRange() {
+        return isGoodSignal() ? RANGE : Pair.create(hStats.min, hStats.max);
+    }
+
+    @Override
     public int[] vertical() {
         return vertical;
     }
 
     @Override
-    public Pair<Integer, Integer> horizontalRange() {
-        if (isGoodSignal()) {
-            return Pair.create(hCalibration.min(), hCalibration.max());
-        } else {
-            return Pair.create(hStats.min, hStats.max);
-        }
-    }
-
-    @Override
     public Pair<Integer, Integer> verticalRange() {
-        if (isGoodSignal()) {
-            return Pair.create(vCalibration.min(), vCalibration.max());
-        } else {
-            return Pair.create(vStats.min, vStats.max);
-        }
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     @Override
     public int[] feature1() {
-        return new int[]{};
+        return feature1;
     }
 
     @Override
     public Pair<Integer, Integer> feature1Range() {
-        return Pair.create(-1, 1);
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     @Override
     public int[] feature2() {
-        return new int[]{};
+        return feature2;
     }
 
     @Override
     public Pair<Integer, Integer> feature2Range() {
-        return Pair.create(-1, 1);
+        return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
     private void notifyObservers(Collection<EyeEvent> events) {
@@ -241,15 +254,14 @@ public class PositionEogProcessor implements EOGProcessor {
     private void notifyObservers(EyeEvent event) {
         for (EyeEvent.Observer observer : observers) {
             if (observer.getCriteria().isMatching(event)) {
-                if (event.type == EyeEvent.Type.FIXATION) {
-                    boolean left = hCalibration.level() <= numSteps / 3;
-                    boolean right = hCalibration.level() >= numSteps * 2 / 3;
-                    EyeEvent.Direction direction =  left ? EyeEvent.Direction.LEFT
-                            : right ? EyeEvent.Direction.RIGHT : EyeEvent.Direction.NONE;
-                    event = new EyeEvent(EyeEvent.Type.FIXATION, direction, 0, 0);
-                }
-
                 observer.onEyeEvent(event);
+
+                if (event.type == EyeEvent.Type.SACCADE) {
+                    feature1[feature1.length - 1] = event.amplitude;
+                    int start = feature2.length - 1 -
+                            (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                    feature2[start >= 0 ? start : 0] = 1;
+                }
             }
         }
     }

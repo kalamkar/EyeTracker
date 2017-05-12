@@ -1,6 +1,8 @@
-package care.dovetail.tracker;
+package care.dovetail.tracker.eog;
 
 import android.util.Pair;
+
+import care.dovetail.tracker.EyeEvent;
 
 /**
  * Created by abhi on 3/22/17.
@@ -14,12 +16,6 @@ public interface EOGProcessor {
      * @param vValue vertical channel value
      */
     void update(int hValue, int vValue);
-
-    /**
-     * Get the cell or sector in the grid for current (latest) eye gaze.
-     * @return Pair of horizontal (column) and vertical (row) value in that order.
-     */
-    Pair<Integer, Integer> getSector();
 
     /**
      * Add an EyEvent Observer to listen to any matching EyeEvents triggered by the EOG Processor.
