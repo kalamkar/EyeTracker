@@ -10,8 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.util.Timer;
-
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.eog.CombinedEogProcessor;
@@ -37,8 +35,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private AccelerationProcessor accelerometer;
 
     private FileDataWriter writer = null;
-
-    private Timer moleUpdateTimer;
 
     private Fragment demo;
     private DebugUi debug;
