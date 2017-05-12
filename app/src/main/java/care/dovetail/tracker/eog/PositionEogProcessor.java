@@ -29,7 +29,7 @@ public class PositionEogProcessor implements EOGProcessor {
 
     private static final int BLINK_WINDOW_LENGTH = 50;
 
-    private static final int POSITION_NOTIFY_INTERVAL = (int) (200 * Config.SAMPLING_FREQ / 1000);
+    private static final int POSITION_NOTIFY_INTERVAL = (int) (100 * Config.SAMPLING_FREQ / 1000);
 
     protected final int horizontal[] = new int[Config.GRAPH_LENGTH];
     protected final int vertical[] = new int[Config.GRAPH_LENGTH];
@@ -139,6 +139,7 @@ public class PositionEogProcessor implements EOGProcessor {
         if (updateCount % POSITION_NOTIFY_INTERVAL == 0) {
             notifyObservers(new EyeEvent(
                     EyeEvent.Type.POSITION, hCalibration.level(), vCalibration.level()));
+            notifyObservers(new EyeEvent(EyeEvent.Type.SIGNAL_QUALITY));
         }
 
         eventRecognizer.update(hValue, vValue);

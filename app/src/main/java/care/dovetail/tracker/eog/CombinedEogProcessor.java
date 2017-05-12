@@ -32,7 +32,7 @@ public class CombinedEogProcessor implements EOGProcessor {
 
     private static final int BLINK_WINDOW_LENGTH = 50;
 
-    private static final int POSITION_NOTIFY_INTERVAL = (int) (200 * Config.SAMPLING_FREQ / 1000);
+    private static final int POSITION_NOTIFY_INTERVAL = (int) (100 * Config.SAMPLING_FREQ / 1000);
 
     private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
 
@@ -146,6 +146,7 @@ public class CombinedEogProcessor implements EOGProcessor {
         if (updateCount % POSITION_NOTIFY_INTERVAL == 0) {
             notifyObservers(new EyeEvent(
                     EyeEvent.Type.POSITION, hCalibration.level(), vCalibration.level()));
+            notifyObservers(new EyeEvent(EyeEvent.Type.SIGNAL_QUALITY));
         }
 
         // ---------------------------------------------------------------------------

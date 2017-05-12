@@ -121,6 +121,7 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
                 .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
+                .add(new EyeEvent.Criterion(EyeEvent.Type.SIGNAL_QUALITY))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.BAD_CONTACT, 5000L));
     }
 
@@ -139,6 +140,8 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                         && ((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
                     ((EyeEvent.Observer) demo).onEyeEvent(event);
                 }
+                break;
+            case SIGNAL_QUALITY:
                 if (eog.isGoodSignal()) {
                     showDebugNumbers();
                 } else {

@@ -2,6 +2,7 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,8 @@ import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
 
 public class GestureEogProcessor implements EOGProcessor {
     private static final String TAG = "GestureEogProcessor";
+
+    private static final int QUALITY_NOTIFY_INTERVAL = (int) (100 * Config.SAMPLING_FREQ / 1000);
 
     private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
 
@@ -72,9 +75,13 @@ public class GestureEogProcessor implements EOGProcessor {
         System.arraycopy(feature2, 1, feature2, 0, feature2.length - 1);
         feature2[feature2.length - 1] = 0;
 
+        if (updateCount % QUALITY_NOTIFY_INTERVAL == 0) {
+            notifyObservers(new EyeEvent(EyeEvent.Type.SIGNAL_QUALITY));
+        }
+
         eventRecognizer.update(hValue, vValue);
         if (isGoodSignal() && eventRecognizer.hasEyeEvent()) {
-            notifyObservers();
+            notifyObservers(eventRecognizer.getEyeEvents());
         }
 
         processingMillis = System.currentTimeMillis() - startTime;
@@ -153,18 +160,22 @@ public class GestureEogProcessor implements EOGProcessor {
         return isGoodSignal() ? RANGE : Pair.create(vStats.min, vStats.max);
     }
 
-    private void notifyObservers() {
-        for (EyeEvent event : eventRecognizer.getEyeEvents()) {
-            for (EyeEvent.Observer observer : observers) {
-                if (observer.getCriteria().isMatching(event)) {
-                    observer.onEyeEvent(event);
+    private void notifyObservers(Collection<EyeEvent> events) {
+        for (EyeEvent event : events) {
+            notifyObservers(event);
+        }
+    }
 
-                    if (event.type == EyeEvent.Type.SACCADE) {
-                        feature1[feature1.length - 1] = event.amplitude;
-                        int start = feature2.length - 1 -
-                                (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
-                        feature2[start >= 0 ? start : 0] = 1;
-                    }
+    private void notifyObservers(EyeEvent event) {
+        for (EyeEvent.Observer observer : observers) {
+            if (observer.getCriteria().isMatching(event)) {
+                observer.onEyeEvent(event);
+
+                if (event.type == EyeEvent.Type.SACCADE) {
+                    feature1[feature1.length - 1] = event.amplitude;
+                    int start = feature2.length - 1 -
+                            (int) (event.durationMillis * Config.SAMPLING_FREQ / 1000);
+                    feature2[start >= 0 ? start : 0] = 1;
                 }
             }
         }

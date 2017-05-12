@@ -30,6 +30,7 @@ public class EyeEvent {
         LARGE_BLINK,
         WHACKAMOLE_POSITION,
         POSITION,
+        SIGNAL_QUALITY,
         BAD_CONTACT
     }
 
