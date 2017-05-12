@@ -10,7 +10,7 @@ public class Settings {
     private static final String TAG = "Settings";
 
     private static final String DAY_DREAM = "DAY_DREAM";
-    private static final String SHOW_BLINKMARKS = "show_blinkmarks";
+    private static final String SHOW_BANDPASS_CHART = "show_bandpass_chart";
     private static final String SHOW_NUMBERS = "show_numbers";
     private static final String SHOW_CHART = "show_chart";
     private static final String WHACK_A_MOLE = "whack_a_mole";
@@ -36,14 +36,14 @@ public class Settings {
                 context.getPackageName(), 0).edit().putBoolean(DAY_DREAM, dayDream).apply();
     }
 
-    public boolean shouldShowBlinkmarks() {
+    public boolean shouldShowBandpassChart() {
         return context.getSharedPreferences(
-                context.getPackageName(), 0).getBoolean(SHOW_BLINKMARKS, false);
+                context.getPackageName(), 0).getBoolean(SHOW_BANDPASS_CHART, true);
     }
 
-    public void setShowBlinkmarks(boolean showBlinkmarks) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putBoolean(SHOW_BLINKMARKS, showBlinkmarks).apply();
+    public void setShowBandpassChart(boolean showBandpassChart) {
+        context.getSharedPreferences(context.getPackageName(), 0).edit()
+                .putBoolean(SHOW_BANDPASS_CHART, showBandpassChart).apply();
     }
 
     public boolean shouldShowNumbers() {
@@ -105,15 +105,6 @@ public class Settings {
     public void setDemo(int algorithm) {
         context.getSharedPreferences(
                 context.getPackageName(), 0).edit().putInt(DEMO, algorithm).apply();
-    }
-
-    public int getCursorStyle() {
-        return context.getSharedPreferences(context.getPackageName(), 0).getInt(CURSOR_STYLE, 0);
-    }
-
-    public void setCursorStyle(int cursor) {
-        context.getSharedPreferences(
-                context.getPackageName(), 0).edit().putInt(CURSOR_STYLE, cursor).apply();
     }
 
     public int getThreshold() {

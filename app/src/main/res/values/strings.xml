@@ -8,7 +8,8 @@
     <string name="optimizing">Optimizing...</string>
 
     <string name="day_dream">DayDream</string>
-    <string name="blink_marks">Blink Marks</string>
+    <string name="bandpass_chart">Bandpass Chart</string>
+    <string name="custom_chart">Custom Chart</string>
     <string name="numbers">Numbers</string>
     <string name="chart">Chart</string>
     <string name="blinks">Blinks</string>

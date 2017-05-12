@@ -32,7 +32,7 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.activity_settings);
 
         ToggleButton dayDream = (ToggleButton) findViewById(R.id.dayDream);
-        ToggleButton showBlinkmarks = (ToggleButton) findViewById(R.id.showBlinkmarks);
+        ToggleButton showBandpassChart = (ToggleButton) findViewById(R.id.show_bandpass_chart);
         ToggleButton showNumbers = (ToggleButton) findViewById(R.id.showNumbers);
         ToggleButton showChart = (ToggleButton) findViewById(R.id.showChart);
         ToggleButton whackAMole = (ToggleButton) findViewById(R.id.whackAMole);
@@ -49,7 +49,7 @@ public class SettingsActivity extends Activity {
 
 
         dayDream.setChecked(settings.isDayDream());
-        showBlinkmarks.setChecked(settings.shouldShowBlinkmarks());
+        showBandpassChart.setChecked(settings.shouldShowBandpassChart());
         showNumbers.setChecked(settings.shouldShowNumbers());
         showChart.setChecked(settings.shouldShowChart());
         whackAMole.setChecked(settings.shouldWhackAMole());
@@ -71,10 +71,10 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        showBlinkmarks.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showBandpassChart.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                settings.setShowBlinkmarks(isChecked);
+                settings.setShowBandpassChart(isChecked);
             }
         });
 

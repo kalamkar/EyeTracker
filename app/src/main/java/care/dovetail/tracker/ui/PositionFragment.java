@@ -78,16 +78,16 @@ public class PositionFragment extends Fragment implements EyeEvent.Observer {
         rightCursor.setNumSteps(numSteps);
 
         if (settings.shouldWhackAMole()) {
-            leftCursor.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-            rightCursor.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
+            leftCursor.setCursorStyle(GridView.CursorStyle.RECTANGLE);
+            rightCursor.setCursorStyle(GridView.CursorStyle.RECTANGLE);
             leftMole.setCursorStyle(GridView.CursorStyle.RECTANGLE);
             rightMole.setCursorStyle(GridView.CursorStyle.RECTANGLE);
 
             leftMole.setNumSteps(Config.MOLE_NUM_STEPS);
             rightMole.setNumSteps(Config.MOLE_NUM_STEPS);
         } else {
-            leftCursor.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
-            rightCursor.setCursorStyle(GridView.CursorStyle.values()[settings.getCursorStyle()]);
+            leftCursor.setCursorStyle(GridView.CursorStyle.RECTANGLE);
+            rightCursor.setCursorStyle(GridView.CursorStyle.RECTANGLE);
         }
 
         if (settings.isDayDream()) {

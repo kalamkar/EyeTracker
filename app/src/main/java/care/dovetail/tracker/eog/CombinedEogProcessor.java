@@ -36,6 +36,8 @@ public class CombinedEogProcessor implements EOGProcessor {
 
     private static final Pair<Integer, Integer> RANGE = Pair.create(-10000, 10000);
 
+    private final boolean showBandpassChart;
+
     private final IirFilter hFilter = new IirFilter(IirFilterDesignExstrom.design(
             FilterPassType.bandpass, 1, 1.024 / Config.SAMPLING_FREQ, 2.56 / Config.SAMPLING_FREQ));
     private final IirFilter vFilter = new IirFilter(IirFilterDesignExstrom.design(
@@ -76,7 +78,9 @@ public class CombinedEogProcessor implements EOGProcessor {
     private long processingMillis;
     private long firstUpdateTimeMillis = 0;
 
-    public CombinedEogProcessor(int numSteps) {
+    public CombinedEogProcessor(int numSteps, boolean showBandpassChart) {
+        this.showBandpassChart = showBandpassChart;
+
         hDrift1 = new FixedWindowSlopeRemover(1024);
         vDrift1 = new FixedWindowSlopeRemover(1024);
         filters.add(hDrift1);
@@ -87,8 +91,8 @@ public class CombinedEogProcessor implements EOGProcessor {
         filters.add(hDrift2);
         filters.add(vDrift2);
 
-        hFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
-        vFeatures = new SlopeFeaturePassthrough(5, 1.0f, 512);
+        hFeatures = new SlopeFeaturePassthrough(5, 1.5f, 512);
+        vFeatures = new SlopeFeaturePassthrough(5, 1.5f, 512);
         filters.add(hFeatures);
         filters.add(vFeatures);
 
@@ -148,10 +152,10 @@ public class CombinedEogProcessor implements EOGProcessor {
         // ---------------------------------------------------------------------------
 
         System.arraycopy(horizontal, 1, horizontal, 0, horizontal.length - 1);
-        horizontal[horizontal.length - 1] = hBandpassValue;
+        horizontal[horizontal.length - 1] = showBandpassChart ? hBandpassValue : hCustomFilterValue;
 
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
-        vertical[vertical.length - 1] = vBandpassValue;
+        vertical[vertical.length - 1] = showBandpassChart ? vBandpassValue : vCustomFilterValue;
 
         hStats = new Stats(horizontal);
         vStats = new Stats(vertical);

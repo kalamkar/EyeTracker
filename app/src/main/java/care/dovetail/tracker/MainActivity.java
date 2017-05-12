@@ -172,12 +172,15 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-            eog = new GestureEogProcessor();
+//            eog = new GestureEogProcessor();
+            eog = new CombinedEogProcessor(
+                    settings.getNumSteps(), settings.shouldShowBandpassChart());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
 //            eog = new PositionEogProcessor(settings.getNumSteps(), settings.getThreshold());
-            eog = new CombinedEogProcessor(settings.getNumSteps());
+            eog = new CombinedEogProcessor(
+                    settings.getNumSteps(), settings.shouldShowBandpassChart());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
