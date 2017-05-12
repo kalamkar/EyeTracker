@@ -7,12 +7,10 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
 
 import java.util.Timer;
-import java.util.TimerTask;
 
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
@@ -32,8 +30,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
-    private static final int MOLE_UPDATE_MILLIS = 2000;
-
     private final Settings settings = new Settings(this);
 
     private final ShimmerClient patchClient = new ShimmerClient(this, this);
@@ -43,8 +39,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private FileDataWriter writer = null;
 
     private Timer moleUpdateTimer;
-
-    private Pair<Integer, Integer> moleSector = Pair.create(-1, -1);
 
     private Fragment demo;
     private DebugUi debug;
@@ -103,20 +97,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         hideAll();
     }
 
-    private class MoleUpdater extends TimerTask {
-        @Override
-        public void run() {
-            // Add some randomness so that its updating every 2 or 4 seconds.
-            if (Stats.random(0, 2) != 0) {
-                return;
-            }
-            moleSector = Pair.create(Stats.random(0, Config.MOLE_NUM_STEPS),
-                    Stats.random(0, Config.MOLE_NUM_STEPS));
-            onEyeEvent(new EyeEvent(
-                    EyeEvent.Type.WHACKAMOLE_POSITION, moleSector.first, moleSector.second));
-        }
-    }
-
     @Override
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
@@ -167,8 +147,11 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
             int row = latestPosition != null ? latestPosition.row : -1;
             int filtered1 = eog.horizontal()[Config.GRAPH_LENGTH-1];
             int filtered2 = eog.vertical()[Config.GRAPH_LENGTH-1];
-            writer.write(channel1, channel2, filtered1, filtered2, column, row,
-                    moleSector.first, moleSector.second);
+            int moleCol = demo instanceof PositionFragment
+                    ? ((PositionFragment) demo).getMoleColumn() : -1;
+            int moleRow = demo instanceof PositionFragment
+                    ? ((PositionFragment) demo).getMoleRow() : -1;
+            writer.write(channel1, channel2, filtered1, filtered2, column, row, moleCol, moleRow);
         }
     }
 
@@ -223,19 +206,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         patchClient.connect();
         lookupStartTimeMillis = System.currentTimeMillis();
         showBluetoothSpinner();
-
-        if (settings.shouldWhackAMole()) {
-            moleUpdateTimer = new Timer();
-            moleUpdateTimer.schedule(new MoleUpdater(), 0, MOLE_UPDATE_MILLIS);
-        }
     }
 
     public void stopBluetooth() {
         patchClient.close();
-        if (moleUpdateTimer != null) {
-            moleUpdateTimer.cancel();
-        }
-        moleSector = Pair.create(-1, -1);
     }
 
     private void hideBars() {

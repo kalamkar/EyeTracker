@@ -35,6 +35,9 @@ public class GridView extends View {
     private int cellWidth = 0;
     private int cellHeight = 0;
 
+    private int currentColumn = -1;
+    private int currentRow = -1;
+
     private final List<Sector> marked = new ArrayList<>();
 
     private boolean heatmap;
@@ -64,6 +67,14 @@ public class GridView extends View {
         super(context, attrs);
         paint.setColor(Color.WHITE);
         paint.setAlpha(ALPHA);
+    }
+
+    public int getCurrentColumn() {
+        return currentColumn;
+    }
+
+    public int getCurrentRow() {
+        return currentRow;
     }
 
     public void setNumSteps(int numSteps) {
@@ -99,6 +110,9 @@ public class GridView extends View {
 
     public void highlight(int horizontalSector, int verticalSector) {
         clearAll(bitmap.getWidth(), bitmap.getHeight());
+
+        currentColumn = horizontalSector;
+        currentRow = verticalSector;
 
         if (heatmap) {
             marked.add(new Sector(horizontalSector, verticalSector));
