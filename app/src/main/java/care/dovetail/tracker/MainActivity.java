@@ -96,9 +96,9 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     @Override
     public EyeEvent.Criteria getCriteria() {
         return new EyeEvent.AnyCriteria()
-                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
+                .add(EyeEvent.Criterion.position(settings.getNumSteps(), settings.getNumSteps()))
                 .add(new EyeEvent.Criterion(EyeEvent.Type.SIGNAL_QUALITY))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.BAD_CONTACT, 5000L));
+                .add(EyeEvent.Criterion.badContact(5000));
     }
 
     @Override

@@ -43,22 +43,22 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     public FruitFragment() {
         gestures.add(new Gesture("left")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
                 .addObserver(this));
         gestures.add(new Gesture("right")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.RIGHT, 1500))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.LEFT, 1500))
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
                 .addObserver(this));
         gestures.add(new Gesture("fixation")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.FIXATION, 1000L))
+                .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
         gestures.add(new Gesture("blink")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.DOWN, 4000))
-                .add(new EyeEvent.Criterion(EyeEvent.Type.SACCADE, EyeEvent.Direction.UP, 2000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
     }
 
@@ -196,7 +196,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         int knives[] = new int[] {R.id.leftLeftKnife, R.id.leftRightKnife, R.id.rightLeftKnife,
                 R.id.rightRightKnife};
         for (int id : knives) {
-            getView().findViewById(id).setVisibility(View.INVISIBLE);
+//            getView().findViewById(id).setVisibility(View.INVISIBLE);
         }
     }
 

@@ -26,8 +26,6 @@ public class EyeEvent {
     public enum Type {
         SACCADE,
         FIXATION,
-        SMALL_BLINK,
-        LARGE_BLINK,
         POSITION,
         SIGNAL_QUALITY,
         BAD_CONTACT
@@ -80,30 +78,17 @@ public class EyeEvent {
         public final long minDurationMillis;
         public final long maxDurationMillis;
 
+        public final int maxColumn;
+        public final int maxRow;
 
         public Criterion(Type type) {
-            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
+            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE,
+                    -1, -1);
         }
 
-        public Criterion(Type type, long minDurationMillis) {
-            this(type, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-                    minDurationMillis, Long.MAX_VALUE);
-        }
-
-        public Criterion(Type type, int minAmplitude) {
-            this(type, NONE, minAmplitude, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
-        }
-
-        public Criterion(Type type, int minAmplitude, int maxAmplitude) {
-            this(type, NONE, minAmplitude, maxAmplitude, Long.MIN_VALUE, Long.MAX_VALUE);
-        }
-
-        public Criterion(Type type, Direction direction, int minAmplitude) {
-            this(type, direction, minAmplitude, Integer.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE);
-        }
-
-        public Criterion(Type type, Direction direction, int minAmplitude, int maxAmplitude,
-                         long minDurationMillis, long maxDurationMillis) {
+        private Criterion(Type type, Direction direction, int minAmplitude, int maxAmplitude,
+                          long minDurationMillis, long maxDurationMillis,
+                          int maxColumn, int maxRow) {
             this.type = type;
             this.direction = direction;
 
@@ -112,6 +97,33 @@ public class EyeEvent {
 
             this.minDurationMillis = minDurationMillis;
             this.maxDurationMillis = maxDurationMillis;
+
+            this.maxColumn = maxColumn;
+            this.maxRow = maxRow;
+        }
+
+        public static Criterion position(int maxColumn, int maxRow) {
+            return new Criterion(Type.POSITION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    Long.MIN_VALUE, Long.MAX_VALUE, maxColumn, maxRow);
+        }
+
+        public static Criterion fixation(long minDurationMillis) {
+            return new Criterion(Type.FIXATION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    minDurationMillis, Long.MAX_VALUE, -1, -1);
+        }
+
+        public static Criterion saccade(Direction direction, int minAmplitude) {
+            return saccade(direction, minAmplitude, Integer.MAX_VALUE);
+        }
+
+        public static Criterion saccade(Direction direction, int minAmplitude, int maxAmplitude) {
+            return new Criterion(Type.SACCADE, direction, minAmplitude, maxAmplitude,
+                    Long.MIN_VALUE, Long.MAX_VALUE, -1, -1);
+        }
+
+        public static Criterion badContact(long minDurationMillis) {
+            return new Criterion(Type.POSITION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    minDurationMillis, Long.MAX_VALUE, -1, -1);
         }
 
         public boolean isMatching(EyeEvent event) {
