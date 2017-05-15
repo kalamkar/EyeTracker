@@ -58,6 +58,9 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
+        eyeEventSource.add(new Gesture("explode")
+                .add(EyeEvent.Criterion.fixation(5000, 5500))
+                .addObserver(this));
         replaceDirections(1500);
     }
 
@@ -131,6 +134,7 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         players.put("right", MediaPlayer.create(getContext(), R.raw.slice));
         players.put("fixation", MediaPlayer.create(getContext(), R.raw.beep));
         players.put("blink", MediaPlayer.create(getContext(), R.raw.beep));
+        players.put("explode", MediaPlayer.create(getContext(), R.raw.explode));
     }
 
     @Override
@@ -167,6 +171,9 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                                 events.get(1).amplitude, events.get(2).amplitude);
                         reset(2000);
                         maybeUpdateDirections(events);
+                        break;
+                    case "explode":
+                        debug = String.format("%d", events.get(0).durationMillis);
                         break;
                     case "fixation":
                         debug = String.format("%d", events.get(0).durationMillis);

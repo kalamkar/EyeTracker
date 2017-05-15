@@ -59,6 +59,9 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
+        eyeEventSource.add(new Gesture("explode")
+                .add(EyeEvent.Criterion.fixation(5000, 5500))
+                .addObserver(this));
 //        eyeEventSource.add(new Gesture("position")
 //                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
 //                .add(this));
@@ -125,6 +128,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         players.put("right", MediaPlayer.create(getContext(), R.raw.slice));
         players.put("fixation", MediaPlayer.create(getContext(), R.raw.jump));
         players.put("blink", MediaPlayer.create(getContext(), R.raw.ping));
+        players.put("explode", MediaPlayer.create(getContext(), R.raw.explode));
     }
 
     @Override
@@ -183,6 +187,9 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
                         setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
                         scheduleResetFixation(Config.FIXATION_VISIBILITY_MILLIS);
+                        break;
+                    case "explode":
+                        play(gestureName);
                         break;
                     case "position":
                         latestColumn = events.get(0).column;

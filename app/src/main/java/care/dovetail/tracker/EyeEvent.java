@@ -104,6 +104,11 @@ public class EyeEvent {
                     minDurationMillis, Long.MAX_VALUE);
         }
 
+        public static Criterion fixation(long minDurationMillis, long maxDurationMillis) {
+            return new Criterion(Type.FIXATION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    minDurationMillis, maxDurationMillis);
+        }
+
         public static Criterion saccade(Direction direction, int minAmplitude) {
             return saccade(direction, minAmplitude, Integer.MAX_VALUE);
         }
