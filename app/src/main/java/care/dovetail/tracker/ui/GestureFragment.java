@@ -11,8 +11,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,6 +35,9 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
     private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
 
+    private final Set<Gesture> directions = new HashSet<>();
+    private int blinkCount = 0;
+
     private GestureView leftContent;
     private GestureView rightContent;
 
@@ -41,43 +46,47 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
 
     private Timer resetTimer;
 
-    private boolean directionsAdded = false;
-
     @Override
     public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
         this.eyeEventSource = eyeEventSource;
-        eyeEventSource.addObserver(new Gesture("blink")
+        eyeEventSource.add(new Gesture("blink")
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("fixation")
+        eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
+        replaceDirections(1500);
     }
 
-    private void addDirections(int amplitude) {
-        eyeEventSource.addObserver(new Gesture("left")
+    private void replaceDirections(int amplitude) {
+        for (Gesture direction : directions) {
+            eyeEventSource.remove(direction);
+        }
+        directions.add(new Gesture("left")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("right")
+        directions.add(new Gesture("right")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("up")
+        directions.add(new Gesture("up")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("down")
+        directions.add(new Gesture("down")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .addObserver(this));
-        directionsAdded = true;
+        for (Gesture direction : directions) {
+            eyeEventSource.add(direction);
+        }
     }
 
     @Override
@@ -156,9 +165,10 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                         debug = String.format("%d\n%d\n%d", events.get(0).amplitude,
                                 events.get(1).amplitude, events.get(2).amplitude);
                         reset(2000);
-                        if (!directionsAdded) {
+                        blinkCount++;
+                        if (blinkCount % 10 == 0) {
                             // Average of the 2 UPs (in UP DOWN UP blink gesture) divided by 8
-                            addDirections(
+                            replaceDirections(
                                     ((events.get(0).amplitude + events.get(2).amplitude) / 2) / 8);
                         }
                         break;

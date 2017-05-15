@@ -181,11 +181,11 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
         }
 
         if (demo instanceof EyeEvent.Observer) {
-            ((EyeEvent.Source) eog).addObserver((EyeEvent.Observer) demo);
+            ((EyeEvent.Source) eog).add((EyeEvent.Observer) demo);
         } else if (demo instanceof Gesture.Observer) {
             ((Gesture.Observer) demo).setEyeEventSource((EyeEvent.Source) eog);
         }
-        ((EyeEvent.Source) eog).addObserver(this);
+        ((EyeEvent.Source) eog).add(this);
         getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 
         debug.setDataSource(eog);

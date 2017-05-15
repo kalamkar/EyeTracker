@@ -174,8 +174,13 @@ public class CombinedEogProcessor implements EOGProcessor, EyeEvent.Source {
     }
 
     @Override
-    public void addObserver(EyeEvent.Observer observer) {
+    public void add(EyeEvent.Observer observer) {
         this.observers.add(observer);
+    }
+
+    @Override
+    public void remove(EyeEvent.Observer observer) {
+        this.observers.remove(observer);
     }
 
     @Override

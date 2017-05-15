@@ -11,8 +11,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,6 +35,9 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
 
+    private final Set<Gesture> directions = new HashSet<>();
+    private int blinkCount = 0;
+
     private boolean animationRunning = false;
 
     private ImageView leftFruit;
@@ -42,38 +47,41 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private int latestColumn = 1;
 
-    private boolean directionsAdded = false;
-
     @Override
     public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
         this.eyeEventSource = eyeEventSource;
-        eyeEventSource.addObserver(new Gesture("blink")
+        eyeEventSource.add(new Gesture("blink")
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("fixation")
+        eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
-//        eyeEventSource.addObserver(new Gesture("position")
+//        eyeEventSource.add(new Gesture("position")
 //                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
-//                .addObserver(this));
-        // TODO(abhi): Move adding following gestures post first blink.
-        addDirections(1500);
+//                .add(this));
+        replaceDirections(1500);
     }
 
-    private void addDirections(int amplitude) {
-        eyeEventSource.addObserver(new Gesture("left")
+    private void replaceDirections(int amplitude) {
+        for (Gesture direction : directions) {
+            eyeEventSource.remove(direction);
+        }
+        directions.clear();
+        directions.add(new Gesture("left")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .addObserver(this));
-        eyeEventSource.addObserver(new Gesture("right")
+        directions.add(new Gesture("right")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
-        directionsAdded = true;
+        for (Gesture direction : directions) {
+            eyeEventSource.add(direction);
+        }
     }
 
     @Override
@@ -163,9 +171,10 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         resetImage(Config.FIXATION_VISIBILITY_MILLIS);
                         resetFixation();
                         animationRunning = true;
-                        if (!directionsAdded) {
+                        blinkCount++;
+                        if (blinkCount % 10 == 0) {
                             // Average of the 2 UPs (in UP DOWN UP blink gesture) divided by 8
-                            addDirections(
+                            replaceDirections(
                                     ((events.get(0).amplitude + events.get(2).amplitude) / 2) / 8);
                         }
                         break;

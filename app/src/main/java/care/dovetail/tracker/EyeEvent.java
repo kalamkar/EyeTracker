@@ -37,7 +37,8 @@ public class EyeEvent {
     }
 
     public interface Source {
-        void addObserver(EyeEvent.Observer observer);
+        void add(EyeEvent.Observer observer);
+        void remove(EyeEvent.Observer observer);
     }
 
     public abstract static class Criteria {
