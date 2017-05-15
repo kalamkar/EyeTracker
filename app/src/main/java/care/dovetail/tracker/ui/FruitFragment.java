@@ -37,6 +37,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private final Set<Gesture> directions = new HashSet<>();
     private int blinkCount = 0;
+    private final Set<Integer> blinkAmplitudes = new HashSet<>();
 
     private boolean animationRunning = false;
 
@@ -171,12 +172,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         resetImage(Config.FIXATION_VISIBILITY_MILLIS);
                         resetFixation();
                         animationRunning = true;
-                        blinkCount++;
-                        if (blinkCount % 10 == 0) {
-                            // Average of the 2 UPs (in UP DOWN UP blink gesture) divided by 8
-                            replaceDirections(
-                                    ((events.get(0).amplitude + events.get(2).amplitude) / 2) / 8);
-                        }
+                        maybeUpdateDirections(events);
                         break;
                     case "fixation":
                         if (getView().findViewById(R.id.leftLeftKnife).getAlpha() < 1.0f) {
@@ -194,6 +190,24 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 }
             }
         });
+    }
+
+    private void maybeUpdateDirections(List<EyeEvent> events) {
+        blinkCount++;
+        if (blinkCount % 10 == 0 || blinkAmplitudes.size() > 0) {
+            if (blinkAmplitudes.size() < 6) {
+                blinkAmplitudes.add(events.get(0).amplitude);
+                blinkAmplitudes.add(events.get(1).amplitude / 2);
+                blinkAmplitudes.add(events.get(2).amplitude);
+            } else {
+                int sum = 0;
+                for (Integer amplitude : blinkAmplitudes) {
+                    sum += amplitude;
+                }
+                replaceDirections((sum / blinkAmplitudes.size()) / 8);
+                blinkAmplitudes.clear();
+            }
+        }
     }
 
     private void resetImage(int delay) {
