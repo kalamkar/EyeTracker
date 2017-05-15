@@ -41,6 +41,8 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
 
     private Timer resetTimer;
 
+    private boolean directionsAdded = false;
+
     @Override
     public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
         this.eyeEventSource = eyeEventSource;
@@ -52,8 +54,6 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         eyeEventSource.addObserver(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
-        // TODO(abhi): Move adding following gestures post first blink.
-        addDirections(1500);
     }
 
     private void addDirections(int amplitude) {
@@ -77,6 +77,7 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .addObserver(this));
+        directionsAdded = true;
     }
 
     @Override
@@ -155,6 +156,11 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                         debug = String.format("%d\n%d\n%d", events.get(0).amplitude,
                                 events.get(1).amplitude, events.get(2).amplitude);
                         reset(2000);
+                        if (!directionsAdded) {
+                            // Average of the 2 UPs (in UP DOWN UP blink gesture) divided by 8
+                            addDirections(
+                                    ((events.get(0).amplitude + events.get(2).amplitude) / 2) / 8);
+                        }
                         break;
                     case "fixation":
                         debug = String.format("%d", events.get(0).durationMillis);
@@ -205,7 +211,11 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         resetTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                getActivity().runOnUiThread(new Runnable() {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         leftContent.clear();

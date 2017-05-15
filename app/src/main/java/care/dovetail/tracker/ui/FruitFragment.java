@@ -42,6 +42,8 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private int latestColumn = 1;
 
+    private boolean directionsAdded = false;
+
     @Override
     public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
         this.eyeEventSource = eyeEventSource;
@@ -71,6 +73,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
+        directionsAdded = true;
     }
 
     @Override
@@ -160,6 +163,11 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         resetImage(Config.FIXATION_VISIBILITY_MILLIS);
                         resetFixation();
                         animationRunning = true;
+                        if (!directionsAdded) {
+                            // Average of the 2 UPs (in UP DOWN UP blink gesture) divided by 8
+                            addDirections(
+                                    ((events.get(0).amplitude + events.get(2).amplitude) / 2) / 8);
+                        }
                         break;
                     case "fixation":
                         if (getView().findViewById(R.id.leftLeftKnife).getAlpha() < 1.0f) {
