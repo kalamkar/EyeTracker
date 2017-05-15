@@ -24,7 +24,7 @@ import care.dovetail.tracker.eog.filters.ValueChangeCurveFitDriftRemoval;
  * Created by abhi on 4/10/17.
  */
 
-public class PositionEogProcessor implements EOGProcessor {
+public class PositionEogProcessor implements EOGProcessor, EyeEvent.Source {
     private static final String TAG = "PositionEogProcessor";
 
     private static final int BLINK_WINDOW_LENGTH = 50;

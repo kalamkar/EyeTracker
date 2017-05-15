@@ -2,8 +2,6 @@ package care.dovetail.tracker.eog;
 
 import android.util.Pair;
 
-import care.dovetail.tracker.EyeEvent;
-
 /**
  * Created by abhi on 3/22/17.
  */
@@ -16,12 +14,6 @@ public interface EOGProcessor {
      * @param vValue vertical channel value
      */
     void update(int hValue, int vValue);
-
-    /**
-     * Add an EyEvent Observer to listen to any matching EyeEvents triggered by the EOG Processor.
-     * @param observer
-     */
-    void addObserver(EyeEvent.Observer observer);
 
     /**
      *

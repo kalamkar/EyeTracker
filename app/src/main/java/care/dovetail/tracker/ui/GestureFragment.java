@@ -11,10 +11,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,7 +28,7 @@ import care.dovetail.tracker.Settings;
 
 public class GestureFragment extends Fragment implements Gesture.Observer {
 
-    private final Set<Gesture> gestures = new HashSet<>();
+    private EyeEvent.Source eyeEventSource;
 
     private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
@@ -43,34 +41,41 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
 
     private Timer resetTimer;
 
-    public GestureFragment() {
-        gestures.add(new Gesture("left")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("right")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("up")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("down")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("fixation")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .addObserver(this));
-        gestures.add(new Gesture("blink")
+    @Override
+    public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
+        this.eyeEventSource = eyeEventSource;
+        eyeEventSource.addObserver(new Gesture("blink")
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .addObserver(this));
+        eyeEventSource.addObserver(new Gesture("fixation")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .addObserver(this));
+        // TODO(abhi): Move adding following gestures post first blink.
+        addDirections(1500);
+    }
+
+    private void addDirections(int amplitude) {
+        eyeEventSource.addObserver(new Gesture("left")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
+                .addObserver(this));
+        eyeEventSource.addObserver(new Gesture("right")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
+                .addObserver(this));
+        eyeEventSource.addObserver(new Gesture("up")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
+                .addObserver(this));
+        eyeEventSource.addObserver(new Gesture("down")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .addObserver(this));
     }
 
@@ -124,11 +129,6 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
         }
         players.clear();
         super.onStop();
-    }
-
-    @Override
-    public Set<Gesture> getGestures() {
-        return gestures;
     }
 
     @Override

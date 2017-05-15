@@ -14,7 +14,6 @@ import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
 import care.dovetail.tracker.eog.CombinedEogProcessor;
 import care.dovetail.tracker.eog.EOGProcessor;
-import care.dovetail.tracker.eog.GestureEogProcessor;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
@@ -166,36 +165,27 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     }
 
     public void startBluetooth() {
+        eog = new CombinedEogProcessor(settings.getNumSteps(), settings.shouldShowBandpassChart());
         if (settings.getDemo() == 0) { // Gestures
             demo = new GestureFragment();
-            eog = new GestureEogProcessor();
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 1) { // Fruit
             demo = new FruitFragment();
-//            eog = new GestureEogProcessor();
-            eog = new CombinedEogProcessor(
-                    settings.getNumSteps(), settings.shouldShowBandpassChart());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 2) { // Position
             demo = new PositionFragment();
-//            eog = new PositionEogProcessor(settings.getNumSteps(), settings.getThreshold());
-            eog = new CombinedEogProcessor(
-                    settings.getNumSteps(), settings.shouldShowBandpassChart());
             debug = new DebugBinocularFragment();
         } else if (settings.getDemo() == 3) { // Spectacles
             demo = new SpectaclesFragment();
-            eog = new GestureEogProcessor();
             debug = new DebugFragment();
         }
 
         if (demo instanceof EyeEvent.Observer) {
-            eog.addObserver((EyeEvent.Observer) demo);
+            ((EyeEvent.Source) eog).addObserver((EyeEvent.Observer) demo);
         } else if (demo instanceof Gesture.Observer) {
-            for (Gesture gesture : ((Gesture.Observer) demo).getGestures()) {
-                eog.addObserver(gesture);
-            }
+            ((Gesture.Observer) demo).setEyeEventSource((EyeEvent.Source) eog);
         }
-        eog.addObserver(this);
+        ((EyeEvent.Source) eog).addObserver(this);
         getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
 
         debug.setDataSource(eog);

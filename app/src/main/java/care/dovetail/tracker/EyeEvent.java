@@ -36,6 +36,10 @@ public class EyeEvent {
         void onEyeEvent(EyeEvent event);
     }
 
+    public interface Source {
+        void addObserver(EyeEvent.Observer observer);
+    }
+
     public abstract static class Criteria {
         protected final List<Criterion> criteria = new ArrayList<>();
         public Criteria add(Criterion criterion) {

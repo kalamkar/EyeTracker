@@ -11,10 +11,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -29,7 +27,8 @@ import care.dovetail.tracker.Settings;
  */
 
 public class FruitFragment extends Fragment implements Gesture.Observer {
-    private final Set<Gesture> gestures = new HashSet<>();
+
+    private EyeEvent.Source eyeEventSource;
 
     private final Map<String, MediaPlayer> players = new HashMap<>();
     private Settings settings;
@@ -43,27 +42,34 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private int latestColumn = 1;
 
-    public FruitFragment() {
-        gestures.add(new Gesture("left")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("right")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, 1500))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, 1500))
-                .addObserver(this));
-        gestures.add(new Gesture("fixation")
-                .add(EyeEvent.Criterion.fixation(1000))
-                .addObserver(this));
-        gestures.add(new Gesture("blink")
+    @Override
+    public void setEyeEventSource(EyeEvent.Source eyeEventSource) {
+        this.eyeEventSource = eyeEventSource;
+        eyeEventSource.addObserver(new Gesture("blink")
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
-        gestures.add(new Gesture("position")
-                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
+        eyeEventSource.addObserver(new Gesture("fixation")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .addObserver(this));
+//        eyeEventSource.addObserver(new Gesture("position")
+//                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
+//                .addObserver(this));
+        // TODO(abhi): Move adding following gestures post first blink.
+        addDirections(1500);
+    }
+
+    private void addDirections(int amplitude) {
+        eyeEventSource.addObserver(new Gesture("left")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
+                .addObserver(this));
+        eyeEventSource.addObserver(new Gesture("right")
+                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
     }
 
@@ -119,11 +125,6 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     }
 
     @Override
-    public Set<Gesture> getGestures() {
-        return gestures;
-    }
-
-    @Override
     public void onGesture(final String gestureName, final List<EyeEvent> events) {
         Activity activity = getActivity();
         if (activity == null) {
@@ -162,13 +163,13 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         break;
                     case "fixation":
                         resetFixation();
-                        if (latestColumn == 0) {
+//                        if (latestColumn == 0) {
                             play(gestureName);
                             setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
-                        } else  if (latestColumn == 2) {
-                            play(gestureName);
+//                        } else  if (latestColumn == 2) {
+//                            play(gestureName);
                             setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
-                        }
+//                        }
                         resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
                         break;
                     case "position":

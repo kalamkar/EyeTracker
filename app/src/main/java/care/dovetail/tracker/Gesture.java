@@ -17,7 +17,7 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
     private final List<EyeEvent> triggeredEvents = new ArrayList<>();
 
     public interface Observer {
-        Set<Gesture> getGestures();
+        void setEyeEventSource(EyeEvent.Source eyeEventSource);
         void onGesture(String name, List<EyeEvent> events);
     }
 

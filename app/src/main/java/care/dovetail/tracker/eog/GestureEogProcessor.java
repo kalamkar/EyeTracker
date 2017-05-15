@@ -19,7 +19,7 @@ import care.dovetail.tracker.eog.events.VariableLengthEyeEventRecognizer;
  * Created by abhi on 4/10/17.
  */
 
-public class GestureEogProcessor implements EOGProcessor {
+public class GestureEogProcessor implements EOGProcessor, EyeEvent.Source {
     private static final String TAG = "GestureEogProcessor";
 
     private static final int QUALITY_NOTIFY_INTERVAL = (int) (100 * Config.SAMPLING_FREQ / 1000);
