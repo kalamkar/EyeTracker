@@ -108,7 +108,9 @@ public class DebugFragment extends Fragment implements DebugUi {
             }
             chart.clear();
 
-            if (settings.shouldShowChart()) {
+            boolean progressVisible =
+                    getView().findViewById(R.id.leftProgress).getVisibility() == View.VISIBLE;
+            if (settings.shouldShowChart() || progressVisible) {
                 chart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 chart.updateChannel2(signals.vertical(), signals.verticalRange());
                 chart.updateFeature1(signals.feature1(), signals.feature1Range());

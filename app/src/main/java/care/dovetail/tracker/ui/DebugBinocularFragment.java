@@ -136,7 +136,9 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
             leftChart.clear();
             rightChart.clear();
 
-            if (settings.shouldShowChart()) {
+            boolean progressVisible =
+                    getView().findViewById(R.id.leftProgress).getVisibility() == View.VISIBLE;
+            if (settings.shouldShowChart() || progressVisible) {
                 leftChart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 leftChart.updateChannel2(signals.vertical(), signals.verticalRange());
                 leftChart.updateFeature1(signals.feature1(), signals.feature1Range());

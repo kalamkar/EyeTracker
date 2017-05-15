@@ -111,10 +111,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 break;
             case POSITION:
                 latestPosition = event;
-                if (demo instanceof EyeEvent.Observer && eog.isGoodSignal()
-                        && ((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
-                    ((EyeEvent.Observer) demo).onEyeEvent(event);
-                }
+//                if (demo instanceof EyeEvent.Observer && eog.isGoodSignal()
+//                        && ((EyeEvent.Observer) demo).getCriteria().isMatching(event)) {
+//                    ((EyeEvent.Observer) demo).onEyeEvent(event);
+//                }
                 break;
             case SIGNAL_QUALITY:
                 if (eog.isGoodSignal()) {

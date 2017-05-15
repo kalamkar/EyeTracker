@@ -184,7 +184,11 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                getActivity().runOnUiThread(new Runnable() {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         leftFruit.setImageResource(R.drawable.apple);
@@ -218,7 +222,11 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         fixationResetTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                getActivity().runOnUiThread(new Runnable() {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         resetFixation();
