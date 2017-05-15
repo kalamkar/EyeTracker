@@ -41,6 +41,8 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private Timer fixationResetTimer;
 
+    private int latestColumn = 1;
+
     public FruitFragment() {
         gestures.add(new Gesture("left")
                 .add(EyeEvent.Criterion.fixation(1000))
@@ -59,6 +61,9 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .addObserver(this));
+        gestures.add(new Gesture("position")
+                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
                 .addObserver(this));
     }
 
@@ -124,13 +129,6 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         if (activity == null) {
             return;
         }
-        MediaPlayer player = players.get(gestureName);
-        if (player != null) {
-            if (player.isPlaying()) {
-                player.stop();
-            }
-            player.start();
-        }
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -139,6 +137,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 }
                 switch (gestureName) {
                     case "left":
+                        play(gestureName);
                         leftFruit.setImageResource(R.drawable.apple_left);
                         rightFruit.setImageResource(R.drawable.apple_left);
                         resetImage(Config.GESTURE_VISIBILITY_MILLIS);
@@ -146,6 +145,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         animationRunning = true;
                         break;
                     case "right":
+                        play(gestureName);
                         leftFruit.setImageResource(R.drawable.apple_right);
                         rightFruit.setImageResource(R.drawable.apple_right);
                         resetImage(Config.GESTURE_VISIBILITY_MILLIS);
@@ -153,6 +153,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         animationRunning = true;
                         break;
                     case "blink":
+                        play(gestureName);
                         leftFruit.setImageResource(R.drawable.apple_hole);
                         rightFruit.setImageResource(R.drawable.apple_hole);
                         resetImage(Config.FIXATION_VISIBILITY_MILLIS);
@@ -161,9 +162,17 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         break;
                     case "fixation":
                         resetFixation();
-                        setFixation(new int[] {R.id.leftLeftKnife, R.id.leftRightKnife});
-                        setFixation(new int[] {R.id.rightLeftKnife, R.id.rightRightKnife});
+                        if (latestColumn == 0) {
+                            play(gestureName);
+                            setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
+                        } else  if (latestColumn == 2) {
+                            play(gestureName);
+                            setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
+                        }
                         resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
+                        break;
+                    case "position":
+                        latestColumn = events.get(0).column;
                         break;
                 }
             }
@@ -188,7 +197,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private void setFixation(int knives[]) {
         for (int id : knives) {
-            getView().findViewById(id).setVisibility(View.VISIBLE);
+            getView().findViewById(id).setAlpha(1.0f);
         }
     }
 
@@ -196,7 +205,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         int knives[] = new int[] {R.id.leftLeftKnife, R.id.leftRightKnife, R.id.rightLeftKnife,
                 R.id.rightRightKnife};
         for (int id : knives) {
-//            getView().findViewById(id).setVisibility(View.INVISIBLE);
+            getView().findViewById(id).setAlpha(0.5f);
         }
     }
 
@@ -216,5 +225,15 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 });
             }
         }, delay);
+    }
+
+    private void play(String name) {
+        MediaPlayer player = players.get(name);
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.start();
+        }
     }
 }
