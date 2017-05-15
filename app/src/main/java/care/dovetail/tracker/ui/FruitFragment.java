@@ -195,7 +195,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     private void maybeUpdateDirections(List<EyeEvent> events) {
         blinkCount++;
         if (blinkCount % 10 == 0 || blinkAmplitudes.size() > 0) {
-            if (blinkAmplitudes.size() < 6) {
+            if (blinkAmplitudes.size() < 9) {
                 blinkAmplitudes.add(events.get(0).amplitude);
                 blinkAmplitudes.add(events.get(1).amplitude / 2);
                 blinkAmplitudes.add(events.get(2).amplitude);
