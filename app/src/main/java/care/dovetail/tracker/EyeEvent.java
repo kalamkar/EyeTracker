@@ -134,6 +134,7 @@ public class EyeEvent {
     }
 
     public final Type type;
+    public final long timeMillis;
     public final Direction direction;
     public final int amplitude;
     public final long durationMillis;
@@ -163,6 +164,7 @@ public class EyeEvent {
     private EyeEvent(Type type, Direction direction, int amplitude, long durationMillis,
                      int column, int row) {
         this.type = type;
+        this.timeMillis = System.currentTimeMillis();
         this.direction = direction;
         this.amplitude = amplitude;
         this.durationMillis = durationMillis;

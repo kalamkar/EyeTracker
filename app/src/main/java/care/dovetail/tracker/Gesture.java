@@ -14,6 +14,8 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
     private final Set<Observer> observers = new HashSet<>();
     public final String name;
 
+    private long maxTimeDifferenceMillis = 500;
+
     private final List<EyeEvent> triggeredEvents = new ArrayList<>();
 
     public interface Observer {
@@ -27,6 +29,11 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
 
     public Gesture addObserver(Observer observer) {
         this.observers.add(observer);
+        return this;
+    }
+
+    public Gesture setMaxTimeDifferenceMillis(long millis) {
+        maxTimeDifferenceMillis = millis;
         return this;
     }
 
@@ -51,7 +58,10 @@ public class Gesture extends EyeEvent.AnyCriteria implements EyeEvent.Observer {
         // Size of events matches size of criteria, compare them for gesture match.
         boolean matched = true;
         for (int i = 0; i < criteria.size(); i++) {
+            long timeDiffMillis = i == 0 ? 0
+                    : triggeredEvents.get(i).timeMillis - triggeredEvents.get(i - 1).timeMillis;
             matched = matched && criteria.get(i).isMatching(triggeredEvents.get(i));
+            matched = matched && timeDiffMillis < maxTimeDifferenceMillis;
         }
         if (matched) {
             for (Observer observer : observers) {
