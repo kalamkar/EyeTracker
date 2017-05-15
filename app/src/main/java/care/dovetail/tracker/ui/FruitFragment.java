@@ -111,8 +111,8 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         super.onStart();
         players.put("left", MediaPlayer.create(getContext(), R.raw.slice));
         players.put("right", MediaPlayer.create(getContext(), R.raw.slice));
-        players.put("fixation", MediaPlayer.create(getContext(), R.raw.beep));
-        players.put("blink", MediaPlayer.create(getContext(), R.raw.beep));
+        players.put("fixation", MediaPlayer.create(getContext(), R.raw.jump));
+        players.put("blink", MediaPlayer.create(getContext(), R.raw.ping));
     }
 
     @Override
@@ -162,15 +162,14 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         animationRunning = true;
                         break;
                     case "fixation":
-                        resetFixation();
-//                        if (latestColumn == 0) {
+                        if (getView().findViewById(R.id.leftLeftKnife).getAlpha() < 1.0f) {
+                            // Play sound only one time when highlighting the knife
                             play(gestureName);
-                            setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
-//                        } else  if (latestColumn == 2) {
-//                            play(gestureName);
-                            setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
-//                        }
-                        resetFixation(Config.FIXATION_VISIBILITY_MILLIS);
+                        }
+                        resetFixation();
+                        setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
+                        setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
+                        scheduleResetFixation(Config.FIXATION_VISIBILITY_MILLIS);
                         break;
                     case "position":
                         latestColumn = events.get(0).column;
@@ -214,7 +213,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         }
     }
 
-    private void resetFixation(int delay) {
+    private void scheduleResetFixation(int delay) {
         if (fixationResetTimer != null) {
             fixationResetTimer.cancel();
         }
