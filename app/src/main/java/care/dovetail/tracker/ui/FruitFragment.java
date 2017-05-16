@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,17 @@ import care.dovetail.tracker.Settings;
 
 public class FruitFragment extends Fragment implements Gesture.Observer {
 
+    private final int FRUIT[] = new int[]
+            {R.drawable.apple, R.drawable.orange, R.drawable.strawberry};
+    private final int RIGHT[] = new int[]
+            {R.drawable.apple_right, R.drawable.orange_right, R.drawable.strawberry_right};
+    private final int LEFT[] = new int[]
+            {R.drawable.apple_left, R.drawable.orange_left, R.drawable.strawberry_left};
+    private final int EXPLODED[] = new int[]
+            {R.drawable.apple_exploded, R.drawable.orange_exploded, R.drawable.strawberry_exploded};
+
+    private int fruitIndex = 0;
+
     private EyeEvent.Source eyeEventSource;
 
     private final Map<String, MediaPlayer> players = new HashMap<>();
@@ -43,6 +55,8 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private ImageView leftFruit;
     private ImageView rightFruit;
+    private TextView leftDebug;
+    private TextView rightDebug;
 
     private Timer fixationResetTimer;
 
@@ -55,6 +69,14 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .addObserver(this));
+        eyeEventSource.add(new Gesture("multiblink")
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 2000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
@@ -69,6 +91,11 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     }
 
     private void replaceDirections(int amplitude) {
+        amplitude = Math.max(amplitude, 500);
+        if (directions.size() > 0) { // Skip the first one that is not called from UI thread.
+            leftDebug.setText(Integer.toString(amplitude));
+            rightDebug.setText(Integer.toString(amplitude));
+        }
         for (Gesture direction : directions) {
             eyeEventSource.remove(direction);
         }
@@ -105,6 +132,12 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         super.onViewCreated(view, savedInstanceState);
         leftFruit = (ImageView) view.findViewById(R.id.leftImage);
         rightFruit = (ImageView) view.findViewById(R.id.rightImage);
+
+        leftFruit.setImageResource(FRUIT[fruitIndex]);
+        rightFruit.setImageResource(FRUIT[fruitIndex]);
+
+        leftDebug = (TextView) view.findViewById(R.id.leftText);
+        rightDebug = (TextView) view.findViewById(R.id.rightText);
 
         if (settings.isDayDream()) {
             view.findViewById(R.id.left).setPadding(
@@ -155,28 +188,29 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 switch (gestureName) {
                     case "left":
                         play(gestureName);
-                        leftFruit.setImageResource(R.drawable.apple_left);
-                        rightFruit.setImageResource(R.drawable.apple_left);
+                        leftFruit.setImageResource(LEFT[fruitIndex]);
+                        rightFruit.setImageResource(LEFT[fruitIndex]);
                         resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                         resetFixation();
                         animationRunning = true;
                         break;
                     case "right":
                         play(gestureName);
-                        leftFruit.setImageResource(R.drawable.apple_right);
-                        rightFruit.setImageResource(R.drawable.apple_right);
+                        leftFruit.setImageResource(RIGHT[fruitIndex]);
+                        rightFruit.setImageResource(RIGHT[fruitIndex]);
                         resetImage(Config.GESTURE_VISIBILITY_MILLIS);
                         resetFixation();
                         animationRunning = true;
                         break;
                     case "blink":
                         play(gestureName);
-                        leftFruit.setImageResource(R.drawable.apple_hole);
-                        rightFruit.setImageResource(R.drawable.apple_hole);
-                        resetImage(Config.FIXATION_VISIBILITY_MILLIS);
                         resetFixation();
-                        animationRunning = true;
                         maybeUpdateDirections(events);
+                        break;
+                    case "multiblink":
+                        fruitIndex = ++fruitIndex == FRUIT.length ? 0 : fruitIndex;
+                        resetImage(0);
+                        resetFixation();
                         break;
                     case "fixation":
                         if (getView().findViewById(R.id.leftLeftKnife).getAlpha() < 1.0f) {
@@ -190,6 +224,11 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         break;
                     case "explode":
                         play(gestureName);
+                        leftFruit.setImageResource(EXPLODED[fruitIndex]);
+                        rightFruit.setImageResource(EXPLODED[fruitIndex]);
+                        resetImage(Config.GESTURE_VISIBILITY_MILLIS);
+                        resetFixation();
+                        animationRunning = true;
                         break;
                     case "position":
                         latestColumn = events.get(0).column;
@@ -211,7 +250,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 for (Integer amplitude : blinkAmplitudes) {
                     sum += amplitude;
                 }
-                replaceDirections((sum / blinkAmplitudes.size()) / 8);
+                replaceDirections((sum / blinkAmplitudes.size()) / 5);
                 blinkAmplitudes.clear();
             }
         }
@@ -228,8 +267,8 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        leftFruit.setImageResource(R.drawable.apple);
-                        rightFruit.setImageResource(R.drawable.apple);
+                        leftFruit.setImageResource(FRUIT[fruitIndex]);
+                        rightFruit.setImageResource(FRUIT[fruitIndex]);
                         animationRunning = false;
                     }
                 });

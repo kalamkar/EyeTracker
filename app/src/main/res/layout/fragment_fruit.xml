@@ -35,6 +35,14 @@
             android:layout_gravity="center_vertical|end"
             android:src="@drawable/knife"/>
 
+        <TextView
+            android:id="@+id/leftText"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal|bottom"
+            android:textColor="@android:color/holo_blue_light"/>
+
     </FrameLayout>
 
     <FrameLayout
@@ -64,6 +72,14 @@
             android:layout_height="@dimen/knife_height"
             android:layout_gravity="center_vertical|end"
             android:src="@drawable/knife"/>
+
+        <TextView
+            android:id="@+id/rightText"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal|bottom"
+            android:textColor="@android:color/holo_blue_light"/>
 
     </FrameLayout>
 
