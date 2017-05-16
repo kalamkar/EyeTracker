@@ -73,9 +73,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         eyeEventSource.add(new Gesture("multiblink")
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 2000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("fixation")
