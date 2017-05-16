@@ -41,6 +41,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
             {R.drawable.apple_exploded, R.drawable.orange_exploded, R.drawable.strawberry_exploded};
 
     private int fruitIndex = 0;
+    private long lastFruitChangeTimeMillis = 0;
 
     private EyeEvent.Source eyeEventSource;
 
@@ -71,10 +72,12 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("multiblink")
-                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 2000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 2000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, 4000))
+                .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, 4000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("fixation")
                 .add(EyeEvent.Criterion.fixation(1000))
@@ -89,7 +92,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     }
 
     private void replaceDirections(int amplitude) {
-        amplitude = Math.max(amplitude, 500);
+        amplitude = Math.max(amplitude, 800);
         if (directions.size() > 0) { // Skip the first one that is not called from UI thread.
             leftDebug.setText(Integer.toString(amplitude));
             rightDebug.setText(Integer.toString(amplitude));
@@ -99,12 +102,12 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         }
         directions.clear();
         directions.add(new Gesture("left")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 5000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .addObserver(this));
         directions.add(new Gesture("right")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 5000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
@@ -206,9 +209,15 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                         maybeUpdateDirections(events);
                         break;
                     case "multiblink":
+                        long currentTime = System.currentTimeMillis();
+                        if (currentTime - lastFruitChangeTimeMillis < 2000) {
+                            // Ignore quick multiblink events.
+                            return;
+                        }
                         fruitIndex = ++fruitIndex == FRUIT.length ? 0 : fruitIndex;
                         resetImage(0);
                         resetFixation();
+                        lastFruitChangeTimeMillis = currentTime;
                         break;
                     case "fixation":
                         if (getView().findViewById(R.id.leftLeftKnife).getAlpha() < 1.0f) {
@@ -248,7 +257,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 for (Integer amplitude : blinkAmplitudes) {
                     sum += amplitude;
                 }
-                replaceDirections((sum / blinkAmplitudes.size()) / 5);
+                replaceDirections((sum / blinkAmplitudes.size()) / 3);
                 blinkAmplitudes.clear();
             }
         }
