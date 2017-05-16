@@ -119,7 +119,7 @@ public class EyeEvent {
         }
 
         public static Criterion badContact(long minDurationMillis) {
-            return new Criterion(Type.POSITION, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+            return new Criterion(Type.BAD_CONTACT, NONE, Integer.MIN_VALUE, Integer.MAX_VALUE,
                     minDurationMillis, Long.MAX_VALUE);
         }
 

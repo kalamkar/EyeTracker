@@ -34,9 +34,9 @@ public class VariableLengthEyeEventRecognizer implements EyeEventRecognizer {
         horizontal.update(hValue);
         vertical.update(vValue);
 
-        long signalLossDuration = signalChecker.getSignalLossDurationMillis();
-        if (signalLossDuration > 0 && signalLossDuration % 100 == 0) {
-            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0, signalLossDuration));
+        if (signalChecker.hasNoSignal()) {
+            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0,
+                    signalChecker.getSignalLossDurationMillis()));
         }
 
         if (horizontal.hasSaccade()) {

@@ -32,9 +32,9 @@ public class StepSlopeEyeEventRecognizer implements EyeEventRecognizer {
         events.clear();
 
         signalChecker.update(horizontal, vertical);
-        long signalLossDuration = signalChecker.getSignalLossDurationMillis();
-        if (signalLossDuration > 0 && signalLossDuration % 100 == 0) {
-            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0, signalLossDuration));
+        if (signalChecker.hasNoSignal()) {
+            events.add(new EyeEvent(EyeEvent.Type.BAD_CONTACT, 0,
+                    signalChecker.getSignalLossDurationMillis()));
         }
 
         int hSlope = hGesture.filter(horizontal);
