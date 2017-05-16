@@ -92,7 +92,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
     }
 
     private void replaceDirections(int amplitude) {
-        amplitude = Math.max(amplitude, 800);
+        amplitude = Math.min(Math.max(amplitude, 800), 2000);
         if (directions.size() > 0) { // Skip the first one that is not called from UI thread.
             leftDebug.setText(Integer.toString(amplitude));
             rightDebug.setText(Integer.toString(amplitude));
