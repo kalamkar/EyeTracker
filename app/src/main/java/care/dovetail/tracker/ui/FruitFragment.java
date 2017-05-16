@@ -83,7 +83,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("explode")
-                .add(EyeEvent.Criterion.fixation(5000, 5500))
+                .add(EyeEvent.Criterion.fixation(4000, 4500))
                 .addObserver(this));
 //        eyeEventSource.add(new Gesture("position")
 //                .add(new EyeEvent.Criterion(EyeEvent.Type.POSITION))
@@ -102,12 +102,12 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
         }
         directions.clear();
         directions.add(new Gesture("left")
-                .add(EyeEvent.Criterion.fixation(1000, 5000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .addObserver(this));
         directions.add(new Gesture("right")
-                .add(EyeEvent.Criterion.fixation(1000, 5000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
