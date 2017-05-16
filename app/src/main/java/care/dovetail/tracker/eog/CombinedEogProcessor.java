@@ -111,7 +111,7 @@ public class CombinedEogProcessor implements EOGProcessor, EyeEvent.Source {
     }
 
     @Override
-    public void update(int hRaw, int vRaw) {
+    public synchronized void update(int hRaw, int vRaw) {
         updateCount++;
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
@@ -128,8 +128,10 @@ public class CombinedEogProcessor implements EOGProcessor, EyeEvent.Source {
         vCustomFilterValue = vDrift2.filter(vCustomFilterValue);
 
         if (blinkDetector.check(vCustomFilterValue)) {
-            RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
-            RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
+            if (!showBandpassChart) {
+                RawBlinkDetector.removeSpike(horizontal, BLINK_WINDOW_LENGTH);
+                RawBlinkDetector.removeSpike(vertical, BLINK_WINDOW_LENGTH);
+            }
             for (Filter filter : filters) {
                 filter.removeSpike(BLINK_WINDOW_LENGTH);
             }

@@ -96,7 +96,7 @@ public class PositionEogProcessor implements EOGProcessor, EyeEvent.Source {
     }
 
     @Override
-    public void update(int hRaw, int vRaw) {
+    public synchronized void update(int hRaw, int vRaw) {
         updateCount++;
         long startTime = System.currentTimeMillis();
         firstUpdateTimeMillis = updateCount == 1 ? startTime : firstUpdateTimeMillis;
