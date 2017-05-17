@@ -159,8 +159,8 @@ public class CombinedEogProcessor implements EOGProcessor, EyeEvent.Source {
         System.arraycopy(vertical, 1, vertical, 0, vertical.length - 1);
         vertical[vertical.length - 1] = showBandpassChart ? vBandpassValue : vCustomFilterValue;
 
-        hStats = new Stats(horizontal);
-        vStats = new Stats(vertical);
+        hStats = new Stats(horizontal, horizontal.length - 100, 100);
+        vStats = new Stats(vertical, vertical.length - 100, 100);
 
         System.arraycopy(feature1, 1, feature1, 0, feature1.length - 1);
         feature1[feature1.length - 1] = 0;

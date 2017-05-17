@@ -19,6 +19,7 @@
             android:layout_width="@dimen/knife_width"
             android:layout_height="@dimen/knife_height"
             android:layout_gravity="center_vertical|start"
+            android:visibility="gone"
             android:src="@drawable/knife"/>
 
         <ImageView
@@ -33,6 +34,7 @@
             android:layout_width="@dimen/knife_width"
             android:layout_height="@dimen/knife_height"
             android:layout_gravity="center_vertical|end"
+            android:visibility="gone"
             android:src="@drawable/knife"/>
 
         <TextView
@@ -57,6 +59,7 @@
             android:layout_width="@dimen/knife_width"
             android:layout_height="@dimen/knife_height"
             android:layout_gravity="center_vertical|start"
+            android:visibility="gone"
             android:src="@drawable/knife"/>
 
         <ImageView
@@ -71,6 +74,7 @@
             android:layout_width="@dimen/knife_width"
             android:layout_height="@dimen/knife_height"
             android:layout_gravity="center_vertical|end"
+            android:visibility="gone"
             android:src="@drawable/knife"/>
 
         <TextView
