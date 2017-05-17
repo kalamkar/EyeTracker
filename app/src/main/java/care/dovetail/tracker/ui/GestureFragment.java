@@ -59,32 +59,33 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                 .add(EyeEvent.Criterion.fixation(1000))
                 .addObserver(this));
         eyeEventSource.add(new Gesture("explode")
-                .add(EyeEvent.Criterion.fixation(5000, 5500))
+                .add(EyeEvent.Criterion.fixation(4000, 4500))
                 .addObserver(this));
         replaceDirections(1500);
     }
 
     private void replaceDirections(int amplitude) {
+        amplitude = Math.min(Math.max(amplitude, 800), 2000);
         for (Gesture direction : directions) {
             eyeEventSource.remove(direction);
         }
         directions.add(new Gesture("left")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .addObserver(this));
         directions.add(new Gesture("right")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.RIGHT, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.LEFT, amplitude))
                 .addObserver(this));
         directions.add(new Gesture("up")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
                 .addObserver(this));
         directions.add(new Gesture("down")
-                .add(EyeEvent.Criterion.fixation(1000))
+                .add(EyeEvent.Criterion.fixation(1000, 4000))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.DOWN, amplitude))
                 .add(EyeEvent.Criterion.saccade(EyeEvent.Direction.UP, amplitude))
                 .addObserver(this));
@@ -228,7 +229,7 @@ public class GestureFragment extends Fragment implements Gesture.Observer {
                 for (Integer amplitude : blinkAmplitudes) {
                     sum += amplitude;
                 }
-                replaceDirections((sum / blinkAmplitudes.size()) / 8);
+                replaceDirections((sum / blinkAmplitudes.size()) / 3);
                 blinkAmplitudes.clear();
             }
         }
