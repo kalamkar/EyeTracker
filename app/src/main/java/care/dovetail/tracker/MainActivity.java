@@ -10,10 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
+import care.dovetail.ojo.CombinedEogProcessor;
+import care.dovetail.ojo.EOGProcessor;
+import care.dovetail.ojo.EyeEvent;
+import care.dovetail.ojo.Gesture;
 import care.dovetail.tracker.bluetooth.ShimmerClient;
 import care.dovetail.tracker.bluetooth.ShimmerClient.BluetoothDeviceListener;
-import care.dovetail.tracker.eog.CombinedEogProcessor;
-import care.dovetail.tracker.eog.EOGProcessor;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;

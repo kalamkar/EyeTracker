@@ -1,6 +1,6 @@
 package care.dovetail.tracker.ui;
 
-import care.dovetail.tracker.eog.EOGProcessor;
+import care.dovetail.ojo.EOGProcessor;
 
 /**
  * Created by abhi on 5/1/17.

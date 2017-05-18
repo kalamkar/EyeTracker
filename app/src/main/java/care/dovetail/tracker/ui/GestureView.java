@@ -8,7 +8,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import care.dovetail.tracker.EyeEvent;
+import care.dovetail.ojo.EyeEvent;
 
 /**
  * Created by abhi on 9/28/16.

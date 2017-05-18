@@ -18,9 +18,9 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import care.dovetail.ojo.EyeEvent;
+import care.dovetail.ojo.Gesture;
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.EyeEvent;
-import care.dovetail.tracker.Gesture;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
 

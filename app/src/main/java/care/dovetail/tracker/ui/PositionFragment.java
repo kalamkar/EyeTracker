@@ -11,11 +11,11 @@ import android.view.ViewGroup;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import care.dovetail.ojo.EyeEvent;
+import care.dovetail.ojo.Stats;
 import care.dovetail.tracker.Config;
-import care.dovetail.tracker.EyeEvent;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
-import care.dovetail.tracker.Stats;
 
 /**
  * Created by abhi on 4/24/17.

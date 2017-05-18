@@ -7,7 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import care.dovetail.tracker.EyeEvent;
+import care.dovetail.ojo.EyeEvent;
 
 /**
  * Created by abhi on 4/24/17.
