@@ -1,4 +1,4 @@
-package care.dovetail.tracker.bluetooth;
+package care.dovetail.ojo.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

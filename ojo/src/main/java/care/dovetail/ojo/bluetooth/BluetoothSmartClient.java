@@ -1,4 +1,4 @@
-package care.dovetail.tracker.bluetooth;
+package care.dovetail.ojo.bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -17,8 +17,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
-
-import care.dovetail.tracker.Config;
 
 public class BluetoothSmartClient extends BluetoothGattCallback {
 	private static final String TAG = "BluetoothSmartClient";
@@ -221,7 +219,7 @@ public class BluetoothSmartClient extends BluetoothGattCallback {
 
 		if (bluetooth == null || !bluetooth.isEnabled()) {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			activity.startActivityForResult(enableBtIntent, Config.BLUETOOTH_ENABLE_REQUEST);
+			activity.startActivityForResult(enableBtIntent, 0);
 		}
 	}
 }
