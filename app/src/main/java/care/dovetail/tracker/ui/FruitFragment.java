@@ -225,8 +225,10 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
                             play(gestureName);
                         }
                         resetFixation();
-                        setFixation(new int[]{R.id.leftLeftKnife, R.id.rightLeftKnife});
-                        setFixation(new int[]{R.id.leftRightKnife, R.id.rightRightKnife});
+                        setFixation(new int[]{
+                                R.id.leftLeftKnife, R.id.rightLeftKnife, R.id.leftImage});
+                        setFixation(new int[]{
+                                R.id.leftRightKnife, R.id.rightRightKnife, R.id.rightImage});
                         scheduleResetFixation(Config.FIXATION_VISIBILITY_MILLIS);
                         break;
                     case "explode":
@@ -291,7 +293,7 @@ public class FruitFragment extends Fragment implements Gesture.Observer {
 
     private void resetFixation() {
         int knives[] = new int[] {R.id.leftLeftKnife, R.id.leftRightKnife, R.id.rightLeftKnife,
-                R.id.rightRightKnife};
+                R.id.rightRightKnife, R.id.leftImage, R.id.rightImage};
         for (int id : knives) {
             getView().findViewById(id).setAlpha(0.5f);
         }
