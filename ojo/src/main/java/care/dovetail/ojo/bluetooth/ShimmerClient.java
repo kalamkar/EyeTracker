@@ -14,27 +14,16 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
 
-public class ShimmerClient {
+public class ShimmerClient extends EogDevice {
     private static final String TAG = "ShimmerClient";
 
     private static final UUID SHIMMER_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final String BT_DEVICE_NAME_PREFIX = "Shimmer3";
 
-    private final Context context;
-    private final BluetoothDeviceListener listener;
-
     private BluetoothAdapter adapter;
     private String remoteAddress;
     private ConnectionTask connectionTask;
     private ShimmerConnection connection;
-
-    public interface BluetoothDeviceListener {
-        void onConnect(String name);
-
-        void onDisconnect(String name);
-
-        void onNewValues(int channel1, int channel2);
-    }
 
     private static class Packet {
         private int timestamp;
@@ -49,9 +38,8 @@ public class ShimmerClient {
         }
     }
 
-    public ShimmerClient(Context context, BluetoothDeviceListener listener) {
-        this.listener = listener;
-        this.context = context;
+    public ShimmerClient(Context context) {
+        super(context);
     }
 
     public void connect() {
@@ -116,7 +104,7 @@ public class ShimmerClient {
                     return null;
                 }
                 socket.connect();
-                return new ShimmerConnection(socket, client.get().listener);
+                return new ShimmerConnection(socket, new WeakReference<EogDevice>(client.get()));
             } catch (Exception e) {
                 // Log.e(TAG, String.format("Could not connect to %s.", device.getName()), e);
             }
@@ -148,12 +136,12 @@ public class ShimmerClient {
         private InputStream inStream;
         private OutputStream outStream;
 
-        private final WeakReference<BluetoothDeviceListener> listener;
+        private final WeakReference<EogDevice> device;
 
 
-        private ShimmerConnection(BluetoothSocket socket, BluetoothDeviceListener listener) {
+        private ShimmerConnection(BluetoothSocket socket, WeakReference<EogDevice> device) {
             this.socket = socket;
-            this.listener = new WeakReference<>(listener);
+            this.device = device;
             this.remoteName = socket.getRemoteDevice().getName();
             try {
                 inStream = socket.getInputStream();
@@ -165,8 +153,8 @@ public class ShimmerClient {
 
         @Override
         public void run() {
-            listener.get().onConnect(remoteName);
-            while (inStream != null && outStream != null && listener.get() != null) {
+            device.get().onConnect(remoteName);
+            while (inStream != null && outStream != null && device.get() != null) {
                 int response;
                 try {
                     response = inStream.read();
@@ -185,8 +173,8 @@ public class ShimmerClient {
                         break;
                     }
                     Packet packet = parsePacket(buffer);
-                    if (listener.get() != null && packet != null) {
-                        listener.get().onNewValues(packet.channel1, packet.channel2);
+                    if (device.get() != null && packet != null) {
+                        device.get().onNewValues(packet.channel1, packet.channel2);
                     }
                 } else if (response == 0x02) {  // Inquiry response
                     byte[] buffer = new byte[128];
@@ -216,8 +204,8 @@ public class ShimmerClient {
                 }
             }
             close();
-            if (listener.get() != null) {
-                listener.get().onDisconnect(remoteName);
+            if (device.get() != null) {
+                device.get().onDisconnect(remoteName);
             }
         }
 

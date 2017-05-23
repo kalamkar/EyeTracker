@@ -12,7 +12,7 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import care.dovetail.ojo.EOGProcessor;
+import care.dovetail.ojo.EogProcessor;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
 
@@ -26,7 +26,7 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
     private Settings settings;
     private Timer chartUpdateTimer;
 
-    private EOGProcessor signals;
+    private EogProcessor signals;
 
     @Override
     public void onAttach(Context context) {
@@ -75,7 +75,7 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
     }
 
     @Override
-    public void setDataSource(EOGProcessor signals) {
+    public void setDataSource(EogProcessor signals) {
         this.signals = signals;
     }
 
@@ -102,12 +102,15 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
 
     @Override
     public void updateStatusUI(final int spinner, final int progress, final int numbers) {
-        if (getActivity() == null || getView() == null) {
+        if (getActivity() == null) {
             return;
         }
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (getView() == null) {
+                    return;
+                }
                 getView().findViewById(R.id.leftBlue).setVisibility(spinner);
                 getView().findViewById(R.id.rightBlue).setVisibility(spinner);
 
@@ -129,8 +132,8 @@ public class DebugBinocularFragment extends Fragment implements DebugUi {
                     (ChartFragment) getChildFragmentManager().findFragmentById(R.id.leftChart);
             final ChartFragment rightChart =
                     (ChartFragment) getChildFragmentManager().findFragmentById(R.id.rightChart);
-            if (leftChart == null || rightChart == null
-                    || getActivity() == null || getView() == null) {
+            if (leftChart == null || rightChart == null || getActivity() == null
+                    || getView() == null || signals == null) {
                 return;
             }
             leftChart.clear();

@@ -12,7 +12,7 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import care.dovetail.ojo.EOGProcessor;
+import care.dovetail.ojo.EogProcessor;
 import care.dovetail.tracker.R;
 import care.dovetail.tracker.Settings;
 
@@ -26,7 +26,7 @@ public class DebugFragment extends Fragment implements DebugUi {
     private Settings settings;
     private Timer chartUpdateTimer;
 
-    private EOGProcessor signals;
+    private EogProcessor signals;
 
     @Override
     public void onAttach(Context context) {
@@ -60,7 +60,7 @@ public class DebugFragment extends Fragment implements DebugUi {
     }
 
     @Override
-    public void setDataSource(EOGProcessor signals) {
+    public void setDataSource(EogProcessor signals) {
         this.signals = signals;
     }
 
@@ -82,12 +82,15 @@ public class DebugFragment extends Fragment implements DebugUi {
 
     @Override
     public void updateStatusUI(final int spinner, final int progress, final int numbers) {
-        if (getActivity() == null || getView() == null) {
+        if (getActivity() == null) {
             return;
         }
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (getView() == null) {
+                    return;
+                }
                 getView().findViewById(R.id.blue).setVisibility(spinner);
 
                 getView().findViewById(R.id.progress).setVisibility(progress);
@@ -103,7 +106,7 @@ public class DebugFragment extends Fragment implements DebugUi {
         public void run() {
             final ChartFragment chart =
                     (ChartFragment) getChildFragmentManager().findFragmentById(R.id.chart);
-            if (chart == null || getActivity() == null || getView() == null) {
+            if (chart == null || getActivity() == null || getView() == null || signals == null) {
                 return;
             }
             chart.clear();

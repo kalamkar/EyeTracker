@@ -6,7 +6,7 @@ import android.util.Pair;
  * Created by abhi on 3/22/17.
  */
 
-public interface EOGProcessor {
+public interface EogProcessor {
 
     /**
      * Update the processor with any newly acquired signal values from all the channels

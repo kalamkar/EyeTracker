@@ -1,8 +1,6 @@
 package care.dovetail.tracker;
 
-import android.content.Context;
 import android.content.Intent;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -10,12 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
-import care.dovetail.ojo.CombinedEogProcessor;
-import care.dovetail.ojo.EOGProcessor;
+import care.dovetail.ojo.EyeController;
 import care.dovetail.ojo.EyeEvent;
 import care.dovetail.ojo.Gesture;
-import care.dovetail.ojo.bluetooth.ShimmerClient;
-import care.dovetail.ojo.bluetooth.ShimmerClient.BluetoothDeviceListener;
+import care.dovetail.ojo.bluetooth.EogDevice;
 import care.dovetail.tracker.ui.DebugBinocularFragment;
 import care.dovetail.tracker.ui.DebugFragment;
 import care.dovetail.tracker.ui.DebugUi;
@@ -25,15 +21,13 @@ import care.dovetail.tracker.ui.PositionFragment;
 import care.dovetail.tracker.ui.SettingsActivity;
 import care.dovetail.tracker.ui.SpectaclesFragment;
 
-public class MainActivity extends FragmentActivity implements BluetoothDeviceListener,
-        AccelerationProcessor.ShakingObserver, EyeEvent.Observer {
+public class MainActivity extends FragmentActivity implements EogDevice.Observer,
+        EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
     private final Settings settings = new Settings(this);
 
-    private final ShimmerClient patchClient = new ShimmerClient(this, this);
-    private EOGProcessor eog;
-    private AccelerationProcessor accelerometer;
+    private final EyeController eyeController = new EyeController(this);
 
     private FileDataWriter writer = null;
 
@@ -41,8 +35,6 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     private DebugUi debug;
 
     private EyeEvent latestPosition;
-
-    private long lookupStartTimeMillis;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,28 +46,51 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View view) {
-                        stopBluetooth();
+                        eyeController.disconnect();
                         startActivity(new Intent(MainActivity.this, SettingsActivity.class));
                         return true;
                     }
                 });
+        eyeController.device.add(this);
+        ((EyeEvent.Source) eyeController.processor).add(this);
 
-        accelerometer = new AccelerationProcessor(
-                (SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
+        if (settings.getDemo() == 0) { // Gestures
+            demo = new GestureFragment();
+            debug = new DebugBinocularFragment();
+        } else if (settings.getDemo() == 1) { // Fruit
+            demo = new FruitFragment();
+            debug = new DebugBinocularFragment();
+        } else if (settings.getDemo() == 2) { // Position
+            demo = new PositionFragment();
+            debug = new DebugBinocularFragment();
+        } else if (settings.getDemo() == 3) { // Spectacles
+            demo = new SpectaclesFragment();
+            debug = new DebugFragment();
+        }
+
+        if (demo instanceof EyeEvent.Observer) {
+            ((EyeEvent.Source) eyeController.processor).add((EyeEvent.Observer) demo);
+        } else if (demo instanceof Gesture.Observer) {
+            ((Gesture.Observer) demo).setEyeEventSource((EyeEvent.Source) eyeController.processor);
+        }
+        getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
+
+        debug.setDataSource(eyeController.processor);
+        getSupportFragmentManager()
+                .beginTransaction().replace(R.id.debug, (Fragment) debug).commit();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         hideBars();
-        startBluetooth();
-        accelerometer.start();
+        eyeController.connect();
+        showBluetoothSpinner();
     }
 
     @Override
     protected void onStop() {
-        stopBluetooth();
-        accelerometer.stop();
+        eyeController.disconnect();
         super.onStop();
     }
 
@@ -105,17 +120,11 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
     @Override
     public void onEyeEvent(EyeEvent event) {
         switch (event.type) {
-            case BAD_CONTACT:
-                if (patchClient.isConnected()) {
-                    stopBluetooth();
-                    startBluetooth();
-                }
-                break;
             case POSITION:
                 latestPosition = event;
                 break;
             case SIGNAL_QUALITY:
-                if (eog.isGoodSignal()) {
+                if (eyeController.processor.isGoodSignal()) {
                     showDebugNumbers();
                 } else {
                     showQualityProgress();
@@ -123,9 +132,10 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        debug.setProgress(eog.getSignalQuality());
+                        debug.setProgress(eyeController.processor.getSignalQuality());
                         debug.showWarning(
-                                (!eog.isStableHorizontal()) || (!eog.isStableVertical()));
+                                (!eyeController.processor.isStableHorizontal())
+                                        || (!eyeController.processor.isStableVertical()));
                     }
                 });
         }
@@ -133,69 +143,17 @@ public class MainActivity extends FragmentActivity implements BluetoothDeviceLis
 
     @Override
     public void onNewValues(int channel1, int channel2) {
-        eog.update(channel1, channel2);
         if (writer != null) {
             int column = latestPosition != null ? latestPosition.column : -1;
             int row = latestPosition != null ? latestPosition.row : -1;
-            int filtered1 = eog.horizontal()[Config.GRAPH_LENGTH-1];
-            int filtered2 = eog.vertical()[Config.GRAPH_LENGTH-1];
+            int filtered1 = eyeController.processor.horizontal()[Config.GRAPH_LENGTH-1];
+            int filtered2 = eyeController.processor.vertical()[Config.GRAPH_LENGTH-1];
             int moleCol = demo instanceof PositionFragment
                     ? ((PositionFragment) demo).getMoleColumn() : -1;
             int moleRow = demo instanceof PositionFragment
                     ? ((PositionFragment) demo).getMoleRow() : -1;
             writer.write(channel1, channel2, filtered1, filtered2, column, row, moleCol, moleRow);
         }
-    }
-
-    @Override
-    public void onShakingChange(final boolean isShaking) {
-        long millisSinceLookup = System.currentTimeMillis() - lookupStartTimeMillis;
-        if (!isShaking || millisSinceLookup < 5000) {
-            return;
-        }
-        if (patchClient.isConnected()) {
-            stopBluetooth();
-            startBluetooth();
-        } else {
-            startBluetooth();
-        }
-    }
-
-    public void startBluetooth() {
-        eog = new CombinedEogProcessor(settings.getNumSteps(), settings.shouldShowBandpassChart());
-        if (settings.getDemo() == 0) { // Gestures
-            demo = new GestureFragment();
-            debug = new DebugBinocularFragment();
-        } else if (settings.getDemo() == 1) { // Fruit
-            demo = new FruitFragment();
-            debug = new DebugBinocularFragment();
-        } else if (settings.getDemo() == 2) { // Position
-            demo = new PositionFragment();
-            debug = new DebugBinocularFragment();
-        } else if (settings.getDemo() == 3) { // Spectacles
-            demo = new SpectaclesFragment();
-            debug = new DebugFragment();
-        }
-
-        if (demo instanceof EyeEvent.Observer) {
-            ((EyeEvent.Source) eog).add((EyeEvent.Observer) demo);
-        } else if (demo instanceof Gesture.Observer) {
-            ((Gesture.Observer) demo).setEyeEventSource((EyeEvent.Source) eog);
-        }
-        ((EyeEvent.Source) eog).add(this);
-        getSupportFragmentManager().beginTransaction().replace(R.id.demo, demo).commit();
-
-        debug.setDataSource(eog);
-        getSupportFragmentManager()
-                .beginTransaction().replace(R.id.debug, (Fragment) debug).commit();
-
-        patchClient.connect();
-        lookupStartTimeMillis = System.currentTimeMillis();
-        showBluetoothSpinner();
-    }
-
-    public void stopBluetooth() {
-        patchClient.close();
     }
 
     private void hideBars() {
