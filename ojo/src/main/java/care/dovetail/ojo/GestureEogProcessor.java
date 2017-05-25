@@ -3,6 +3,7 @@ package care.dovetail.ojo;
 import android.util.Pair;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,7 +37,8 @@ public class GestureEogProcessor implements EogProcessor, EyeEvent.Source {
     private Stats hStats = new Stats(new int[]{});
     private Stats vStats = new Stats(new int[]{});
 
-    private final Set<EyeEvent.Observer> observers = new HashSet<>();
+    private final Set<EyeEvent.Observer> observers =
+            Collections.synchronizedSet(new HashSet<EyeEvent.Observer>());
 
     private final EyeEventRecognizer eventRecognizer;
 
@@ -85,12 +87,12 @@ public class GestureEogProcessor implements EogProcessor, EyeEvent.Source {
     }
 
     @Override
-    public void add(EyeEvent.Observer observer) {
+    public synchronized void add(EyeEvent.Observer observer) {
         this.observers.add(observer);
     }
 
     @Override
-    public void remove(EyeEvent.Observer observer) {
+    public synchronized void remove(EyeEvent.Observer observer) {
         this.observers.remove(observer);
     }
 
@@ -168,8 +170,8 @@ public class GestureEogProcessor implements EogProcessor, EyeEvent.Source {
         }
     }
 
-    private void notifyObservers(EyeEvent event) {
-        for (EyeEvent.Observer observer : observers) {
+    private synchronized void notifyObservers(EyeEvent event) {
+        for (EyeEvent.Observer observer : observers.toArray(new EyeEvent.Observer[0])) {
             if (observer.getCriteria().isMatching(event)) {
                 observer.onEyeEvent(event);
 
