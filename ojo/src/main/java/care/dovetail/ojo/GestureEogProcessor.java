@@ -75,7 +75,8 @@ public class GestureEogProcessor implements EogProcessor, EyeEvent.Source {
         feature2[feature2.length - 1] = 0;
 
         if (updateCount % QUALITY_NOTIFY_INTERVAL == 0) {
-            notifyObservers(new EyeEvent(EyeEvent.Type.SIGNAL_QUALITY));
+            notifyObservers(new EyeEvent(EyeEvent.Type.SIGNAL_QUALITY, getSignalQuality(),
+                    (long) (QUALITY_NOTIFY_INTERVAL * 1000 / Config.SAMPLING_FREQ)));
         }
 
         eventRecognizer.update(hValue, vValue);
