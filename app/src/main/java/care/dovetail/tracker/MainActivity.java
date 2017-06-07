@@ -26,10 +26,9 @@ public class MainActivity extends FragmentActivity implements EogDevice.Observer
         EyeEvent.Observer {
     private static final String TAG = "MainActivity";
 
-    private final Settings settings = new Settings(this);
+    private Settings settings;
 
-    private final EyeController eyeController = new EyeController(this,
-            new CombinedEogProcessor(settings.getNumSteps(), settings.shouldShowBandpassChart()));
+    private EyeController eyeController;
 
     private FileDataWriter writer = null;
 
@@ -43,6 +42,11 @@ public class MainActivity extends FragmentActivity implements EogDevice.Observer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        settings = new Settings(this);
+
+        eyeController = new EyeController(this, new CombinedEogProcessor(
+                settings.getNumSteps(), settings.shouldShowBandpassChart()));
 
         findViewById(R.id.settings).setOnLongClickListener(
                 new View.OnLongClickListener() {
