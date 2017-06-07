@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
+import care.dovetail.ojo.CombinedEogProcessor;
 import care.dovetail.ojo.EyeController;
 import care.dovetail.ojo.EyeEvent;
 import care.dovetail.ojo.Gesture;
@@ -27,7 +28,8 @@ public class MainActivity extends FragmentActivity implements EogDevice.Observer
 
     private final Settings settings = new Settings(this);
 
-    private final EyeController eyeController = new EyeController(this);
+    private final EyeController eyeController = new EyeController(this,
+            new CombinedEogProcessor(settings.getNumSteps(), settings.shouldShowBandpassChart()));
 
     private FileDataWriter writer = null;
 

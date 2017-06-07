@@ -24,10 +24,14 @@ public class EyeController implements EyeEvent.Observer, EogDevice.Observer {
     private long lookupStartTimeMillis;
 
     public EyeController(Context context) {
+        this(context, new GestureEogProcessor());
+    }
+
+    public EyeController(Context context, EogProcessor processor) {
         this.context = context;
         device = new ShimmerClient(context);
         device.add(this);
-        processor = new GestureEogProcessor(); // new CombinedEogProcessor(3, true);
+        this.processor = processor;
         ((EyeEvent.Source) processor).add(this);
     }
 
