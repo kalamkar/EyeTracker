@@ -3,3 +3,8 @@
 .gradle/**
 app/build/**
 build/**
+.gradle/
+.idea/
+app/build/
+build/
+*.iml

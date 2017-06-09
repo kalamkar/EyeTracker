@@ -112,7 +112,7 @@ public class DebugFragment extends Fragment implements DebugUi {
             chart.clear();
 
             boolean progressVisible =
-                    getView().findViewById(R.id.leftProgress).getVisibility() == View.VISIBLE;
+                    getView().findViewById(R.id.progress).getVisibility() == View.VISIBLE;
             if (settings.shouldShowChart() || progressVisible) {
                 chart.updateChannel1(signals.horizontal(), signals.horizontalRange());
                 chart.updateChannel2(signals.vertical(), signals.verticalRange());
